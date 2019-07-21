@@ -10,3 +10,16 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Georges Bank
 
 Georges Bank is a highly productive sub-marine plateau located directly east of Cape Cod, Massachusetts.  The bank has a long history of commercial fishing and is currently the focus of an example Fisheries Ecosystem Plan (eFEP) for the New England Fisheries Management Council.  This repository will house all of the code that goes into creating a mass balance food web model version of Georges Bank.  The model will be built using [Rpath](http://github.com/NOAA-EDAB/Rpath), the R implementaion of the mass balance algorithms. 
+
+## Notes on ABC (wikipedia)
+
+ABC is approximate Bayesian computation - originally developed in genetics to estimate the posterior distribution when calculating the likelihood is impractical.
+
+General reminder of Bayes Theorem:
+
+$$  p(\theta | D) = \frac{p(D|\theta)p(\theta)}{p(D)} $$
+where $p(\theta|D)$ is the posterior distribution, $p(D|\theta)$ the likelihood, $p(\theta)$ the prior distribution, and $p(D)$ the evidence or marginal likelihood.
+
+All ABCs approximate the likelihood through simulations where outcomes are compared to observations.  The core is the ABC rejection algorithm where parameters are first sampled from the prior distribution. Given a sampled parameter point $\hat{\theta}$, a data set $\hat{D}$ is then simulated under the statistical model *M* specified by $\hat{\theta}$. If the generated $\hat{D}$ is too different from the observed data *D*, the sampled parameter value is discarded. The distance measure $\rho(\hat{D}, D)$ determines the level of discrepancy between \hat{D} and *D* based on a given metric (e.g. Euclidean distance). 
+
+$$ \rho(\hat{D}, D) \leq \epsilon $$

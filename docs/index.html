@@ -371,6 +371,14 @@ summary {
 <h2>Georges Bank</h2>
 <p>Georges Bank is a highly productive sub-marine plateau located directly east of Cape Cod, Massachusetts. The bank has a long history of commercial fishing and is currently the focus of an example Fisheries Ecosystem Plan (eFEP) for the New England Fisheries Management Council. This repository will house all of the code that goes into creating a mass balance food web model version of Georges Bank. The model will be built using <a href="http://github.com/NOAA-EDAB/Rpath">Rpath</a>, the R implementaion of the mass balance algorithms.</p>
 </div>
+<div id="notes-on-abc-wikipedia" class="section level2">
+<h2>Notes on ABC (wikipedia)</h2>
+<p>ABC is approximate Bayesian computation - originally developed in genetics to estimate the posterior distribution when calculating the likelihood is impractical.</p>
+<p>General reminder of Bayes Theorem:</p>
+<p><span class="math display">\[  p(\theta | D) = \frac{p(D|\theta)p(\theta)}{p(D)} \]</span> where <span class="math inline">\(p(\theta|D)\)</span> is the posterior distribution, <span class="math inline">\(p(D|\theta)\)</span> the likelihood, <span class="math inline">\(p(\theta)\)</span> the prior distribution, and <span class="math inline">\(p(D)\)</span> the evidence or marginal likelihood.</p>
+<p>All ABCs approximate the likelihood through simulations where outcomes are compared to observations. The core is the ABC rejection algorithm where parameters are first sampled from the prior distribution. Given a sampled parameter point <span class="math inline">\(\hat{\theta}\)</span>, a data set <span class="math inline">\(\hat{D}\)</span> is then simulated under the statistical model <em>M</em> specified by <span class="math inline">\(\hat{\theta}\)</span>. If the generated <span class="math inline">\(\hat{D}\)</span> is too different from the observed data <em>D</em>, the sampled parameter value is discarded. The distance measure <span class="math inline">\(\rho(\hat{D}, D)\)</span> determines the level of discrepancy between  and <em>D</em> based on a given metric (e.g. Euclidean distance).</p>
+<p><span class="math display">\[ \rho(\hat{D}, D) \leq \epsilon \]</span></p>
+</div>
 
 
 
