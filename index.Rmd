@@ -1,6 +1,7 @@
 ---
 title: "Georges Bank Rpath Model Notes"
 output: html_document
+bibliography: GBRpath.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -23,3 +24,17 @@ where $p(\theta|D)$ is the posterior distribution, $p(D|\theta)$ the likelihood,
 All ABCs approximate the likelihood through simulations where outcomes are compared to observations.  The core is the ABC rejection algorithm where parameters are first sampled from the prior distribution. Given a sampled parameter point $\hat{\theta}$, a data set $\hat{D}$ is then simulated under the statistical model *M* specified by $\hat{\theta}$. If the generated $\hat{D}$ is too different from the observed data *D*, the sampled parameter value is discarded. The distance measure $\rho(\hat{D}, D)$ determines the level of discrepancy between \hat{D} and *D* based on a given metric (e.g. Euclidean distance). 
 
 $$ \rho(\hat{D}, D) \leq \epsilon $$
+The probability of generating a $\hat{D}$ that is within tolerance of *D* decreases as the dimensionality of the data increases.  To avoid this a set of lower-dimensional summary statistics, *S(D)* are used that captures the informatin in *D*.  The acceptance criteria then becomes:
+
+$$ \rho(\hat{S(D)}, S(D)) \leq \epsilon $$ 
+
+Package in R for doing approximate Bayesian computation: abc [@csillery_abc_2012]
+
+
+
+
+
+
+
+References {#references .unnumbered}
+===
