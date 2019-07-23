@@ -119,27 +119,8 @@ GB <- survdat.epu[EPU == 'GB', ]
 GB.prep <- stratprep(GB, epu.area, strat.col = 'EPU', area.col = 'Area')
 GB.mean <- stratmean(GB.prep, group.col = 'RPATH', strat.col = 'EPU', poststrat = T)
 
-
-
-#GB.tows <- unique(GB.prep[, list(YEAR, ntows)])
-
-#Sum biomass by Rpath groups
-GB.sums <- GB[, sum(BIOMASS), by = c('YEAR', 'RPATH', 'STATION', 'SWEPTAREA')]
-setnames(GB.sums, 'V1', 'sta.bio')
-GB.sums[, n.pos := length(STATION), by = c('YEAR', 'RPATH')]
-GB.sums[, tot.bio := sum(sta.bio), by = c('YEAR', 'RPATH')]
-
-#Calculate yearly mean
-GB.sums <- merge(GB.sums, GB.tows, by = 'YEAR')
-GB.sums[, mean.bio := tot.bio / ntows]
-
-#Calculate variance - Need to account for zero tows
-GB.sums[, zero.tow := ntows - n.pos]
-GB.sums[, zero.var := zero.tow * (0 - mean.bio)^ 2]
-GB.sums[, pos.var  := sum((sta.bio - mean.bio)^ 2), by = c('YEAR', 'RPATH')]
-GB.sums[, var.bio  := (zero.var + pos.var) / (ntows - 1)]
-
 #Calculate minimum swept area biomass estimates (i.e. q = 1)
+
 #Using wings swept area per tow
 
 #Georges Bank area
