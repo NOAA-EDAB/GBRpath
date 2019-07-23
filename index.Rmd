@@ -8,7 +8,8 @@ bibliography: GBRpath.bib
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Georges Bank
+Georges Bank
+===
 
 Georges Bank is a highly productive sub-marine plateau located directly east of Cape Cod, Massachusetts.  The bank has a long history of commercial fishing and is currently the focus of an example Fisheries Ecosystem Plan (eFEP) for the New England Fisheries Management Council.  This repository will house all of the code that goes into creating a mass balance food web model version of Georges Bank.  The model will be built using [Rpath](http://github.com/NOAA-EDAB/Rpath), the R implementaion of the mass balance algorithms. 
 
@@ -16,13 +17,34 @@ Data pulls
 ===
 
 ## Biomass
-I am using Bigelow Fall data 2012 to 2016 - without conversion factors. Fall 2017 
+For non-bivalve species that are encountered in our surveys I am using Bigelow Fall 
+data 2012 to 2016 - without conversion factors. Fall 2017 
 survey was conducted on the Pisces with no Mid coverage which will be an issue for 
 future work...also spring/fall 2018 compromised due to ship issues.
 
-Biomass for surveyed species is calculated as the mean from 2013 to 2015.
+I am using the scallop survey and clam survey for Atlantic Scallops and Ocean 
+Quhogs/Surfclams respectively.  Note that the clam survey samples regions on a 
+rotating basis.  See below table:
+```{r clam table, echo = F, warning = F}
+library(data.table); library(knitr)
+
+clam.tows <- data.table(Year = 2012:2016, ntows = c(0, 115, 29, 8, 166))
+kable(clam.tows, caption = "Number of clam tows within the Georges Bank EPU.", 
+      booktabs = T, align = c('c', 'c'))
+
+```
+
+Biomass for surveyed species is calculated as the mean from 2013 to 2015.  Clams 
+will be an average of 2013 and 2016 as those two years are more representive than 
+the others.
 
 2012 through 2016 are used to see if there is a significant trend for a BA term.
+
+Species not encountered by our survey are using EMAX values.
+
+
+Moving forward dynamically
+===
 
 ## Notes on ABC (wikipedia)
 

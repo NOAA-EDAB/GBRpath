@@ -367,10 +367,54 @@ summary {
 </div>
 
 
-<div id="georges-bank" class="section level2">
-<h2>Georges Bank</h2>
+<div id="georges-bank" class="section level1">
+<h1>Georges Bank</h1>
 <p>Georges Bank is a highly productive sub-marine plateau located directly east of Cape Cod, Massachusetts. The bank has a long history of commercial fishing and is currently the focus of an example Fisheries Ecosystem Plan (eFEP) for the New England Fisheries Management Council. This repository will house all of the code that goes into creating a mass balance food web model version of Georges Bank. The model will be built using <a href="http://github.com/NOAA-EDAB/Rpath">Rpath</a>, the R implementaion of the mass balance algorithms.</p>
 </div>
+<div id="data-pulls" class="section level1">
+<h1>Data pulls</h1>
+<div id="biomass" class="section level2">
+<h2>Biomass</h2>
+<p>For non-bivalve species that are encountered in our surveys I am using Bigelow Fall data 2012 to 2016 - without conversion factors. Fall 2017 survey was conducted on the Pisces with no Mid coverage which will be an issue for future work…also spring/fall 2018 compromised due to ship issues.</p>
+<p>I am using the scallop survey and clam survey for Atlantic Scallops and Ocean Quhogs/Surfclams respectively. Note that the clam survey samples regions on a rotating basis. See below table:</p>
+<table>
+<caption>Number of clam tows within the Georges Bank EPU.</caption>
+<thead>
+<tr class="header">
+<th align="center">Year</th>
+<th align="center">ntows</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">2012</td>
+<td align="center">0</td>
+</tr>
+<tr class="even">
+<td align="center">2013</td>
+<td align="center">115</td>
+</tr>
+<tr class="odd">
+<td align="center">2014</td>
+<td align="center">29</td>
+</tr>
+<tr class="even">
+<td align="center">2015</td>
+<td align="center">8</td>
+</tr>
+<tr class="odd">
+<td align="center">2016</td>
+<td align="center">166</td>
+</tr>
+</tbody>
+</table>
+<p>Biomass for surveyed species is calculated as the mean from 2013 to 2015. Clams will be an average of 2013 and 2016 as those two years are more representive than the others.</p>
+<p>2012 through 2016 are used to see if there is a significant trend for a BA term.</p>
+<p>Species not encountered by our survey are using EMAX values.</p>
+</div>
+</div>
+<div id="moving-forward-dynamically" class="section level1">
+<h1>Moving forward dynamically</h1>
 <div id="notes-on-abc-wikipedia" class="section level2">
 <h2>Notes on ABC (wikipedia)</h2>
 <p>ABC is approximate Bayesian computation - originally developed in genetics to estimate the posterior distribution when calculating the likelihood is impractical.</p>
@@ -380,6 +424,7 @@ summary {
 <p><span class="math display">\[ \rho(\hat{D}, D) \leq \epsilon \]</span> The probability of generating a <span class="math inline">\(\hat{D}\)</span> that is within tolerance of <em>D</em> decreases as the dimensionality of the data increases. To avoid this a set of lower-dimensional summary statistics, <em>S(D)</em> are used that captures the informatin in <em>D</em>. The acceptance criteria then becomes:</p>
 <p><span class="math display">\[ \rho(\hat{S(D)}, S(D)) \leq \epsilon \]</span></p>
 <p>Package in R for doing approximate Bayesian computation: abc <span class="citation">(Csilléry, François, and Blum 2012)</span></p>
+</div>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
