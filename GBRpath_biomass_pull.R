@@ -120,31 +120,114 @@ GB.prep <- stratprep(GB, epu.area, strat.col = 'EPU', area.col = 'Area')
 GB.mean <- stratmean(GB.prep, group.col = 'RPATH', strat.col = 'EPU', poststrat = T)
 
 #Calculate minimum swept area biomass estimates (i.e. q = 1)
-
-#Using wings swept area per tow
-
 #Georges Bank area
 A <- epu.area[EPU == 'GB', Area]
-#Calculate minimum swept area estimate
-GB.sums[, swept.bio := mean.bio * A / SWEPTAREA]
-#Calculate total estimate variance
-GB.sums[, swept.var := (A / SWEPTAREA)^2 * var.bio]
+#Using wings swept area per tow
+mean.swept <- GB[, mean(SWEPTAREA), by = YEAR]
+setnames(mean.swept, 'V1', 'mean.swept')
+mean.swept[, A := A]
+mean.swept[, prop.swept := A / mean.swept]
 
-GB.biomass <- unique(GB.sums[, list(YEAR, RPATH, swept.bio, swept.var)], 
-                     by = c('YEAR', 'RPATH'))
+#Calculate minimum swept area estimate
+GB.mean <- merge(GB.mean, mean.swept[, list(YEAR, prop.swept)], by = 'YEAR')
+GB.mean[, swept.bio := strat.biomass * prop.swept]
+
+#Calculate total estimate variance
+GB.mean[, swept.var := prop.swept^2 * biomass.var]
 
 #Input for GBRpath
 #Biomass needs to be in mt km^-2
 #Convert swept.bio to metric tons
-GB.biomass[, swept.bio.mt := swept.bio * 10^-3]
+GB.mean[, swept.bio.mt := swept.bio * 10^-3]
 
-GB.input <- GB.biomass[YEAR %in% 2013:2015, mean(swept.bio.mt) / A, by = RPATH]
-setnames(GB.input, 'V1', 'Biomass')
-save(GB.input, file = file.path(out.dir, 'GB_Rpath_inputs.RData'))
+GB.biomass <- GB.mean[YEAR %in% 2013:2015, mean(swept.bio.mt) / A, by = RPATH]
+setnames(GB.biomass, 'V1', 'Biomass')
+
+#Shellfish surveys--------------------------------------------------------------
+#Scallops
+cruise.qry <- "select unique year, cruise6, svvessel
+               from mstr_cruise
+               where purpose_code = 60
+               and year >= 2012
+               and year <= 2016
+               order by year, cruise6"
+
+cruise <- as.data.table(sqlQuery(channel, cruise.qry))
+
+#Use cruise codes to select other data
+cruise6 <- sqltext(cruise$CRUISE6)
+
+#Station data
+station.qry <- paste("select unique cruise6, svvessel, station, stratum, 
+                      decdeg_beglat as lat, decdeg_beglon as lon,
+                      avgdepth as depth,
+                      from Union_fscs_svsta
+                      where cruise6 in (", cruise6, ")
+                      and SHG <= 136
+                      order by cruise6, station", sep='')
+
+station <- as.data.table(sqlQuery(channel, station.qry))
+
+scalldat <- merge(cruise, station, by = c('CRUISE6', 'SVVESSEL'))
+
+#Catch data
+catch.qry <- paste("select cruise6, station, stratum, svspp, catchsex, 
+                    expcatchnum as abundance, expcatchwt as biomass
+                    from UNION_FSCS_SVCAT
+                    where cruise6 in (", cruise6, ")
+                    and svspp = '401'
+                    order by cruise6, station, svspp", sep='')
+
+catch <- as.data.table(sqlQuery(channel, catch.qry))
+
+#merge with scalldat
+setkey(catch, CRUISE6, STATION, STRATUM)
+scalldat <- merge(scalldat, catch, by = key(catch), all.x = T)
+
+#use poststrat to assign to EPU
+scalldat.epu <- poststrat(scalldat, epu)
+setnames(scalldat.epu, 'newstrata', 'EPU')
+
+#Subset for Georges Bank
+GB.scall <- scalldat.epu[EPU == 'GB', ]
+
+#Using a simple means within strata but can still use survdat functions
+GB.scall.prep <- stratprep(GB.scall, epu.area, strat.col = 'EPU', area.col = 'Area')
+GB.scall.mean <- stratmean(GB.scall.prep, strat.col = 'EPU', poststrat = T)
+
+#Remove NAs and add RPATH column
+GB.scall.mean <- GB.scall.mean[!is.na(SVSPP), ]
+GB.scall.mean[, RPATH := 'AtlScallop']
+GB.scall.mean[, SVSPP := NULL]
+
+#Calculate total biomass/abundance estimates
+a.scall <- (0.001317 * 1.852) * (1.0 * 1.852) #convert dredge area/tow distance to km from nm
+GB.scall.mean[, prop.swept := A / a.scall]
+GB.scall.mean[, swept.bio := strat.biomass * prop.swept]
+
+#Calculate total estimate variance
+GB.scall.mean[, swept.var := prop.swept^2 * biomass.var]
+
+#Input for GBRpath
+#Biomass needs to be in mt km^-2
+#Convert swept.bio to metric tons
+GB.scall.mean[, swept.bio.mt := swept.bio * 10^-3]
+
+GB.scall.biomass <- GB.scall.mean[YEAR %in% 2013:2015, mean(swept.bio.mt) / A, by = RPATH]
+setnames(GB.scall.biomass, 'V1', 'Biomass')
+
+#Replace scallop biomass from bottomtrawl survey
+GB.biomass[RPATH == 'AtlScallop', Biomass := GB.scall.biomass[, Biomass]]
+
+#Clam survey--------------------------------------------------------------------
+
+
+
+
 
 #Biomass Accumulation-----------------------------------------------------------
 #Use lm test for significant trend - only add significant terms
-groups <- GB.input[, RPATH]
+groups <- GB.biomass[, RPATH]
 BA.all <- c()
 for(igroup in groups){
   species <- GB.biomass[RPATH == igroup, ]
