@@ -284,7 +284,7 @@ GB.clam.mean <- GB.clam.mean[YEAR %in% c(2013, 2016), ]
 
 #Get mean per species and sum for "clam" group
 #Calculate total biomass/abundance estimates
-a.clam <- (0.001317 * 1.852) * (1.0 * 1.852) #Place holder (scallop dredge numbers) convert dredge area/tow distance to km from nm
+a.clam <- 0.0039624 * 0.374 
 GB.clam.mean[, prop.swept := A / a.clam]
 GB.clam.mean[, swept.bio := strat.biomass * prop.swept]
 
