@@ -317,4 +317,9 @@ emax <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS
 
 GB.biomass <- rbindlist(list(GB.biomass, emax))
 
+#Merge raw biomass data to use for biomass accumulation
+setcolorder(GB.scall.mean, colnames(GB.mean))
+GB.raw <- rbindlist(list(GB.mean, GB.scall.mean))
+
 save(GB.biomass, file = file.path(data.dir, 'GB_biomass.RData'))
+save(GB.raw,     file = file.path(data.dir, 'GB_Biomass_raw.RData'))
