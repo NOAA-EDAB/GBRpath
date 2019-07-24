@@ -16,7 +16,7 @@ Georges Bank is a highly productive sub-marine plateau located directly east of 
 Data pulls
 ===
 
-## Biomass
+## Biomass/ Biomass accumulation
 For non-bivalve species that are encountered in our surveys I am using Bigelow Fall 
 data 2012 to 2016 - without conversion factors. Fall 2017 
 survey was conducted on the Pisces with no Mid coverage which will be an issue for 
@@ -38,9 +38,11 @@ Biomass for surveyed species is calculated as the mean from 2013 to 2015.  Clams
 will be an average of 2013 and 2016 as those two years are more representive than 
 the others.
 
-2012 through 2016 are used to see if there is a significant trend for a BA term.
+2012 through 2016 are used to see if there is a significant trend for a BA term.  Clams
+were not assessed for a trend because there are only two data points.
 
-Species not encountered by our survey are using EMAX values.
+Species not encountered by our survey are using EMAX values [@link_EMAX_2006].  I also assumed no 
+BA term.
 
 
 Moving forward dynamically
