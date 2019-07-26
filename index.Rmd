@@ -112,9 +112,17 @@ going to hold off on BA terms unless model doesn't balance right.
 Pulling data from the stockefficiency tables for 2013 - 2015.  Landings will be 
 an average of those years.  
 
-Dividing otter trawl landings by large and small mesh.  The regulation for July 2015
-was 6.5 inches.  Approximately 18% of otter trawl records (~11% by weight) do not 
-have a mesh associated with them. 
+Need to deal with skates which are landed as skates(ns).  Human consumption mainly
+winter or thorny while bait mainly little skate (44th SAW).  Set all utilcd of 0 
+to winter skates and utilcd of 7 to little skates.  End fate of observer data not 
+known but only 7.6% of skates are listed as skates(ns).  The rest are identified
+to species.  Therefore I'm just allowing the "OtherSkates" node absorb the unknown
+skates.
+
+Dividing otter trawl landings by large and small mesh.  The
+[regulation](https://www.greateratlantic.fisheries.noaa.gov/regs/infodocs/small_mesh_exemption.pdf) 
+for July 2015 was 6.5 inches.  Approximately 18% of otter trawl records (~11% by 
+weight) do not have a mesh associated with them. 
 
 Total landings by gear type are divided by the area of the NAFO Statistical Areas
 that have been selected as Georges Bank.  This area is much larger than the survey
