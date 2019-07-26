@@ -2,18 +2,18 @@
 #Expanded model of Georges Bank
 #SML
 
-#User parameters
+#User parameters----------------------------------------------------------------
 if(Sys.info()['sysname']=="Windows"){
-  data.dir <- "C:/Users/Sean.Lucey/Desktop/Rpath_code/data"
-  out.dir  <- "C:/Users/Sean.Lucey/Desktop/Rpath_code/outputs"
-}
-if(Sys.info()['sysname']=="Linux"){
-  data.dir <- "/home/slucey/slucey/Rpath/data"
-  out.dir  <- "/home/slucey/slucey/Rpath/outputs"
+  main.dir <- "C:/Users/Sean.Lucey/Desktop/GBRpath"
 }
 
-#-------------------------------------------------------------------------------
-#Required packages
+if(Sys.info()['sysname']=="Linux"){
+  main.dir  <- "/home/slucey/slucey/GBRpath"
+}
+
+data.dir <- file.path(main.dir, 'data')
+
+#Required packages--------------------------------------------------------------
 library(data.table); library(Rpath)
 
 #-------------------------------------------------------------------------------
@@ -21,31 +21,30 @@ library(data.table); library(Rpath)
 
 #-------------------------------------------------------------------------------
 #Georges Bank
-#This model will have a much less aggregated box structure.
-groups <- c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale','HMS', 
-            'AmShad', 'AtlHerring', 'AtlMackerel', 'RiverHerring', 
-            'Butterfish', 'SmPelagics', 'Cod', 'Haddock', 'AtlHalibut', 'Goosefish', 
-            'OffHake', 'SilverHake', 'RedHake', 'WhiteHake', 'Redfish', 'Pollock', 
-            'OceanPout', 'BlackSeaBass', 'Weakfish','Bluefish', 'Scup','OtherDemersals', 
-            'Fourspot', 'SummerFlounder', 'AmPlaice', 'Windowpane', 'WinterFlounder', 
-            'WitchFlounder', 'YTFlounder', 'SmFlatfishes', 'SpinyDogfish', 
-            'SmoothDogfish', 'Barndoor', 'WinterSkate', 'LittleSkate', 'SmSkates', 
-            'Illex', 'Loligo', 'OtherCephalopods', 'AmLobster', 'Red Crab', 
-            'Macrobenthos', 'Megabenthos', 'AtlScallops', 'Clams', 'NShrimp', 
-            'OtherShrimp', 'Krill', 'Micronekton', 'GelZooplankton', 
-            'Mesozooplankton', 'Microzooplankton', 'Phytoplankton', 
+groups <- c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 'Sharks', 
+            'AtlHerring', 'AtlMackerel', 'Butterfish', 'SmPelagics', 'Mesopelagics', 
+            'OtherPelagics', 'Cod', 'Haddock', 'Goosefish', 'OffHake', 'SilverHake', 
+            'RedHake', 'WhiteHake', 'Redfish', 'Pollock', 'OceanPout', 'BlackSeaBass', 
+            'Bluefish', 'Scup', 'OtherDemersals', 'SouthernDemersals', 'Fourspot', 
+            'SummerFlounder', 'AmPlaice', 'Windowpane', 'WinterFlounder', 'WitchFlounder', 
+            'YTFlounder', 'OtherFlatfish', 'SmFlatfishes', 'SpinyDogfish', 
+            'SmoothDogfish', 'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates',
+            'Illex', 'Loligo', 'OtherCephalopods', 'AmLobster', 'Macrobenthos', 
+            'Megabenthos', 'AtlScallop', 'Clams', 'OtherShrimps', 'Krill', 'Micronekton', 
+            'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 'Phytoplankton',
             'Detritus', 'Discards', 
             'DredgeScallop', 'DredgeClam', 'Gillnet', 'Longline', 'Seine', 
             'PotTrap', 'Ottertrawl', 'Midwater', 'OtherFisheries')
 
-types <- c(rep(0, 57), 1, 2, 2, rep(3, 9))
+types <- c(rep(0, 56), 1, 2, 2, rep(3, 9))
 
 GB.params <- create.rpath.params(groups, types)
 
-#Load GB.input RData
-load(file.path(data.dir, 'GB_input.RData'))
+#Load biomass
+load(file.path(data.dir, 'GB_biomass.RData'))
 
 #Load biomass
-for(igroup in GB.params$model[, Group]){
-  group.input <- GB.input[RPATH == igroup, ]
+for(igroup in GB.params$model[Type < 2, Group]){
+  group.bio <- GB.biomass[RPATH == igroup, Biomass]
+  GB.params$model[Group == igroup, Biomass := group.bio][]
 }
