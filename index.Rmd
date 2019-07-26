@@ -22,7 +22,7 @@ Unit developed by the Ecosystem Assessment and Dynamics Branch (EDAB) of the Nor
 Fisheries Science Center (NEFSC).
 
 The base structure of the model is the EMAX model of @link_EMAX_2006.  However, it
-will be much more disaggregated.  Here is the model nodes:
+will be much more disaggregated.  Here are the model nodes:
 
 ```{r model nodes}
 groups <- data.table(Group = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
@@ -61,6 +61,15 @@ kable(groups, caption = 'Species present during 2012-2016 on Georges Bank but no
       booktabs = T, align = c('c', 'c'))
 ```
 
+```{r other nodes}
+groups <- data.table(Group = c('Detritus', 'Discards', 'DredgeScallop', 'DredgeClam', 
+                               'Gillnet', 'Longline', 'Seine', 'PotTrap', 'Ottertrawl', 
+                               'Midwater', 'OtherFisheries'),
+                     Type = c(rep('Detrital Group', 2), rep('Fleet', 9)))
+kable(groups, caption = 'Non-living nodes for the Georges Bank Rpath model.',
+      booktabs = T, align = 'c')
+```
+
 Data pulls
 ===
 
@@ -97,6 +106,9 @@ biomass would be counter to the resent assessmets.  So in talking with Sarah, I'
 going to hold off on BA terms unless model doesn't balance right.
 
 *Need to double check "Freshwater" designation*
+
+## Landings/Discards
+
 
 ## PreBal
 
