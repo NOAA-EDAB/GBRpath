@@ -309,6 +309,8 @@ GB.biomass <- rbindlist(list(GB.biomass, data.table(RPATH = 'Clams',
 
 #Non Survey groups--------------------------------------------------------------
 #Add groups not available in database using EMAX
+#Remove macrobenthos from survey
+GB.biomass <- GB.biomass[RPATH != 'Macrobenthos', ]
 emax <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
                              'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton', 
                              'Mesozooplankton', 'Microzooplankton', 'Phytoplankton'),
