@@ -5,13 +5,61 @@ bibliography: GBRpath.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = F)
+library(data.table); library(knitr)
+
 ```
 
 Georges Bank
 ===
 
 Georges Bank is a highly productive sub-marine plateau located directly east of Cape Cod, Massachusetts.  The bank has a long history of commercial fishing and is currently the focus of an example Fisheries Ecosystem Plan (eFEP) for the New England Fisheries Management Council.  This repository will house all of the code that goes into creating a mass balance food web model version of Georges Bank.  The model will be built using [Rpath](http://github.com/NOAA-EDAB/Rpath), the R implementaion of the mass balance algorithms. 
+
+Rpath model structure
+===
+The geographic extent of the model will be the Georges Bank Ecological Production 
+Unit developed by the Ecosystem Assessment and Dynamics Branch (EDAB) of the Northeast
+Fisheries Science Center (NEFSC).
+
+The base structure of the model is the EMAX model of @link_EMAX_2006.  However, it
+will be much more disaggregated.  Here is the model nodes:
+
+```{r model nodes}
+groups <- data.table(Group = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
+                               'Sharks', 'AtlHerring', 'AtlMackerel', 'Butterfish', 
+                               'SmPelagics', 'Mesopelagics', 'OtherPelagics', 'Cod', 
+                               'Haddock', 'Goosefish', 'OffHake', 'SilverHake', 
+                               'RedHake', 'WhiteHake', 'Redfish', 'Pollock', 'OceanPout', 
+                               'BlackSeaBass', 'Bluefish', 'Scup', 'OtherDemersals', 
+                               'SouthernDemersals', 'Fourspot', 'SummerFlounder', 
+                               'AmPlaice', 'Windowpane', 'WinterFlounder', 'WitchFlounder', 
+                               'YTFlounder', 'OtherFlatfish', 'SmFlatfishes', 'SpinyDogfish', 
+                               'SmoothDogfish', 'Barndoor', 'WinterSkate', 'LittleSkate', 
+                               'OtherSkates', 'Illex', 'Loligo', 'OtherCephalopods', 
+                               'AmLobster', 'Macrobenthos', 'Megabenthos', 'AtlScallop', 
+                               'Clams', 'OtherShrimps', 'Krill', 'Micronekton', 
+                               'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 
+                               'Phytoplankton'), 
+                     type = c('Bird', 'Mammal', 'Whale', 'Whale', 'HMS', 'Shark',
+                              rep('Forage', 6), rep('DemRound', 15), 
+                              rep('DemFlat', 9), 'DemRound', 'DemRound', 
+                              rep('Dem', 4), rep('PelInvert', 3), rep('BenInvert', 5),
+                              rep('PelInvert', 3), rep('Zoop', 3), 'Phyto'))
+
+kable(groups, caption = "Living nodes for Georges Bank Rpath model.", 
+      booktabs = T, align = c('c', 'c'))
+```
+
+Several other groups showed up in the biomass data pull describe below but were 
+not present for the whole time series.  Therefore they were omitted.
+
+```{r extra nodes}
+groups <- data.table(Group = c('AmShad', 'AtlHalibut', 'NShrimp', 'RedCrab', 'RiverHerring',
+                               'StripedBass', 'Tilefish'),
+                     Years = c(3, 2, 1, 2, 2, 2, 1))
+kable(groups, caption = 'Species present during 2012-2016 on Georges Bank but not included.',
+      booktabs = T, align = c('c', 'c'))
+```
 
 Data pulls
 ===
@@ -26,8 +74,6 @@ I am using the scallop survey and clam survey for Atlantic Scallops and Ocean
 Quhogs/Surfclams respectively.  Note that the clam survey samples regions on a 
 rotating basis.  See below table:
 ```{r clam table, echo = F, warning = F}
-library(data.table); library(knitr)
-
 clam.tows <- data.table(Year = 2012:2016, ntows = c(0, 115, 29, 8, 166))
 kable(clam.tows, caption = "Number of clam tows within the Georges Bank EPU.", 
       booktabs = T, align = c('c', 'c'))
@@ -41,9 +87,23 @@ the others.
 2012 through 2016 are used to see if there is a significant trend for a BA term.  Clams
 were not assessed for a trend because there are only two data points.
 
-Species not encountered by our survey are using EMAX values [@link_EMAX_2006].  I also assumed no 
-BA term.
+Species not encountered by our survey are using EMAX values [@link_EMAX_2006].  I 
+also assumed no BA term.
 
+Three groups showed significant trends.  All three were positive which was a 
+surprise. The three groups were Haddock, Southern Demersals, and Atlantic 
+Mackerel.  Haddock and Southern Demersal make sense but not Mackerel.  An increasing
+biomass would be counter to the resent assessmets.  So in talking with Sarah, I'm 
+going to hold off on BA terms unless model doesn't balance right.
+
+*Need to double check "Freshwater" designation*
+
+## PreBal
+
+Coding up the PreBal routines from @link_prebal_2010.  Some of the checks are easy
+to make general.  Some of them require knowing the classification of the species
+node (i.e. demersal flatfish or small pelagic).  Will hard code for this project
+and revisit at a later date.
 
 Moving forward dynamically
 ===
