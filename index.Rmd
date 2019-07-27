@@ -146,6 +146,18 @@ number of individuals not weight.  Estimate length is recorded but unfortunately
 nearly 89% of records do not have on.  I did add animal condition to drop incidental
 takes were the animal was still alive (~11% of records).
 
+## Diet Data
+
+First step is assigning prey to Rpath nodes.  I am using Jason's SASprey12B file
+which has various categories for prey.  There are 1456 different prey items including
+blown and empty.  One to one relationships are easy to assign.  Then I used the MODCAT
+to deal with chuncks of prey species at once.  Other categories such as ANALCAT,
+ANALCOM, and Collcom have been useful to assign blocks of species at once.
+
+The largest issue is what to do with prey such as bony fish uncl and hake 
+unclassified.  Obviously don't want to get rid of them or assign to 
+OtherDemersals.
+
 ## PreBal
 
 Coding up the PreBal routines from @link_prebal_2010.  Some of the checks are easy

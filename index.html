@@ -766,6 +766,11 @@ summary {
 <p>Figuring out which otter trawl trips were small mesh was challenging. Originally I was using the otter trawl gear table (OBOTG). Unfortunately it was not to the haul level and some trips switched gear during the trip. Some even switched between small mesh and large mesh. After extensive searching and frustration I founs the OBDBS table OBOTGH which contains a link to both the haul (OBHAU) and gear tables (OBOTG). The species table (OBSPP) which contains the hail weights for both caught and discarded species contains the primary key for hauls (LINK3). OBOTGH has LINK3 and LINK4 (Gear key) which can be used then to assign mesh size. Not all catches had an associated gear entry but 95.8% did (which is better than the landings tables!). For the purposes of calculating a DK ratio I am not worrying about the unassigned 5%.</p>
 <p>Had to manually assign Rpath groups for the incidental takes in the observer database. There were 16 sea turtles in the &gt;500K records. I decided this was not enough to warrent their inclusion. Also, incidental takes are measured as number of individuals not weight. Estimate length is recorded but unfortunately nearly 89% of records do not have on. I did add animal condition to drop incidental takes were the animal was still alive (~11% of records).</p>
 </div>
+<div id="diet-data" class="section level2">
+<h2>Diet Data</h2>
+<p>First step is assigning prey to Rpath nodes. I am using Jason’s SASprey12B file which has various categories for prey. There are 1456 different prey items including blown and empty. One to one relationships are easy to assign. Then I used the MODCAT to deal with chuncks of prey species at once. Other categories such as ANALCAT, ANALCOM, and Collcom have been useful to assign blocks of species at once.</p>
+<p>The largest issue is what to do with prey such as bony fish uncl and hake unclassified. Obviously don’t want to get rid of them or assign to OtherDemersals.</p>
+</div>
 <div id="prebal" class="section level2">
 <h2>PreBal</h2>
 <p>Coding up the PreBal routines from <span class="citation">Link (2010)</span>. Some of the checks are easy to make general. Some of them require knowing the classification of the species node (i.e. demersal flatfish or small pelagic). Will hard code for this project and revisit at a later date.</p>
