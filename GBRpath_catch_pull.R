@@ -327,46 +327,49 @@ GB.observed[Cat == 'Large' & RGear == 'otter', RGear := 'otter.lg']
 #Assign Other Fisheries
 GB.observed[is.na(RGear), RGear := 'other']
 
-
-
-
-
-
-
-#Create quarter year variable
-ob.code[MONTH %in% 1:3,   QY := 1]
-ob.code[MONTH %in% 4:6,   QY := 2]
-ob.code[MONTH %in% 7:9,   QY := 3]
-ob.code[MONTH %in% 10:12, QY := 4]
-
-#Aggregate Gear
-otter     <- 50:59
-dredge.sc <- 131:132
-pot       <- c(189:190, 200:219, 300, 301)
-longline  <- c(10, 40)
-seine     <- c(70:79, 120:129, 360)
-gillnet   <- c(100:119, 500, 510, 520)
-midwater  <- c(170, 370)
-dredge.o  <- c(281, 282, 380:400)
-
-ob.code[NEGEAR %in% otter,     GEAR := 'otter']
-ob.code[NEGEAR %in% dredge.sc, GEAR := 'dredge.sc']
-ob.code[NEGEAR %in% pot,       GEAR := 'pot']
-ob.code[NEGEAR %in% longline,  GEAR := 'longline']
-ob.code[NEGEAR %in% seine,     GEAR := 'seine']
-ob.code[NEGEAR %in% gillnet,   GEAR := 'gillnet']
-ob.code[NEGEAR %in% midwater,  GEAR := 'midwater']
-ob.code[NEGEAR %in% dredge.o,  GEAR := 'dredge.o']
-ob.code[is.na(GEAR),           GEAR := 'other']
-ob.code[, GEAR := as.factor(GEAR)]
-
-ob.code[, c('DRFLAG', 'MONTH', 'AREA', 'NEGEAR', 
+GB.observed[, c('DRFLAG', 'MONTH', 'AREA', 'NEGEAR', 
             'HAILWT', 'CF_LNDLB_LIVLB', 'CF_RPTQTY_LNDLB') := NULL]
 
-setkeyv(ob.code, c(strat.var, 'NESPP3', 'CATDISP'))
+#Assign Rpath groups
+GB.observed <- merge(GB.observed, nespp.rpath, by = 'NESPP3', all.x = T)
+
+#Assign groups not in nespp.rpath (mostly protected species)
+GB.observed[NESPP3 %in% c(524, 660, 666, 667, 678, 679), RPATH := 'OtherDemersals']
+GB.observed[NESPP3 %in% c(685, 687, 689), RPATH := 'Macrobenthos']
+GB.observed[NESPP3 >= 6100 & NESPP3 < 6500, RPATH := 'Seabirds']
+GB.observed[NESPP3 >= 6936 & NESPP3 <= 6942 | NESPP3 %in% c(6960, 6992, 6997), RPATH := 'ToothWhale']
+GB.observed[NESPP3 %in% c(6945, 6993, 6999), RPATH := 'BalWhale']
+GB.observed[NESPP3 %in% c(6981, 6994:6996), RPATH := 'Seals']
+#Note there were 16 turtles in >500K records so I did not include them
+GB.observed <- GB.observed[!is.na(RPATH), ]
+
+
+#Pick up here----------------
+
+#Sum by Rpath group
+GB.sums <- GB.landings[, sum(SPPLIVMT), by = c('YEAR', 'RPATH', 'RGear')]
+setnames(GB.sums, 'V1', 'SPPLIVMT')
+
+#Get three year mean
+GB.mean <- GB.sums[, mean(SPPLIVMT), by = c('RPATH', 'RGear')]
+setnames(GB.mean, 'V1', 'SPPLIVMT')
+
+#Need to divide landings by area of stat areas not GB
+stat.areas <- readOGR(gis.dir, 'Statistical_Areas_2010')
+
+#Generate area table
+stat.areas.area <- getarea(stat.areas, 'Id')
+GB.com.area <- stat.areas.area[Id %in% c(521:526, 551, 552, 561, 562), sum(Area)]
+
+GB.landings <- GB.mean[, SPPLIVMT := SPPLIVMT / GB.com.area][]
+save(GB.landings, file = file.path(data.dir, 'GB_landings.RData'))
 
 
 
+
+
+
+setkey(ob.code, YEAR, RGear, NESPP3, CATDISP))
 ob.sums <- ob.code[, sum(C.HAILWT), by = key(ob.code)]
 
 #Calculate kept and discards
