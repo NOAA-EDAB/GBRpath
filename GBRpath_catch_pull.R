@@ -217,21 +217,27 @@ ob[, LINK4 := NULL]
 #Add protected species here
 mammal.qry <- "select distinct a.year, a.month, b.area, b.negear, a.nespp4, 
                1 as hailwt, 0 as catdisp, 1 as drflag, a.tripid, a.haulnum, 
-               a.link1, a.link3
+               a.anmlcond, a.estlen, a.link1, a.link3
                from obinc a, obspp b
                where a.tripid = b.tripid
                and a.year in (2013, 2014, 2015)
                union
                select distinct a.year, a.month, b.area, b.negear, a.nespp4, 
                1 as hailwt, 0 as catdisp, 1 as drflag, a.tripid, a.haulnum, 
-               a.link1, a.link3
+               a.anmlcond, a.estlen, a.link1, a.link3
                from asminc a, asmspp b
                where a.tripid = b.tripid
                and a.year in (2013, 2014, 2015)"
 
 mammal <- as.data.table(sqlQuery(channel, mammal.qry))
-#Added for merge
-mammal[, Cat := NA] 
+
+#Only retain animals that were killed
+mammal <- mammal[ANMLCOND >= 10 & ANMLCOND <= 14, ]
+mammal[, c('ANMLCOND', 'ESTLEN') := NULL]
+
+#Add mesh size
+mammal <- merge(mammal, mesh, by = c('LINK1', 'LINK3', 'NEGEAR'), all.x = T)
+mammal[, LINK4 := NULL]
 
 ob <- rbindlist(list(ob, mammal), use.names = T)
 
@@ -343,252 +349,56 @@ GB.observed[NESPP3 %in% c(6981, 6994:6996), RPATH := 'Seals']
 #Note there were 16 turtles in >500K records so I did not include them
 GB.observed <- GB.observed[!is.na(RPATH), ]
 
-
-#Pick up here----------------
-
-#Sum by Rpath group
-GB.sums <- GB.landings[, sum(SPPLIVMT), by = c('YEAR', 'RPATH', 'RGear')]
+#Sum by Rpath group, gear, disposition
+GB.sums <- GB.observed[, sum(C.HAILWT), by = c('YEAR', 'RPATH', 'RGear', 'CATDISP', 'PR')]
 setnames(GB.sums, 'V1', 'SPPLIVMT')
-
-#Get three year mean
-GB.mean <- GB.sums[, mean(SPPLIVMT), by = c('RPATH', 'RGear')]
-setnames(GB.mean, 'V1', 'SPPLIVMT')
-
-#Need to divide landings by area of stat areas not GB
-stat.areas <- readOGR(gis.dir, 'Statistical_Areas_2010')
-
-#Generate area table
-stat.areas.area <- getarea(stat.areas, 'Id')
-GB.com.area <- stat.areas.area[Id %in% c(521:526, 551, 552, 561, 562), sum(Area)]
-
-GB.landings <- GB.mean[, SPPLIVMT := SPPLIVMT / GB.com.area][]
-save(GB.landings, file = file.path(data.dir, 'GB_landings.RData'))
-
-
-
-
-
-
-setkey(ob.code, YEAR, RGear, NESPP3, CATDISP))
-ob.sums <- ob.code[, sum(C.HAILWT), by = key(ob.code)]
+GB.sums[PR == 1, N := SPPLIVMT]
+GB.sums[PR == 1, SPPLIVMT := 0]
 
 #Calculate kept and discards
-ob.discard <- ob.sums[CATDISP == 0, ]
+GB.discard <- GB.sums[CATDISP == 0, ]
+setnames(GB.discard, 'SPPLIVMT', 'DISCARD')
 
-setnames(ob.discard,
-         "V1",
-         "DISCARD")
+GB.kept <- GB.sums[CATDISP == 1, sum(SPPLIVMT), by = c('YEAR', 'RGear')]
+setnames(GB.kept, 'V1', 'KEPT.ALL')
 
-setkeyv(ob.sums, strat.var)
+GB.all <- merge(GB.kept, GB.discard, by = c('YEAR', 'RGear'))
 
-ob.kept <- ob.sums[CATDISP == 1, sum(V1), by = key(ob.sums)]
+GB.all[, CATDISP := NULL]
 
-setnames(ob.kept,
-         "V1",
-         "KEPT.ALL")
+GB.all[, DK := DISCARD / KEPT.ALL]
+GB.all[PR == 1, DKN := N / KEPT.ALL]
+GB.all[, c('KEPT.ALL', 'DISCARD', 'N') := NULL]
 
-ob.all <- merge(ob.kept, ob.discard, by = key(ob.sums))
+#Calculate mean ratio
+GB.meanDK <- GB.all[, mean(DK), by = c('RGear', 'RPATH')]
+GB.meanDKN <- GB.all[, mean(DKN), by = c('RGear', 'RPATH')]
+GB.mean <- merge(GB.meanDK, GB.meanDKN, by = c('RGear', 'RPATH'))
+setnames(GB.mean, c('V1.x', 'V1.y'), c('DK', 'DKN'))
 
-ob.all[, CATDISP := NULL]
-
-ob.all[, DK := DISCARD / KEPT.ALL]
-ob.all[is.na(DK), DK := 1.0]
-ob.all[, c('KEPT.ALL', 'DISCARD') := NULL]
-
+#Expand ratio by landings
 #Get landings
-load(file.path(data.dir, landings.file))
+load(file.path(data.dir, 'GB_landings.RData'))
 
-setkeyv(comland, strat.var)
+#Merge landings to discard ratios
+GB.disc <- merge(GB.mean, GB.landings, by = c('RPATH', 'RGear'), all = T)
 
-tot.land <- comland[, sum(SPPLIVMT), by = key(comland)]
+#Fix NAs
+GB.disc <- GB.disc[!is.na(RPATH), ]
+GB.disc[is.na(DK),  DK  := 0]
+GB.disc[is.na(DKN), DKN := 0]
+GB.disc[is.na(SPPLIVMT), SPPLIVMT := 0]
 
-setnames(tot.land,
-         "V1",
-         "TOT.LAND")
+#Calculate gear landings
+GB.disc[, Gear.Tot := sum(SPPLIVMT), by = RGear]
+GB.disc[, SPPLIVMT := NULL]
 
-comdisc <- merge(ob.all, tot.land, by = key(comland))
+GB.disc[, Discards := DK  * Gear.Tot]
+GB.disc[, Takes    := DKN * Gear.Tot]
 
-comdisc[, DISC := DK * TOT.LAND]
-
-#Variance
-#Need to add back individual trip data
-rm(ob) #Free up memory
-setkeyv(comdisc, c(strat.var, 'NESPP3'))
-
-disc.var <- unique(comdisc, by = key(comdisc))
-
-#Trip kept all
-setkeyv(ob.code, c(strat.var, 'TRIPID'))
-
-trip.kept <- ob.code[CATDISP == 1, sum(C.HAILWT), by = key(ob.code)]                
-setnames(trip.kept, "V1", "trip.k")
-
-#Trip discard by species
-setkeyv(ob.code, c(strat.var, 'TRIPID', 'NESPP3'))
-
-trip.disc <- ob.code[CATDISP == 0, sum(C.HAILWT), by = key(ob.code)]                
-setnames(trip.disc, "V1", "trip.d")
-
-trip.all <- merge(trip.disc, trip.kept, by = c(strat.var, 'TRIPID'), all = T)
-trip.all[is.na(trip.k), trip.k := 0] 
-
-disc.var <- merge(disc.var, trip.all, by = c(strat.var, 'NESPP3'))
-
-#Calculate the number of observed trips
-setkeyv(ob.code, c(strat.var, 'TRIPID'))
-
-trips <- unique(ob.code, by = key(ob.code))
-
-trip.count <- trips[, count(TRIPID), by = strat.var]
-
-setnames(trip.count, "V1", "n")
-
-disc.var <- merge(disc.var, trip.count, by = strat.var)
-
-#Calculate the total number of trips
-#CFDBS is on sole - need to switch connection
-odbcClose(channel)
-if(Sys.info()['sysname']=="Windows"){
-  channel <- odbcDriverConnect()
-} else {
-  channel <- odbcConnect('sole', uid, pwd)
-}
-
-tables <- c(paste('WODETS',  89:93, sep = ''), 
-            paste('CFDETS',  1994:endyear, 'AA', sep = ''))
-
-comtrip.qry <- "select year, month, area, negear, count(link) as N
-                from WODETS89
-                group by year, month, area, negear"
-comtrip <- as.data.table(sqlQuery(channel, comtrip.qry))
-
-for(i in 2:length(tables)){
-  tripyr.qry <- paste("select year, month, area, negear, count(link) as N
-                       from", tables[i],
-                      "group by year, month, area, negear")
-  tripyr <- as.data.table(sqlQuery(channel, tripyr.qry))
-  
-  comtrip <- rbindlist(list(comtrip, tripyr))
-}
-
-comtrip[AREA %in% gom, EPU := 'GOM']
-comtrip[AREA %in% gb,  EPU := 'GB']
-comtrip[AREA %in% mab, EPU := 'MAB']
-comtrip[AREA %in% ss,  EPU := 'SS']
-comtrip[is.na(EPU),    EPU := 'OTHER']
-comtrip[, EPU := factor(EPU, levels = c('GOM', 'GB', 'MAB', 'SS', 'OTHER'))]
-
-comtrip[YEAR < 100, YEAR := YEAR + 1900]
-
-comtrip[MONTH %in% 1:3,   QY := 1]
-comtrip[MONTH %in% 4:6,   QY := 2]
-comtrip[MONTH %in% 7:9,   QY := 3]
-comtrip[MONTH %in% 10:12, QY := 4]
-
-comtrip[NEGEAR %in% otter,     GEAR := 'otter']
-comtrip[NEGEAR %in% dredge.sc, GEAR := 'dredge.sc']
-comtrip[NEGEAR %in% pot,       GEAR := 'pot']
-comtrip[NEGEAR %in% longline,  GEAR := 'longline']
-comtrip[NEGEAR %in% seine,     GEAR := 'seine']
-comtrip[NEGEAR %in% gillnet,   GEAR := 'gillnet']
-comtrip[NEGEAR %in% midwater,  GEAR := 'midwater']
-comtrip[NEGEAR %in% dredge.o,  GEAR := 'dredge.o']
-comtrip[is.na(GEAR),           GEAR := 'other']
-comtrip[, GEAR := as.factor(GEAR)]
-
-setkeyv(comtrip, strat.var)
-
-comtrip.count <- comtrip[, sum(N), by = key(comtrip)]
-
-setnames(comtrip.count, "V1", "N")
-
-disc.var <- merge(disc.var, comtrip.count, by = key(comtrip), all.x = T)
-
-#Fix groups that don't line up properly - actual value of N not that important only relative size
-N.avg <- disc.var[, mean(N, na.rm = T)]
-disc.var[is.na(N), N := N.avg]
-
-#Calculate variance
-#Need to expand so zero discards by species are represented
-setkeyv(disc.var, c(strat.var, 'TRIPID'))
-var.trips <- unique(disc.var, by = key(disc.var))
-#drop species specific data
-var.trips[, c('NESPP3', 'DK', 'DISC', 'trip.d') := NULL]
-
-#Get list of species
-spp <- unique(disc.var[, NESPP3])
-all.spp.var <- c()
-for(i in 1:length(spp)){
-  spp.trip <- disc.var[NESPP3 == spp[i], ]  
-  #Get rid of extra data
-  spp.trip[, c('TOT.LAND', 'DISC', 'trip.k', 'n', 'N') := NULL]
-  
-  spp.var <- merge(var.trips, spp.trip, by = c(strat.var, 'TRIPID'), all.x = T)
-  
-  #Fix NAs
-  spp.var[is.na(NESPP3), NESPP3 := spp[i]]
-  spp.var[is.na(trip.d), trip.d := 0]
-  
-  #Merge in DK ratios
-  setkeyv(spp.trip, strat.var)
-  spp.dk <- unique(spp.trip, by = key(spp.trip))
-  spp.var[, DK := NULL]
-  spp.dk[, c('NESPP3', 'TRIPID', 'trip.d') := NULL]
-  spp.var <- merge(spp.var, spp.dk, by = strat.var, all.x = T)
-  spp.var[is.na(DK), DK := 0]
-  
-  spp.var[, step.1 := (sum(trip.d^2 + DK^2 * trip.k^2 - 2 * DK * trip.d * trip.k)/(n - 1)), by = strat.var]
-  
-  setkeyv(spp.var, strat.var)
-  spp.var <- unique(spp.var, by = key(spp.var))
-  spp.var[, c('TRIPID', 'trip.d', 'trip.k', 'DK') := NULL]
-  
-  spp.var[, DISC.VAR :=  TOT.LAND^2 * ((N - n)/n*N) * (1/(TOT.LAND/n)^2) * step.1]
-  spp.var[, c('TOT.LAND', 'n', 'N', 'step.1') := NULL]
-  
-  all.spp.var <- rbindlist(list(all.spp.var, spp.var))
-}
-comdisc <- merge(comdisc, all.spp.var, by = c(strat.var, 'NESPP3'), all.x = T)
-
-#Add species names
-#Change to NESPP3 to combine market categories
-comname[NESPP4 < 100,                        NESPP3 := as.numeric(substring(NESPP4, 1, 1))]
-comname[NESPP4 > 99 & NESPP4 < 1000,         NESPP3 := as.numeric(substring(NESPP4, 1, 2))]
-comname[(NESPP4 > 999 & NESPP4 < 6100) | 
-          NESPP4 %in% c(7100:7109, 8020:8029), NESPP3 := as.numeric(substring(NESPP4, 1, 3))]
-#Birds, mammals, etc don't have unique NESPP3 codes
-comname[NESPP4 > 6099 & !NESPP4 %in% c(7100:7109, 8020:8029), NESPP3 := NESPP4]
-
-setkey(comname, NESPP3)
-comname <- unique(comname, by = key(comname))
-comname[, c('NESPP4', 'SCINAME') := NULL]
-
-comdisc <- merge(comname, comdisc, by = 'NESPP3')
-
-save(comdisc, file = file.path(out.dir, "Comdisc.RData"))
+GB.disc[, c('DK', 'DKN', 'Gear.Tot') := NULL]
+save(GB.disc, file = file.path(data.dir, 'GB_discards.RData'))
 
 
 
 
-
-
-
-load(file.path(data.dir2, 'Comdisc.RData'))
-GB.disc <- comdisc[YEAR %in% 2010:2012 & EPU == 'GB', ]
-
-#merge rpath codes
-GB.disc <- merge(GB.disc, unique(spp[, list(NESPP3, RPATH)]), all.x = T)
-setkey(GB.disc, YEAR, GEAR, RPATH)
-GB.disc.sum <- GB.disc[, sum(DISC), by = key(GB.disc)]
-GB.disc.sum[, Discards := V1 / GB.com.area]
-
-#Merge with other inputs
-gear <- unique(GB.disc.sum[, GEAR])
-for(i in 1:length(gear)){
-  gear.discards <- GB.disc.sum[GEAR == gear[i], ]
-  gear.mean <- gear.discards[, mean(Discards), by = RPATH]
-  setnames(gear.mean, 'V1', paste0(gear[i], '_Discards'))
-  GB.input <- merge(GB.input, gear.mean, by = 'RPATH', all.x = T)
-}
-
-save(GB.input, file = file.path(out.dir, 'GB_input.RData'))
