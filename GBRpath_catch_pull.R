@@ -173,8 +173,8 @@ save(GB.landings, file = file.path(data.dir, 'GB_landings.RData'))
 #Observer data base is on nova not sole
 channel <- odbcConnect('nova', uid, pwd)
 
-ob.qry <- "select year, month, area, negear, nespp4, hailwt, catdisp, drflag, 
-          tripid, haulnum, link1, link3
+ob.qry <- "select year, month, area, negear, nespp4, hailwt, catdisp, 
+          drflag, tripid, haulnum, link1, link3
           from OBSPP
           where obsrflag = 1
           and year in (2013, 2014, 2015)
@@ -189,8 +189,31 @@ ob.qry <- "select year, month, area, negear, nespp4, hailwt, catdisp, drflag,
 
 ob <- as.data.table(sqlQuery(channel, ob.qry))
 
-test <- as.data.table(sqlQuery(channel, 'select link1, negear, codmsize from OBOTG
-                               where year in (2013, 2014, 2015)'))
+#Grab mesh size for small/large mesh otter trawl
+mesh.qry <- "select link1, link3, link4, negear, codmsize 
+             from OBOTGH
+             where year in (2013, 2014, 2015)
+             union
+             select link1, link3, link4, negear, codmsize
+             from ASMOTGH
+             where year in (2013, 2014, 2015)"
+mesh <- as.data.table(sqlQuery(channel, mesh.qry))
+#Remove missing entries
+mesh <- mesh[!is.na(CODMSIZE), ]
+#Convert cod mesh from mm to inches
+mesh[, mesh := CODMSIZE * 0.0393701]
+#Assign small/large
+mesh[mesh < 6.5,  Cat := 'Small']
+mesh[mesh >= 6.5, Cat := 'Large']
+#Drop extra columns
+mesh[, c('CODMSIZE', 'mesh') := NULL]
+#Merge duplicates
+mesh <- unique(mesh)
+
+#Merge with ob
+ob <- merge(ob, mesh, by = c('LINK1', 'LINK3', 'NEGEAR'), all.x = T)
+ob[, LINK4 := NULL]
+
 #Add protected species here
 mammal.qry <- "select distinct a.year, a.month, b.area, b.negear, a.nespp4, 
                1 as hailwt, 0 as catdisp, 1 as drflag, a.tripid, a.haulnum, 
@@ -207,8 +230,10 @@ mammal.qry <- "select distinct a.year, a.month, b.area, b.negear, a.nespp4,
                and a.year in (2013, 2014, 2015)"
 
 mammal <- as.data.table(sqlQuery(channel, mammal.qry))
+#Added for merge
+mammal[, Cat := NA] 
 
-ob <- rbindlist(list(ob, mammal))
+ob <- rbindlist(list(ob, mammal), use.names = T)
 
 #Clean up data set
 #Remove those with unknown disposition
@@ -296,12 +321,11 @@ for(igear in 1:length(gcat)){
 }
 
 #Fix otter trawls
-GB.landings[Cat == 'Small' & RGear == 'otter', RGear := 'otter.sm']
-GB.landings[Cat == 'Large' & RGear == 'otter', RGear := 'otter.lg']
+GB.observed[Cat == 'Small' & RGear == 'otter', RGear := 'otter.sm']
+GB.observed[Cat == 'Large' & RGear == 'otter', RGear := 'otter.lg']
 
 #Assign Other Fisheries
-GB.landings[is.na(RGear), RGear := 'other']
-
+GB.observed[is.na(RGear), RGear := 'other']
 
 
 
