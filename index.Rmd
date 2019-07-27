@@ -141,7 +141,10 @@ the purposes of calculating a DK ratio I am not worrying about the unassigned 5%
 
 Had to manually assign Rpath groups for the incidental takes in the observer 
 database.  There were 16 sea turtles in the >500K records.  I decided this was
-not enough to warrent their inclusion.
+not enough to warrent their inclusion.  Also, incidental takes are measured as 
+number of individuals not weight.  Estimate length is recorded but unfortunately
+nearly 89% of records do not have on.  I did add animal condition to drop incidental
+takes were the animal was still alive (~11% of records).
 
 ## PreBal
 
