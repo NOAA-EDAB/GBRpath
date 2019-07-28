@@ -12,8 +12,7 @@ data.dir <- file.path(main.dir, 'data')
 gis.dir  <- file.path(main.dir, 'gis')
 
 #Required packages--------------------------------------------------------------
-library(data.table); library(rgdal); library(fitdistrplus)
-library(dplyr); library(rerddap)
+library(data.table); library(rgdal)
 load(file.path(data.dir, 'SOE_species_list.RData'))
 
 #User functions-----------------------------------------------------------------
@@ -26,6 +25,7 @@ prey <- as.data.table(read.csv(file = file.path(data.dir, 'SASPREY12B.csv')))
 prey[PYCOMNAM == 'ATLANTIC HERRING',        RPATH := 'AtlHerring']
 prey[PYCOMNAM == 'ATLANTIC MACKEREL',       RPATH := 'AtlMackerel']
 prey[PYCOMNAM == 'BUTTERFISH',              RPATH := 'Butterfish']
+prey[PYCOMNAM == 'BUTTERFISH OTOLITHS',     RPATH := 'Butterfish']
 prey[PYCOMNAM == 'ATLANTIC COD',            RPATH := 'Cod']
 prey[PYCOMNAM == 'HADDOCK',                 RPATH := 'Haddock']
 prey[PYCOMNAM == 'GOOSEFISH',               RPATH := 'Goosefish']
@@ -103,15 +103,54 @@ prey[is.na(RPATH) & MODCAT == 'LDEM', RPATH := 'OtherDemersals']
 #Need to revisit ANALCAT GADFAM - Gadidae, urophycis sp
 
 #MODCAT LPEL
-prey[is.na(RPATH) & MODCAT == 'LPEL', ]
-table(prey[is.na(RPATH) & MODCAT == 'LPEL', ANALCAT])
+prey[PYCOMNAM %in% c('BOA DRAGONFISH', 'VIPERFISH'), RPATH := 'Mesopelagics']
+prey[is.na(RPATH) & MODCAT == 'LPEL' & ANALCAT %in% c('CARFAM', 'POMFAM', 'SALSAL',
+                                                      'SCOFAM', 'OTHFIS'), 
+     RPATH := 'OtherPelagics']
+prey[is.na(RPATH) & MODCAT == 'LPEL', RPATH := 'SmPelagics']
 
-table(prey[is.na(RPATH), MODCAT])
+#MODCAT SDEM
+prey[PYCOMNAM == 'DRAGONET FISH', RPATH := 'Mesopelagics']
+prey[is.na(RPATH) & AnalCom == 'GREENEYES', RPATH := 'Mesopelagics']
+prey[is.na(RPATH) & MODCAT == 'SDEM', RPATH := 'OtherDemersals']
 
+#MODCAT SPEL
+#Note - RiverHerring biomass was not present enough on Georges Bank during 2012-2016
+#They are included as other pelagics here
+prey[is.na(RPATH) & MODCAT == 'SPEL' & AnalCom == 'LANTERNFISHES', RPATH := 'Mesopelagics']
+prey[PYABBR == 'MAUWEI', RPATH := 'Mesopelagics']
+prey[is.na(RPATH) & MODCAT == 'SPEL' & AnalCom == 'HERRINGS', RPATH := 'OtherPelagics']
+prey[is.na(RPATH) & MODCAT == 'SPEL', RPATH := 'SmPelagics']
 
+#Fish Larvae
+prey[is.na(RPATH) & MODCAT == 'FISLAR', RPATH := 'Micronekton']
 
+#Ignoring eggs for now
+prey[is.na(RPATH) & MODCAT == 'FISEGG', RPATH := 'NotUsed']
 
+#Miscellaneous - Mostly trash (plastic, twine, rubber)
+prey[PYABBR %in% c('POLLAR', 'AMPTUB'), RPATH := 'Macrobenthos']
+prey[is.na(RPATH) & MODCAT == 'MISC', RPATH := 'NotUsed']
 
+#Other
+prey[PYABBR %in% c('INVERT', 'ARTHRO', 'CRUSTA', 'CRUEGG', 'INSECT', 'UROCHO'),
+     RPATH := 'Macrobenthos']
+prey[PYABBR %in% c('MARMAM', 'MARMA2', 'DELDEL', 'GLOBSP'), RPATH := 'ToothWhale']
+prey[PYABBR %in% c('AVES', 'AVEFEA'), RPATH := 'Seabirds']
+prey[PYABBR %in% c('PLANKT', 'DIATOM'), RPATH := 'Phytoplankton']
+prey[is.na(RPATH) & MODCAT == 'OTHER', RPATH := 'NotUsed'] #Plants and Parasites
+
+#Leftovers
+prey[AnalCom == 'SAND LANCES', RPATH := 'SmPelagics']
+prey[PYABBR %in% c('PERORD', 'MYOOCT'), RPATH := 'OtherDemersals']
+prey[PYABBR %in% c('CLUSCA', 'CLUHA2'), RPATH := 'AtlHerring']
+
+#Unidentified Stuff
+prey[MODCAT == 'AR', RPATH := 'AR']
+prey[is.na(RPATH) & AnalCom == 'OTHER FISH', RPATH := 'UNKFish']
+prey[PYABBR == 'FISSCA', RPATH := 'UNKFish']
+prey[PYABBR == 'CHONDR', RPATH := 'UNKSkate']
+prey[PYABBR == 'PRESER', RPATH := 'NotUsed']
 
 
 
