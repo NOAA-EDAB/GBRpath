@@ -158,6 +158,55 @@ The largest issue is what to do with prey such as bony fish uncl and hake
 unclassified.  Obviously don't want to get rid of them or assign to 
 OtherDemersals.
 
+To ensure that I had enough stomach sample for each predator I used the entire time 
+series of food habits.
+
+```{r stomach count}
+stomachs <- data.table(Group = c('AmPlaice', 'AmShad', 'AtlHalibut', 'AtlHerring', 
+                                 'AtlMackerel', 'Barndoor', 'BlackSeaBass', 'Bluefish',
+                                 'Butterfish', 'Cod', 'Fourspot', 'Freshwater', 
+                                 'Goosefish', 'Haddock', 'Illex', 'LargePelagics',
+                                 'LittleSkate', 'Loligo', 'Mesopelagics', 'OceanPout',
+                                 'OffHake', 'OtherDemersals', 'OtherPelagics', 
+                                 'OtherSkates', 'Pollock', 'Redfish', 'RedHake', 
+                                 'RiverHerring', 'Scup', 'SilverHake', 'SmFlatfishes',
+                                 'SmoothDogfish', 'SpinyDogfish', 'StripedBass',
+                                 'SummerFlounder', 'Weakfish', 'WhiteHake', 'Windowpane',
+                                 'WinterFlounder', 'WinterSkate', 'WitchFlounder',
+                                 'YTFlounder'),
+                       'Stomachs Full' = c(439, 119, 33, 1734, 1214, 1619, 46, 417,
+                                          660, 6538, 2222, 29, 682, 4446, 684, 2,
+                                          10209, 475, 10, 906, 24, 9223, 2, 671,
+                                          602, 45, 3319, 91, 174, 5016, 302, 392,
+                                          8118, 62, 321, 2, 912, 3050, 2199, 9009,
+                                          338, 2440),
+                       'Stomachs 12-16' = c(83, 29, 2, 203, 195, 807, 24, 23, 222,
+                                            291, 350, 5, 140, 995, 0, 0, 1481, 0,
+                                            0, 200, 3, 1182, 0, 138, 22, 14, 457, 20, 
+                                            47, 617, 69, 72, 467, 0, 61, 0, 73, 301,
+                                            356, 734, 78, 299))
+
+kable(stomachs, caption = "Number of stomachs for each node using the full time series 1973 - 2017 or just 2012 - 2016.  Notes these counts do not include empty and blown stomachs.", 
+      booktabs = T, align = c('c', 'c'))
+```
+
+Percent weight of prey was calculated using the cluster design explained in @nelson_cluster_2014:
+
+$$ \hat{r} = \frac{\sum_{i = 1}^nM_i\hat{\mu_i}}{\sum_{i = 1}^nM_i}$$
+where $\hat{r}$ is the mean attribute of interest (in our case weight per stomach), 
+$M_i$ is the total number of fish in each cluster (Station/Rpath group), and 
+$\hat{\mu_i}$ the mean attribute in the cluster calculated as:
+
+$$ \hat{\mu_i} = \frac{\sum_{j = 1}^{M_i}{y_{ij}}}{M_i} $$
+where $y_{ij}$ is attribute of fish *j* in cluster *i*.  After calculating the 
+mean weight per stomach of each prey item I converted to proportions as:
+
+$$ \%prey_i = \frac{\hat{r_i}}{\sum_{i=1}^n\hat{r_i}} $$
+
+Need to add in diet from groups not encoutered in our survey.  Will use EMAX as
+a starting point and proportion aggregate groups to new Rpath groups using the 
+proportion of biomass.
+
 ## PreBal
 
 Coding up the PreBal routines from @link_prebal_2010.  Some of the checks are easy

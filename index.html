@@ -770,6 +770,234 @@ summary {
 <h2>Diet Data</h2>
 <p>First step is assigning prey to Rpath nodes. I am using Jason’s SASprey12B file which has various categories for prey. There are 1456 different prey items including blown and empty. One to one relationships are easy to assign. Then I used the MODCAT to deal with chuncks of prey species at once. Other categories such as ANALCAT, ANALCOM, and Collcom have been useful to assign blocks of species at once.</p>
 <p>The largest issue is what to do with prey such as bony fish uncl and hake unclassified. Obviously don’t want to get rid of them or assign to OtherDemersals.</p>
+<p>To ensure that I had enough stomach sample for each predator I used the entire time series of food habits.</p>
+<table>
+<caption>Number of stomachs for each node using the full time series 1973 - 2017 or just 2012 - 2016. Notes these counts do not include empty and blown stomachs.</caption>
+<thead>
+<tr class="header">
+<th align="center">Group</th>
+<th align="center">Stomachs Full</th>
+<th align="center">Stomachs 12-16</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">AmPlaice</td>
+<td align="center">439</td>
+<td align="center">83</td>
+</tr>
+<tr class="even">
+<td align="center">AmShad</td>
+<td align="center">119</td>
+<td align="center">29</td>
+</tr>
+<tr class="odd">
+<td align="center">AtlHalibut</td>
+<td align="center">33</td>
+<td align="center">2</td>
+</tr>
+<tr class="even">
+<td align="center">AtlHerring</td>
+<td align="center">1734</td>
+<td align="center">203</td>
+</tr>
+<tr class="odd">
+<td align="center">AtlMackerel</td>
+<td align="center">1214</td>
+<td align="center">195</td>
+</tr>
+<tr class="even">
+<td align="center">Barndoor</td>
+<td align="center">1619</td>
+<td align="center">807</td>
+</tr>
+<tr class="odd">
+<td align="center">BlackSeaBass</td>
+<td align="center">46</td>
+<td align="center">24</td>
+</tr>
+<tr class="even">
+<td align="center">Bluefish</td>
+<td align="center">417</td>
+<td align="center">23</td>
+</tr>
+<tr class="odd">
+<td align="center">Butterfish</td>
+<td align="center">660</td>
+<td align="center">222</td>
+</tr>
+<tr class="even">
+<td align="center">Cod</td>
+<td align="center">6538</td>
+<td align="center">291</td>
+</tr>
+<tr class="odd">
+<td align="center">Fourspot</td>
+<td align="center">2222</td>
+<td align="center">350</td>
+</tr>
+<tr class="even">
+<td align="center">Freshwater</td>
+<td align="center">29</td>
+<td align="center">5</td>
+</tr>
+<tr class="odd">
+<td align="center">Goosefish</td>
+<td align="center">682</td>
+<td align="center">140</td>
+</tr>
+<tr class="even">
+<td align="center">Haddock</td>
+<td align="center">4446</td>
+<td align="center">995</td>
+</tr>
+<tr class="odd">
+<td align="center">Illex</td>
+<td align="center">684</td>
+<td align="center">0</td>
+</tr>
+<tr class="even">
+<td align="center">LargePelagics</td>
+<td align="center">2</td>
+<td align="center">0</td>
+</tr>
+<tr class="odd">
+<td align="center">LittleSkate</td>
+<td align="center">10209</td>
+<td align="center">1481</td>
+</tr>
+<tr class="even">
+<td align="center">Loligo</td>
+<td align="center">475</td>
+<td align="center">0</td>
+</tr>
+<tr class="odd">
+<td align="center">Mesopelagics</td>
+<td align="center">10</td>
+<td align="center">0</td>
+</tr>
+<tr class="even">
+<td align="center">OceanPout</td>
+<td align="center">906</td>
+<td align="center">200</td>
+</tr>
+<tr class="odd">
+<td align="center">OffHake</td>
+<td align="center">24</td>
+<td align="center">3</td>
+</tr>
+<tr class="even">
+<td align="center">OtherDemersals</td>
+<td align="center">9223</td>
+<td align="center">1182</td>
+</tr>
+<tr class="odd">
+<td align="center">OtherPelagics</td>
+<td align="center">2</td>
+<td align="center">0</td>
+</tr>
+<tr class="even">
+<td align="center">OtherSkates</td>
+<td align="center">671</td>
+<td align="center">138</td>
+</tr>
+<tr class="odd">
+<td align="center">Pollock</td>
+<td align="center">602</td>
+<td align="center">22</td>
+</tr>
+<tr class="even">
+<td align="center">Redfish</td>
+<td align="center">45</td>
+<td align="center">14</td>
+</tr>
+<tr class="odd">
+<td align="center">RedHake</td>
+<td align="center">3319</td>
+<td align="center">457</td>
+</tr>
+<tr class="even">
+<td align="center">RiverHerring</td>
+<td align="center">91</td>
+<td align="center">20</td>
+</tr>
+<tr class="odd">
+<td align="center">Scup</td>
+<td align="center">174</td>
+<td align="center">47</td>
+</tr>
+<tr class="even">
+<td align="center">SilverHake</td>
+<td align="center">5016</td>
+<td align="center">617</td>
+</tr>
+<tr class="odd">
+<td align="center">SmFlatfishes</td>
+<td align="center">302</td>
+<td align="center">69</td>
+</tr>
+<tr class="even">
+<td align="center">SmoothDogfish</td>
+<td align="center">392</td>
+<td align="center">72</td>
+</tr>
+<tr class="odd">
+<td align="center">SpinyDogfish</td>
+<td align="center">8118</td>
+<td align="center">467</td>
+</tr>
+<tr class="even">
+<td align="center">StripedBass</td>
+<td align="center">62</td>
+<td align="center">0</td>
+</tr>
+<tr class="odd">
+<td align="center">SummerFlounder</td>
+<td align="center">321</td>
+<td align="center">61</td>
+</tr>
+<tr class="even">
+<td align="center">Weakfish</td>
+<td align="center">2</td>
+<td align="center">0</td>
+</tr>
+<tr class="odd">
+<td align="center">WhiteHake</td>
+<td align="center">912</td>
+<td align="center">73</td>
+</tr>
+<tr class="even">
+<td align="center">Windowpane</td>
+<td align="center">3050</td>
+<td align="center">301</td>
+</tr>
+<tr class="odd">
+<td align="center">WinterFlounder</td>
+<td align="center">2199</td>
+<td align="center">356</td>
+</tr>
+<tr class="even">
+<td align="center">WinterSkate</td>
+<td align="center">9009</td>
+<td align="center">734</td>
+</tr>
+<tr class="odd">
+<td align="center">WitchFlounder</td>
+<td align="center">338</td>
+<td align="center">78</td>
+</tr>
+<tr class="even">
+<td align="center">YTFlounder</td>
+<td align="center">2440</td>
+<td align="center">299</td>
+</tr>
+</tbody>
+</table>
+<p>Percent weight of prey was calculated using the cluster design explained in <span class="citation">Nelson (2014)</span>:</p>
+<p><span class="math display">\[ \hat{r} = \frac{\sum_{i = 1}^nM_i\hat{\mu_i}}{\sum_{i = 1}^nM_i}\]</span> where <span class="math inline">\(\hat{r}\)</span> is the mean attribute of interest (in our case weight per stomach), <span class="math inline">\(M_i\)</span> is the total number of fish in each cluster (Station/Rpath group), and <span class="math inline">\(\hat{\mu_i}\)</span> the mean attribute in the cluster calculated as:</p>
+<p><span class="math display">\[ \hat{\mu_i} = \frac{\sum_{j = 1}^{M_i}{y_{ij}}}{M_i} \]</span> where <span class="math inline">\(y_{ij}\)</span> is attribute of fish <em>j</em> in cluster <em>i</em>. After calculating the mean weight per stomach of each prey item I converted to proportions as:</p>
+<p><span class="math display">\[ \%prey_i = \frac{\hat{r_i}}{\sum_{i=1}^n\hat{r_i}} \]</span></p>
+<p>Need to add in diet from groups not encoutered in our survey. Will use EMAX as a starting point and proportion aggregate groups to new Rpath groups using the proportion of biomass.</p>
 </div>
 <div id="prebal" class="section level2">
 <h2>PreBal</h2>
@@ -800,6 +1028,9 @@ summary {
 </div>
 <div id="ref-link_EMAX_2006">
 <p>Link, Jason S., Carolyn A. Griswold, Elizabeth T. Methratta, and Jessie Gunnard. 2006. “Documentation for the Energy Modeling and Analysis eXercise (EMAX).” US Department of Commerce.</p>
+</div>
+<div id="ref-nelson_cluster_2014">
+<p>Nelson, Gary A. 2014. “Cluster Sampling: A Pervasive, yet Little Recognized Survey Design in Fisheries Research.” <em>Transactions of the American Fisheries Society</em> 143 (4): 926–38. <a href="https://doi.org/10.1080/00028487.2014.901252">https://doi.org/10.1080/00028487.2014.901252</a>.</p>
 </div>
 </div>
 </div>
