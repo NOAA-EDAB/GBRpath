@@ -11,6 +11,13 @@ if(Sys.info()['sysname']=="Linux"){
 data.dir <- file.path(main.dir, 'data')
 gis.dir  <- file.path(main.dir, 'gis')
 
+library(RODBC)
+uid <- 'slucey'
+cat("Oracle Password: ")
+pwd <- scan(stdin(), character(), n = 1)
+
+channel <- odbcConnect('sole', uid, pwd)
+
 #Required packages--------------------------------------------------------------
 library(data.table); library(rgdal)
 load(file.path(data.dir, 'SOE_species_list.RData'))
@@ -56,7 +63,7 @@ prey[PYCOMNAM == 'AMERICAN LOBSTER',        RPATH := 'AmLobster']
 prey[PYCOMNAM == 'KRILL',                   RPATH := 'Krill'] 
 prey[PYCOMNAM == 'EMPTY STOMACH',           RPATH := 'Empty']
 prey[PYCOMNAM == 'BLOWN STOMACH',           RPATH := 'Blown']
-prey[PYCOMNAM == 'NORTHERN SHRIMP',         RPATH := 'NShrimp']
+prey[PYCOMNAM == 'NORTHERN SHRIMP',         RPATH := 'OtherShrimp'] #Change to NShrimp for GOM
 prey[PYCOMNAM == 'HORSESHOE CRAB',          RPATH := 'Megabenthos']
 #Easy many to ones
 prey[PYCOMNAM %in% c('SEA SCALLOP', 'SEA SCALLOP VISCERA'), RPATH := 'AtlScallop']
@@ -152,20 +159,22 @@ prey[PYABBR == 'FISSCA', RPATH := 'UNKFish']
 prey[PYABBR == 'CHONDR', RPATH := 'UNKSkate']
 prey[PYABBR == 'PRESER', RPATH := 'NotUsed']
 
+#Pull diet data
+allfh.qry <- "select year, season, cruise6, station, stratum, tow, declat, declon,
+             svspp, pdid, pdgutw, pdgutv,
+             pynam, pyamtw, pyamtv, perpyw, perpyv
+             from FHDBS.ALLFH_FEAST"
 
+allfh <- as.data.table(sqlQuery(channel, allfh.qry))
 
-load(file.path(data.dir, 'allfh.RData'))
-allfh <- as.data.table(allfh)
-
-#ID GB
-x <- copy(allfh)
+#Subset GB stomachs
 #Use only stations
-stations <- unique(x[!is.na(declon), list(cruise6, stratum, station, declat, declon)], 
-                   by = c('cruise6', 'stratum', 'station'))
-stations[, declon := declon * -1]
+stations <- unique(allfh[!is.na(DECLON), list(CRUISE6, STRATUM, STATION, TOW, DECLAT, DECLON)], 
+                   by = c('CRUISE6', 'STRATUM', 'STATION', 'TOW'))
+stations[, DECLON := DECLON * -1]
 
 #Convert to spatial points data fram
-coordinates(stations) <- ~declon+declat
+coordinates(stations) <- ~DECLON+DECLAT
 stations@proj4string <- CRS('+init=epsg:4326') #Lat/Lon code
 lcc <- CRS("+proj=lcc +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-72 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0 ") #Lambert Conformal Conic
 stations <- spTransform(stations, lcc)
@@ -180,60 +189,64 @@ stations$EPU <- over(stations, epu)[, 'EPU']
 #Output data (convert spatial data frame back to lat/lon)
 stations <- spTransform(stations, CRS('+init=epsg:4326'))
 sta.data <- as.data.table(as.data.frame(stations))
-sta.data[, c('declat', 'declon') := NULL]
-x <- merge(x, sta.data, by = c('cruise6', 'stratum', 'station'))
+sta.data[, c('DECLAT', 'DECLON') := NULL]
+allfh <- merge(allfh, sta.data, by = c('CRUISE6', 'STRATUM', 'STATION', 'TOW'))
 
-GB.fh <- x[EPU == 'GB' & !pynam %in% c('EMPTY', 'BLOWN'), 
-           list(cruise6, stratum, station, svspp, pdid, pdgutv, pynam, pyamtv)]
+GB.fh <- allfh[EPU == 'GB' & !PYNAM %in% c('EMPTY', 'BLOWN'), ]
 
 #Assign Rpath codes to pred
 rpath.code <- unique(species[, list(SVSPP, RPATH)])
-setnames(rpath.code, 'SVSPP', 'svspp')
-GB.fh <- merge(GB.fh, rpath.code, by = 'svspp', all.x = T)
+GB.fh <- merge(GB.fh, rpath.code, by = 'SVSPP', all.x = T)
 setnames(GB.fh, 'RPATH', 'Rpred')
 
-#Calculate Percent weight using a cluster sampling design
-cluster <- c('cruise6', 'stratum', 'station', 'svspp') #Cluster
+#Stomach table
+stomachs <- unique(GB.fh[, list(CRUISE6, STRATUM, STATION, SVSPP, PDID, Rpred)])
+table(stomachs[ , Rpred])
 
-#Pred data
-pred <- unique(GB.fh, by = c(cluster, 'pdid'))
-pred[, c('pynam', 'pyamtv') := NULL]
-pred[, Mi := length(pdid), by = cluster]
-pred[, wi := sum(pdgutv), by = cluster]
+#Assign Rpath codes to prey
+GB.fh <- merge(GB.fh, prey[, list(PYNAM, RPATH)], by = 'PYNAM', all.x = T)
+#Missing two prey for some reason
+GB.fh[PYNAM == 'SELENE SETAPINNIS', RPATH := 'SmPelagics']
+GB.fh[PYNAM == 'EPIGONUS PANDIONIS', RPATH := 'Mesopelagics']
+setnames(GB.fh, 'RPATH', 'Rprey')
 
-#Reduce to cluster data
-sta <- unique(pred, by = cluster)
-sta[, c('pdid', 'pdgutv') := NULL]
-sta[, sumMi := sum(Mi), by = 'svspp']
+#Remove NotUsed, AR, UNKFish and UNKSkate - Talk to Sarah about how to deal with these
+GB.fh <- GB.fh[!Rprey %in% c('NotUsed', 'AR', 'UNKFish', 'UNKSkate'), ]
 
-#prey data
-prey <- GB.fh[, sum(pyamtv), by = c(cluster, 'pynam')]
-setnames(prey, 'V1', 'wik')
+#Merge prey items
+setkey(GB.fh, YEAR, SEASON, CRUISE6, STRATUM, STATION, TOW, Rpred, PDID, Rprey)
+GB.fh2 <- GB.fh[, sum(PYAMTW), by = key(GB.fh)]
+setnames(GB.fh2, 'V1', 'PYAMTW')
 
-#merge prey/sta data
-preysta <- merge(prey, sta, by = cluster)
-preysta[, Miqik := Mi * (wik / wi)]
+#Calculate Percent weight using a cluster sampling design (Nelson 2014)
+#Clusters are station/Rpred combos
+cluster <- c('CRUISE6', 'STRATUM', 'STATION', 'TOW', 'Rpred')
 
-perwt <- preysta[, sum(Miqik), by = c('svspp', 'pynam')]
-setnames(perwt, 'V1', 'sumMiqik')
-perwt <- merge(perwt, unique(sta[, list(svspp, sumMi)], by = 'svspp'))
-perwt[, perwt := sumMiqik / sumMi]
+#Calculate numbers of fish per cluster
+GB.pred <- unique(GB.fh2, by = c(cluster, 'PDID'))
+GB.pred[, Mi := length(PDID), by = cluster]
+GB.pred <- unique(GB.pred[, list(CRUISE6, STRATUM, STATION, TOW, Rpred, Mi)])
+GB.pred[, sumMi := sum(Mi), by = Rpred]
+GB.fh2 <- merge(GB.fh2, GB.pred, by = cluster)
 
-#Need to combine pret groups to Rpath groups
-unique.prey <- unique(perwt[, pynam])
-#write.csv(unique.prey, file = file.path(out.dir, 'GB_prey.csv'))
+#Sum prey weight per stomach
+GB.fh2[, yij := sum(PYAMTW), by = c(cluster, 'Rprey')]
+GB.fh2[, mu := yij / Mi]
+GB.cluster <- unique(GB.fh2, by = c(cluster, 'Rprey'))
+GB.cluster[, c('PYAMTW', 'yij') := NULL]
 
-#Pull back in manual categorization
-unique.prey <- read.csv(file.path(out.dir, 'GB_prey.csv'))
-#Assign to Rpath groups
-perwt <- merge(perwt, unique.prey, by = 'pynam')
-rpath.diet <- perwt[, sum(perwt), by = c('svspp', 'RPATH')]
-setnames(rpath.diet, c('svspp', 'RPATH', 'V1'), c('SVSPP', 'prey', 'DC'))
-#Add in Predtaor Rpath groups
-rpath.diet <- merge(unique(spp[, list(SVSPP, RPATH)], by = 'SVSPP'), rpath.diet, by = 'SVSPP')
-setnames(rpath.diet, 'RPATH', 'pred')
-rpath.diet[, SVSPP := NULL]
+#Calculate weighted contribution
+GB.cluster[, Miu := Mi * mu]
+GB.cluster[, rhat := Miu / sumMi]
 
-save(rpath.diet, file = file.path(out.dir, 'GB_diet.RData'))
+#Grab unique rows
+GB.diet <- unique(GB.cluster[, list(Rpred, Rprey, rhat)], by = c('Rpred', 'Rprey'))
+
+#Convert to percentages
+GB.diet[, tot.preyw := sum(rhat), by = Rpred]
+GB.diet[, preyper := rhat / tot.preyw]
+GB.diet[, c('rhat', 'tot.preyw') := NULL]
+setkey(GB.diet, Rpred, preyper)
+
+save(GB.diet, file = file.path(data.dir, 'GB_diet.RData'))
 #Deal with unclassified fish and AR
-#
