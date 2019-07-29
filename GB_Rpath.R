@@ -31,20 +31,57 @@ groups <- c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 'Sharks',
             'SmoothDogfish', 'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates',
             'Illex', 'Loligo', 'OtherCephalopods', 'AmLobster', 'Macrobenthos', 
             'Megabenthos', 'AtlScallop', 'Clams', 'OtherShrimps', 'Krill', 'Micronekton', 
-            'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 'Phytoplankton',
+            'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 'Bacteria',
+            'Phytoplankton',
             'Detritus', 'Discards', 
-            'DredgeScallop', 'DredgeClam', 'Gillnet', 'Longline', 'Seine', 
-            'PotTrap', 'Ottertrawl', 'Midwater', 'OtherFisheries')
+            'DredgeScallop', 'DredgeClam', 'Gillnet', 'Longline', 'PotTrap', 
+            'OtterTrawlSm', 'OtterTrawlLg', 'Midwater', 'OtherFisheries')
 
-types <- c(rep(0, 56), 1, 2, 2, rep(3, 9))
+types <- c(rep(0, 57), 1, 2, 2, rep(3, 9))
 
 GB.params <- create.rpath.params(groups, types)
 
 #Load biomass
 load(file.path(data.dir, 'GB_biomass.RData'))
 
-#Load biomass
 for(igroup in GB.params$model[Type < 2, Group]){
   group.bio <- GB.biomass[RPATH == igroup, Biomass]
   GB.params$model[Group == igroup, Biomass := group.bio][]
 }
+
+#Load landings
+load(file.path(data.dir, 'GB_landings.RData'))
+
+#Need to account for mismatched names
+rfleets <- c('DredgeScallop', 'DredgeClam', 'Gillnet', 'Longline', 'PotTrap', 
+             'OtterTrawlSm', 'OtterTrawlLg', 'Midwater', 'OtherFisheries')
+rgear   <- c('dredge.sc', 'dredge.cl', 'gillnet', 'longline', 'pot', 'otter.sm',
+             'otter.lg', 'midwater', 'other')
+
+for(igear in 1:length(rfleets)){
+  gear.landings <- GB.landings[RGear == rgear[igear], ]
+  setnames(GB.params$model, rfleets[igear], 'gear')
+  for(igroup in 1:nrow(gear.landings)){
+    GB.params$model[Group == gear.landings[igroup, RPATH], 
+                    gear := gear.landings[igroup, SPPLIVMT]][]
+  }
+  setnames(GB.params$model, 'gear', rfleets[igear])
+}
+
+#Load discards
+load(file.path(data.dir, 'GB_discards.RData'))
+
+for(igear in 1:length(rfleets)){
+  gear.disc <- GB.disc[RGear == rgear[igear], ]
+  setnames(GB.params$model, paste0(rfleets[igear], '.disc'), 'gear')
+  #Discards
+  for(igroup in 1:nrow(gear.disc)){
+    GB.params$model[Group == gear.disc[igroup, RPATH], 
+                    gear := gear.disc[igroup, Discards]][]
+  }
+  #Takes?
+  setnames(GB.params$model, 'gear', paste0(rfleets[igear], '.disc'))
+}
+
+#Load Diet
+load(file.path(data.dir, 'GB_diet.RData'))
