@@ -765,6 +765,7 @@ summary {
 <p>Total landings by gear type are divided by the area of the NAFO Statistical Areas that have been selected as Georges Bank. This area is much larger than the survey foot print.</p>
 <p>Figuring out which otter trawl trips were small mesh was challenging. Originally I was using the otter trawl gear table (OBOTG). Unfortunately it was not to the haul level and some trips switched gear during the trip. Some even switched between small mesh and large mesh. After extensive searching and frustration I founs the OBDBS table OBOTGH which contains a link to both the haul (OBHAU) and gear tables (OBOTG). The species table (OBSPP) which contains the hail weights for both caught and discarded species contains the primary key for hauls (LINK3). OBOTGH has LINK3 and LINK4 (Gear key) which can be used then to assign mesh size. Not all catches had an associated gear entry but 95.8% did (which is better than the landings tables!). For the purposes of calculating a DK ratio I am not worrying about the unassigned 5%.</p>
 <p>Had to manually assign Rpath groups for the incidental takes in the observer database. There were 16 sea turtles in the &gt;500K records. I decided this was not enough to warrent their inclusion. Also, incidental takes are measured as number of individuals not weight. Estimate length is recorded but unfortunately nearly 89% of records do not have on. I did add animal condition to drop incidental takes were the animal was still alive (~11% of records).</p>
+<p>I applied a average weight based on the values in <span class="citation">Trites and Pauly (1998)</span>. I averaged male and female mean weights as I did not know what sex many of the animals were.</p>
 </div>
 <div id="diet-data" class="section level2">
 <h2>Diet Data</h2>
@@ -1002,6 +1003,7 @@ summary {
 </div>
 <div id="biological-parameters" class="section level2">
 <h2>Biological parameters</h2>
+<p>While more indepth methods exist (see Aydin et al. 200x), for this model I pulled the numbers from FishBase (citation?). Actually the FishBase values are not complete and I’m not happy with some of them (PB the same for herring and cod!). Instead I am going to use <span class="citation">Buchheister et al. (2017)</span>. This is a shelf-wide disaggregated Ecopath model based off EMAX. Several groups have multiple stanzas so I will biomass weight their values. Their biological parameters were based on stock assessments.</p>
 </div>
 <div id="prebal" class="section level2">
 <h2>PreBal</h2>
@@ -1024,6 +1026,9 @@ summary {
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
 <div id="refs" class="references">
+<div id="ref-buchheister_NWACS_2017">
+<p>Buchheister, Andre, Thomas J Miller, Edward D Houde, and David A Loewensteiner. 2017. “Technical Documentation of the Northwest Atlantic Continental Shelf (NWACS) Ecosystem Model. Report to the Lenfest Ocean Program, Washington, D.C.” University of Maryland Center for Environmental Sciences Report TS -694 -17.</p>
+</div>
 <div id="ref-csillery_abc_2012">
 <p>Csilléry, Katalin, Olivier François, and Michael G. B. Blum. 2012. “Abc: An R Package for Approximate Bayesian Computation (ABC).” <em>Methods in Ecology and Evolution</em> 3 (3): 475–79. <a href="https://doi.org/10.1111/j.2041-210X.2011.00179.x">https://doi.org/10.1111/j.2041-210X.2011.00179.x</a>.</p>
 </div>
@@ -1035,6 +1040,9 @@ summary {
 </div>
 <div id="ref-nelson_cluster_2014">
 <p>Nelson, Gary A. 2014. “Cluster Sampling: A Pervasive, yet Little Recognized Survey Design in Fisheries Research.” <em>Transactions of the American Fisheries Society</em> 143 (4): 926–38. <a href="https://doi.org/10.1080/00028487.2014.901252">https://doi.org/10.1080/00028487.2014.901252</a>.</p>
+</div>
+<div id="ref-trites_mammal_size_1998">
+<p>Trites, Andrew W, and Daniel Pauly. 1998. “Estimating Mean Body Masses of Marine Mammals from Maximum Body Lengths” 76: 11.</p>
 </div>
 </div>
 </div>
