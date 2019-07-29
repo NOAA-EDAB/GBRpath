@@ -284,8 +284,23 @@ comname[, c('CETACEAN', 'TURTLE', 'PINNIPED') := NULL]
 
 ob.code <- merge(comname, ob.code, by = 'NESPP4')
 
-#Convert to metric tons to align with commercial landings data
+#Convert to metric tons from pounds to align with commercial landings data
 ob.code[PR == 0, C.HAILWT := C.HAILWT * 0.00045359237]
+
+#Apply average weight of Protected resources
+#Values from Trites and Pauly 1998
+#Averaged male and female values
+mammal.size <- data.table(COMNAME = c('WHALE, FINBACK', 'WHALE, HUMPBACK', 'DOLPHIN, WHITESIDED',
+                                      'DOLPHIN, COMMON (OLD SADDLEBACK)', 'DOLPHIN, BOTTLENOSE',
+                                      'DOLPHIN, RISSOS', 'WHALE, MINKE', 'PORPOISE, HARBOR',
+                                      'SEAL, HARP', 'WHALE, PILOT, NK', 'WHALE, BALEEN, NK',
+                                      'SEAL, NK', 'SEAL, HARBOR', 'SEAL, GRAY', 
+                                      'DOLPHIN, NK (MAMMAL)', 'PORPOISE/DOLPHIN, NK'),
+                          meanwt = c(55590, 30408, 92, 80, 188, 224, 6566, 31,
+                                     92, 747, 30855, 105, 64, 160, 146, 227))
+
+ob.code <- merge(ob.code, mammal.size, by = 'COMNAME', all.x = T)
+ob.code[PR == 1 & !is.na(meanwt), C.HAILWT := meanwt * 0.001]
 
 #Change to NESPP3 to combine market categories
 ob.code[NESPP4 < 100,                NESPP3 := as.numeric(substring(NESPP4, 1, 1))]
@@ -352,8 +367,6 @@ GB.observed <- GB.observed[!is.na(RPATH), ]
 #Sum by Rpath group, gear, disposition
 GB.sums <- GB.observed[, sum(C.HAILWT), by = c('YEAR', 'RPATH', 'RGear', 'CATDISP', 'PR')]
 setnames(GB.sums, 'V1', 'SPPLIVMT')
-GB.sums[PR == 1, N := SPPLIVMT]
-GB.sums[PR == 1, SPPLIVMT := 0]
 
 #Calculate kept and discards
 GB.discard <- GB.sums[CATDISP == 0, ]
@@ -367,14 +380,11 @@ GB.all <- merge(GB.kept, GB.discard, by = c('YEAR', 'RGear'))
 GB.all[, CATDISP := NULL]
 
 GB.all[, DK := DISCARD / KEPT.ALL]
-GB.all[PR == 1, DKN := N / KEPT.ALL]
-GB.all[, c('KEPT.ALL', 'DISCARD', 'N') := NULL]
+GB.all[, c('KEPT.ALL', 'DISCARD') := NULL]
 
 #Calculate mean ratio
-GB.meanDK <- GB.all[, mean(DK), by = c('RGear', 'RPATH')]
-GB.meanDKN <- GB.all[, mean(DKN), by = c('RGear', 'RPATH')]
-GB.mean <- merge(GB.meanDK, GB.meanDKN, by = c('RGear', 'RPATH'))
-setnames(GB.mean, c('V1.x', 'V1.y'), c('DK', 'DKN'))
+GB.mean <- GB.all[, mean(DK), by = c('RGear', 'RPATH')]
+setnames(GB.mean, 'V1', 'DK')
 
 #Expand ratio by landings
 #Get landings
@@ -386,7 +396,6 @@ GB.disc <- merge(GB.mean, GB.landings, by = c('RPATH', 'RGear'), all = T)
 #Fix NAs
 GB.disc <- GB.disc[!is.na(RPATH), ]
 GB.disc[is.na(DK),  DK  := 0]
-GB.disc[is.na(DKN), DKN := 0]
 GB.disc[is.na(SPPLIVMT), SPPLIVMT := 0]
 
 #Calculate gear landings
@@ -394,9 +403,8 @@ GB.disc[, Gear.Tot := sum(SPPLIVMT), by = RGear]
 GB.disc[, SPPLIVMT := NULL]
 
 GB.disc[, Discards := DK  * Gear.Tot]
-GB.disc[, Takes    := DKN * Gear.Tot]
 
-GB.disc[, c('DK', 'DKN', 'Gear.Tot') := NULL]
+GB.disc[, c('DK', 'Gear.Tot') := NULL]
 save(GB.disc, file = file.path(data.dir, 'GB_discards.RData'))
 
 
