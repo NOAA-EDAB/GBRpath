@@ -203,9 +203,19 @@ mean weight per stomach of each prey item I converted to proportions as:
 
 $$ \%prey_i = \frac{\hat{r_i}}{\sum_{i=1}^n\hat{r_i}} $$
 
-Need to add in diet from groups not encoutered in our survey.  Will use EMAX as
+Needed to add in diet from groups not encoutered in our survey.  Will use EMAX as
 a starting point and proportion aggregate groups to new Rpath groups using the 
-proportion of biomass.
+proportion of biomass.  Several groups need to be merged from EMAX to Rpath 
+(Macrobenthos and Mesozooplankton).  I weighted the DCs by the EMAX groups respective 
+biomasses.
+
+Also noticed that the food habits data from the survey does not include discards 
+or detritus.  The EMAX groups did have some nodes feeding on them.  I will try and 
+balance without it and see where I get.
+
+## Biological parameters
+
+
 
 ## PreBal
 

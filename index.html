@@ -997,7 +997,11 @@ summary {
 <p><span class="math display">\[ \hat{r} = \frac{\sum_{i = 1}^nM_i\hat{\mu_i}}{\sum_{i = 1}^nM_i}\]</span> where <span class="math inline">\(\hat{r}\)</span> is the mean attribute of interest (in our case weight per stomach), <span class="math inline">\(M_i\)</span> is the total number of fish in each cluster (Station/Rpath group), and <span class="math inline">\(\hat{\mu_i}\)</span> the mean attribute in the cluster calculated as:</p>
 <p><span class="math display">\[ \hat{\mu_i} = \frac{\sum_{j = 1}^{M_i}{y_{ij}}}{M_i} \]</span> where <span class="math inline">\(y_{ij}\)</span> is attribute of fish <em>j</em> in cluster <em>i</em>. After calculating the mean weight per stomach of each prey item I converted to proportions as:</p>
 <p><span class="math display">\[ \%prey_i = \frac{\hat{r_i}}{\sum_{i=1}^n\hat{r_i}} \]</span></p>
-<p>Need to add in diet from groups not encoutered in our survey. Will use EMAX as a starting point and proportion aggregate groups to new Rpath groups using the proportion of biomass.</p>
+<p>Needed to add in diet from groups not encoutered in our survey. Will use EMAX as a starting point and proportion aggregate groups to new Rpath groups using the proportion of biomass. Several groups need to be merged from EMAX to Rpath (Macrobenthos and Mesozooplankton). I weighted the DCs by the EMAX groups respective biomasses.</p>
+<p>Also noticed that the food habits data from the survey does not include discards or detritus. The EMAX groups did have some nodes feeding on them. I will try and balance without it and see where I get.</p>
+</div>
+<div id="biological-parameters" class="section level2">
+<h2>Biological parameters</h2>
 </div>
 <div id="prebal" class="section level2">
 <h2>PreBal</h2>
