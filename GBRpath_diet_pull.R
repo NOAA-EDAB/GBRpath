@@ -436,30 +436,6 @@ setnames(smpel, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, smpel))
 
-#Southern Demrsals and Otherflatfish will use Demersal- benthivore diet
-dems <- data.table(EMAX = c('Gelatinous Zooplankton', 'Micronekton', 'Macrobenthos- polychaetes',
-                            'Macrobenthos- crustaceans', 'Macrobenthos- molluscs',
-                            'Macrobenthos- other', 'Megabenthos- filterers',
-                            'Megabenthos- other', 'Shrimp et al.', 'Small Pelagics- commercial',
-                            'Small Pelagics- other', 'Small Pelagics- squid',
-                            'Demersals- benthivores', 'Demersals- omnivores',
-                            'Demersals- piscivores', 'Discard', 'Detritus-POC'),
-                   DC = c(0.005, 0.001, 0.111, 0.130, 0.111, 0.133, 0.104, 0.133,
-                          0.006, 0.110, 0.001, 0.010, 0.076, 0.029, 0.018, 0.011,
-                          0.011))
-dems <- merge(dems, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
-dems[, preyper := DC * Rpath.prop]
-#Need to sum many:1 EMAX:Rpath
-dems <- dems[, sum(preyper), by = RPATH]
-#Two Rpred
-south  <- copy(dems[, Rpred := 'SouthernDemersals'][])
-otflat <- copy(dems[, Rpred := 'OtherFlatfish'][])
-setnames(south,  c('RPATH', 'V1'), c('Rprey', 'preyper'))
-setnames(otflat, c('RPATH', 'V1'), c('Rprey', 'preyper'))
-
-GB.diet.plus <- rbindlist(list(GB.diet.plus, south))
-GB.diet.plus <- rbindlist(list(GB.diet.plus, otflat))
-
 ceph <- data.table(EMAX = c('Large Copepods', 'Micronekton', 'Macrobenthos- crustaceans',
                             'Macrobenthos- other', 'Shrimp et al.', 'Larval-juv fish- all',
                             'Small Pelagics- commercial', 'Small Pelagics- other',
@@ -520,14 +496,170 @@ setnames(micro, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, micro))
 
+#EMAX groups that apply to more than one Rpath
+#Southern Demrsals and Otherflatfish will use Demersal- benthivore diet
+dems <- data.table(EMAX = c('Gelatinous Zooplankton', 'Micronekton', 'Macrobenthos- polychaetes',
+                            'Macrobenthos- crustaceans', 'Macrobenthos- molluscs',
+                            'Macrobenthos- other', 'Megabenthos- filterers',
+                            'Megabenthos- other', 'Shrimp et al.', 'Small Pelagics- commercial',
+                            'Small Pelagics- other', 'Small Pelagics- squid',
+                            'Demersals- benthivores', 'Demersals- omnivores',
+                            'Demersals- piscivores', 'Discard', 'Detritus-POC'),
+                   DC = c(0.005, 0.001, 0.111, 0.130, 0.111, 0.133, 0.104, 0.133,
+                          0.006, 0.110, 0.001, 0.010, 0.076, 0.029, 0.018, 0.011,
+                          0.011))
+dems <- merge(dems, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
+dems[, preyper := DC * Rpath.prop]
+#Need to sum many:1 EMAX:Rpath
+dems <- dems[, sum(preyper), by = RPATH]
+#Two Rpred
+south  <- copy(dems[, Rpred := 'SouthernDemersals'][])
+otflat <- copy(dems[, Rpred := 'OtherFlatfish'][])
+setnames(south,  c('RPATH', 'V1'), c('Rprey', 'preyper'))
+setnames(otflat, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
-GB.params$diet[!is.na(`Microzooplankton`), Group]
-GB.params$diet[!is.na(`Shrimp et al.`), `Shrimp et al.`]
+GB.diet.plus <- rbindlist(list(GB.diet.plus, south))
+GB.diet.plus <- rbindlist(list(GB.diet.plus, otflat))
 
-<- data.table(EMAX = c(),
-              DC = c())
+#AmLobster and Megabenthos will use Megabenthos- other
+mega <- data.table(EMAX = c('Bacteria', 'Macrobenthos- polychaetes', 'Macrobenthos- crustaceans', 
+                            'Macrobenthos- molluscs', 'Macrobenthos- other', 
+                            'Megabenthos- filterers', 'Megabenthos- other', 'Demersals- benthivores',
+                            'Demersals- omnivores', 'Demersals- piscivores', 'Discard',
+                            'Detritus-POC'),
+                   DC = c(1.76e-01, 7.80e-02, 9.80e-02, 3.20e-02, 2.94e-01, 4.80e-02,
+                          4.50e-02, 3.00e-03, 2.00e-03, 2.40e-07, 4.80e-02, 1.76e-01))
+mega <- merge(mega, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
+mega[, preyper := DC * Rpath.prop]
+#Need to sum many:1 EMAX:Rpath
+mega <- mega[, sum(preyper), by = RPATH]
+#Two Rpred
+lob  <- copy(mega[, Rpred := 'AmLobster'][])
+mega <- copy(mega[, Rpred := 'Megabenthos'][])
+setnames(lob,  c('RPATH', 'V1'), c('Rprey', 'preyper'))
+setnames(mega, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
+GB.diet.plus <- rbindlist(list(GB.diet.plus, lob))
+GB.diet.plus <- rbindlist(list(GB.diet.plus, mega))
+
+#AtlScallops and Clams will use Megabenthos- filters
+filter <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Bacteria',
+                              'Detritus-POC'),
+                     DC = c(0.69, 0.08, 0.23))
+filter <- merge(filter, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
+filter[, preyper := DC * Rpath.prop]
+#Need to sum many:1 EMAX:Rpath
+filter <- filter[, sum(preyper), by = RPATH]
+#Two Rpred
+scal <- copy(filter[, Rpred := 'AtlScallop'][])
+clam <- copy(filter[, Rpred := 'Clams'][])
+setnames(scal, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+setnames(clam, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+
+GB.diet.plus <- rbindlist(list(GB.diet.plus, scal))
+GB.diet.plus <- rbindlist(list(GB.diet.plus, clam))
+
+#Krill and Micronekton will use Micronekton
+micro <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Small copepods',
+                             'Large Copepods', 'Micronekton', 'Detritus-POC'),
+                    DC = c(0.162, 0.308, 0.326, 0.041, 0.163))
+micro <- merge(micro, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
+micro[, preyper := DC * Rpath.prop]
+#Need to sum many:1 EMAX:Rpath
+micro <- micro[, sum(preyper), by = RPATH]
+#Two Rpred
+krill <- copy(micro[, Rpred := 'Krill'][])
+micro <- copy(micro[, Rpred := 'Micronekton'][])
+setnames(krill, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+setnames(micro, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+
+GB.diet.plus <- rbindlist(list(GB.diet.plus, krill))
+GB.diet.plus <- rbindlist(list(GB.diet.plus, micro))
+
+#Need to merge multiple EMAX groups for macrobenthos and mesozooplankton
+#Weight DCs by biomass
+macro <- data.table(Group = c('Macrobenthos- polychaetes', 'Macrobenthos- crustaceans',
+                              'Macrobenthos- molluscs', 'Macrobenthos- other'),
+                    Biomass = c(11.4, 10.9, 9.9, 40.0))
+macro[, macro.prop := Biomass / sum(Biomass)]
+
+#Pull individual DCs
+poly <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Bacteria', 
+                            'Macrobenthos- polychaetes', 'Macrobenthos- crustaceans',
+                            'Macrobenthos- molluscs', 'Macrobenthos- other', 
+                            'Megabenthos- filterers', 'Megabenthos- other', 'Discard',
+                            'Detritus-POC'),
+                   DC = c(0.128000, 0.308000, 0.015000, 0.000980, 0.000579,
+                          0.003540, 0.003560, 0.000190, 0.005930, 0.534000),
+                   macro.prop = macro[Group == 'Macrobenthos- polychaetes', macro.prop])
+crus <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Bacteria', 
+                            'Small copepods', 'Large Copepods', 'Macrobenthos- polychaetes',
+                            'Macrobenthos- crustaceans', 'Macrobenthos- molluscs',
+                            'Macrobenthos- other', 'Megabenthos- filterers',
+                            'Megabenthos- other', 'Demersals- benthivores', 
+                            'Demersals- omnivores', 'Discard', 'Detritus-POC'),
+                   DC = c(0.21200, 0.18700, 0.01900, 0.03700, 0.01500, 0.00800,
+                          0.00800, 0.02600, 0.01800, 0.00029, 0.00085, 0.00051,
+                          0.00900, 0.45900),
+                   macro.prop = macro[Group == 'Macrobenthos- crustaceans', macro.prop])
+moll <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Bacteria', 
+                            'Macrobenthos- molluscs', 'Macrobenthos- other', 
+                            'Megabenthos- filterers', 'Megabenthos- other', 
+                            'Discard', 'Detritus-POC'),
+                   DC = c(0.43300, 0.19900, 0.00400, 0.00300, 0.01300, 0.00043,
+                          0.00600, 0.34200),
+                   macro.prop = macro[Group == 'Macrobenthos- molluscs', macro.prop])
+oth  <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Bacteria', 
+                            'Macrobenthos- polychaetes', 'Macrobenthos- crustaceans',
+                            'Macrobenthos- molluscs', 'Macrobenthos- other', 
+                            'Megabenthos- filterers', 'Megabenthos- other', 
+                            'Demersals- benthivores', 'Demersals- omnivores', 
+                            'Demersals- piscivores', 'Discard', 'Detritus-POC'),
+                   DC = c(2.15e-01, 2.31e-01, 1.70e-02, 2.50e-02, 1.60e-02, 5.70e-02,
+                          6.00e-03, 3.00e-03, 8.50e-04, 4.20e-04, 2.40e-07, 1.00e-02,
+                          4.19e-01),
+                   macro.prop = macro[Group == 'Macrobenthos- other', macro.prop])
+combo <- rbindlist(list(poly, crus, moll, oth)) 
+combo[, newDC := DC * macro.prop]
+combo <- merge(combo, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
+combo[, preyper := newDC * Rpath.prop]
+#Need to sum many:1 EMAX:Rpath
+combo <- combo[, sum(preyper), by = RPATH]
+combo[, Rpred := 'Macrobenthos']
+setnames(combo, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+
+GB.diet.plus <- rbindlist(list(GB.diet.plus, combo))
+
+#Weight DCs by biomass
+meso <- data.table(Group = c('Small copepods', 'Large Copepods'),
+                    Biomass = c(13.0, 7.0))
+meso[, meso.prop := Biomass / sum(Biomass)]
+
+sm <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Microzooplankton',
+                          'Small copepods', 'Detritus-POC'),
+                 DC = c(0.724, 0.080, 0.065, 0.131),
+                 meso.prop = meso[Group == 'Small copepods', meso.prop])
+lg <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Microzooplankton',
+                          'Small copepods', 'Large Copepods', 'Gelatinous Zooplankton',
+                          'Macrobenthos- crustaceans', 'Macrobenthos- other', 
+                          'Detritus-POC'),
+                 DC = c(0.547000, 0.043900, 0.174000, 0.122000, 0.053100, 0.000192,
+                        0.000102, 0.059400),
+                 meso.prop = meso[Group == 'Large Copepods', meso.prop])
+combo <- rbindlist(list(sm, lg)) 
+combo[, newDC := DC * meso.prop]
+combo <- merge(combo, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
+combo[, preyper := newDC * Rpath.prop]
+#Need to sum many:1 EMAX:Rpath
+combo <- combo[, sum(preyper), by = RPATH]
+combo[, Rpred := 'Mesozooplankton']
+setnames(combo, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+
+GB.diet.plus <- rbindlist(list(GB.diet.plus, combo))
+
+#Merge diet.plus with regular diet
+GB.diet <- rbindlist(list(GB.diet, GB.diet.plus), use.names = T)
 
 save(GB.diet, file = file.path(data.dir, 'GB_diet.RData'))
-#Deal with unclassified fish and AR
+
 
