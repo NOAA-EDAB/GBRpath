@@ -11,7 +11,7 @@ if(Sys.info()['sysname']=="Linux"){
 data.dir <- file.path(main.dir, 'data')
 
 #Required packages--------------------------------------------------------------
-devtools::install_github("ropensci/rfishbase")
+#devtools::install_github("ropensci/rfishbase")
 library(rfishbase); library(data.table)
 load(file.path(data.dir, 'SOE_species_list.RData'))
 
@@ -174,4 +174,14 @@ fish.params[, EMAX := NULL]
 
 #Add OtherFlatfish and SmFlatfish....
 
-GB.params <- rbindlist(list(GB.params, fish.params), use.names = T)
+GB.bioparams <- rbindlist(list(GB.params, fish.params), use.names = T)
+
+#Need to add OtherFlatfish and SmFlatfish
+#Use OtherDemersals for OtherFlatfish and SmPelagics for SmFlatfish
+GB.add <- copy(GB.bioparams[RPATH %in% c('OtherDemersals', 'SmPelagics'), ])
+GB.add[RPATH == 'OtherDemrsals', RPATH := 'OtherFlatfish']
+GB.add[RPATH == 'SMPelagics', RPATH := 'SmFlatfish']
+
+GB.bioparams <- rbindlist(list(GB.bioparams, GB.add), use.names = T)
+
+save(GB.bioparams, file = file.path(data.dir, 'GB_bioparams.RData'))
