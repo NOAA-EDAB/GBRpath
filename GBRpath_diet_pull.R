@@ -362,7 +362,11 @@ birds <- data.table(EMAX = c('Large Copepods', 'Micronekton', 'Shrimp et al.',
                            0.311898300, 0.268483800, 0.031822620, 0.020179870,
                            0.000353094, 0.020000000, 0.013226180, 0.028562110,
                            0.009100700))
-birds <- merge(birds, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX')
+birds <- merge(birds, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', 
+               all.x = T)
+#Fix NAs
+birds[EMAX == 'Small Pelagics- anadromous', RPATH := 'SmPelagics'] #no river herring in this model
+birds[EMAX == 'Small Pelagics- anadromous', Rpath.prop := 1]
 birds[, preyper := DC * Rpath.prop]
 birds[, c('EMAX', 'DC', 'Rpath.prop') := NULL]
 birds[, Rpred := 'Seabirds']
