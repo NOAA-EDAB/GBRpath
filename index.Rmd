@@ -227,6 +227,15 @@ I am going to use @buchheister_NWACS_2017.  This is a shelf-wide disaggregated
 Ecopath model based off EMAX.  Several groups have multiple stanzas so I will biomass
 weight their values.  Their biological parameters were based on stock assessments.
 
+There were still many groups that were not broken out by @buchheister_NWACS_2017.  I
+used fishbase.org to pull their parameters where available.  For PB I used 
+$1/Longevitywild$.  QB was an average of the QBs on fishbase from different regions.
+
+After mapping all Buchheister groups and individual new groups, *SmFlatfish* and 
+*OtherFlatfish* still did not have parameters.  I used *SmPelagics* for *SmFlatfish*
+due to their size and position in the food web.  I use *OtherDemersals* for 
+*OtherFlatfish*.  Those parameters were an average of the three demersal fish groups 
+from EMAX and should be agood approximation.
 
 ## PreBal
 
