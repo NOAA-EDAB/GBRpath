@@ -86,9 +86,9 @@ NWACS <- data.table(Group = c('Phytoplankton', 'Other primary producers', 'Bacte
                            0.690, 6.794, 5.581, 3.217, 14.301, 80.000, 80.000, NA),
                     RPATH = c('Phytoplankton', 'Phytoplankton', 'Bacteria', 
                               'Microzooplankton', 'Mesozooplankton', 'Mesozooplankton',
-                              'GelatinousZooplankton', 'Micronekton', 
+                              'GelZooplankton', 'Micronekton', 
                               rep('Macrobenthos', 4), 'AtlScallop', 'AmLobster',
-                              'OtherShrimp', 'Mesopelagics', 'AtlHerring', 'SmPelagics',
+                              'OtherShrimps', 'Mesopelagics', 'AtlHerring', 'SmPelagics',
                               rep('OtherPelagics', 3), 'SmPelagics', 'AtlMackerel',
                               'Illex', 'Butterfish', 'SmPelagics', rep('Bluefish', 3),
                               rep('OtherPelagics', 3), rep('SouthernDemersals', 3),
@@ -180,8 +180,13 @@ GB.bioparams <- rbindlist(list(GB.params, fish.params), use.names = T)
 #Use OtherDemersals for OtherFlatfish and SmPelagics for SmFlatfish
 GB.add <- copy(GB.bioparams[RPATH %in% c('OtherDemersals', 'SmPelagics'), ])
 GB.add[RPATH == 'OtherDemersals', RPATH := 'OtherFlatfish']
-GB.add[RPATH == 'SmPelagics', RPATH := 'SmFlatfish']
-
+GB.add[RPATH == 'SmPelagics', RPATH := 'SmFlatfishes']
+#Need an OtherSkates as well...going to take a mean of Winter and Little
+GB.skate <- copy(GB.bioparams[RPATH %in% c('WinterSkate', 'LittleSkate'), ])
+GB.skate <- GB.skate[, lapply(list(PB, QB), mean)]
+setnames(GB.skate, c('V1', 'V2'), c('PB', 'QB'))
+GB.skate[, RPATH := 'OtherSkates']
+GB.add <- rbindlist(list(GB.add, GB.skate), use.names = T)
 GB.bioparams <- rbindlist(list(GB.bioparams, GB.add), use.names = T)
 
 save(GB.bioparams, file = file.path(data.dir, 'GB_bioparams.RData'))
