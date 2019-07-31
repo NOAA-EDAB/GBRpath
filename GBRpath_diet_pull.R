@@ -100,7 +100,7 @@ prey[is.na(RPATH) & Collcom == 'COPEPODA', RPATH := 'Mesozooplankton']
 prey[is.na(RPATH) & MODCAT == 'PELINV', RPATH := 'Micronekton']
 
 #MODCAT LDEM
-prey[is.na(RPATH) & ANALCAT %in% c('BOTFAM', 'SOLFAM'), RPATH := 'SmFlatfish']
+prey[is.na(RPATH) & ANALCAT %in% c('BOTFAM', 'SOLFAM'), RPATH := 'SmFlatfishes']
 prey[is.na(RPATH) & ANALCAT == 'RAJORD', RPATH := 'OtherSkates']
 prey[is.na(RPATH) & ANALCAT %in% c('LUTFAM', 'SCAFAM', 'SCIFAM', 'SPAFAM', 'SERFA3'), RPATH := 'SouthernDemersals']
 prey[is.na(RPATH) & ANALCAT == 'SHARK', RPATH := 'Sharks']
@@ -668,6 +668,10 @@ GB.diet.plus <- rbindlist(list(GB.diet.plus, combo))
 
 #Merge diet.plus with regular diet
 GB.diet <- rbindlist(list(GB.diet, GB.diet.plus), use.names = T)
+
+#Need to add Bacteria
+bact <- data.table(Rpred = 'Bacteria', Rprey = 'Detritus', preyper = 1.000)
+GB.diet <- rbindlist(list(GB.diet, bact))
 
 save(GB.diet, file = file.path(data.dir, 'GB_diet.RData'))
 
