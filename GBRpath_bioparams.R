@@ -179,8 +179,8 @@ GB.bioparams <- rbindlist(list(GB.params, fish.params), use.names = T)
 #Need to add OtherFlatfish and SmFlatfish
 #Use OtherDemersals for OtherFlatfish and SmPelagics for SmFlatfish
 GB.add <- copy(GB.bioparams[RPATH %in% c('OtherDemersals', 'SmPelagics'), ])
-GB.add[RPATH == 'OtherDemrsals', RPATH := 'OtherFlatfish']
-GB.add[RPATH == 'SMPelagics', RPATH := 'SmFlatfish']
+GB.add[RPATH == 'OtherDemersals', RPATH := 'OtherFlatfish']
+GB.add[RPATH == 'SmPelagics', RPATH := 'SmFlatfish']
 
 GB.bioparams <- rbindlist(list(GB.bioparams, GB.add), use.names = T)
 
