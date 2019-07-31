@@ -41,7 +41,8 @@ types <- c(rep(0, 57), 1, 2, 2, rep(3, 9))
 
 GB.params <- create.rpath.params(groups, types)
 
-#Enter Unassim, DetInput, and detrital fate
+#Enter BioAcc, Unassim, DetInput, and detrital fate
+GB.params$model[Type < 3,  BioAcc := 0]
 GB.params$model[Type == 0, Unassim := 0.2]
 GB.params$model[Type > 0 & Type < 3, Unassim := 0]
 GB.params$model[Type == 2, DetInput := 0]
@@ -56,6 +57,17 @@ load(file.path(data.dir, 'GB_biomass.RData'))
 for(igroup in GB.params$model[Type < 2, Group]){
   group.bio <- GB.biomass[RPATH == igroup, Biomass]
   GB.params$model[Group == igroup, Biomass := group.bio][]
+}
+
+#Add EEs for groups without biomass
+GB.params$model[Group %in% c('Seals', 'Bacteria', 'Phytoplankton'), EE := 0.8]
+
+#Biological Parameters
+load(file.path(data.dir, 'GB_bioparams.RData'))
+
+for(igroup in GB.bioparams[, RPATH]){
+  GB.params$model[Group == igroup, PB := GB.bioparams[RPATH == igroup, PB]]
+  GB.params$model[Group == igroup, QB := GB.bioparams[RPATH == igroup, QB]][]
 }
 
 #Load landings
@@ -108,6 +120,6 @@ for(ipred in 1:length(preds)){
   GB.params$diet[]
 }
 
-#Biological Parameters
+
 
 check.rpath.params(GB.params)
