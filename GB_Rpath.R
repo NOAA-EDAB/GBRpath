@@ -41,6 +41,15 @@ types <- c(rep(0, 57), 1, 2, 2, rep(3, 9))
 
 GB.params <- create.rpath.params(groups, types)
 
+#Enter Unassim, DetInput, and detrital fate
+GB.params$model[Type == 0, Unassim := 0.2]
+GB.params$model[Type > 0 & Type < 3, Unassim := 0]
+GB.params$model[Type == 2, DetInput := 0]
+GB.params$model[Type < 2,  Detritus := 1]
+GB.params$model[Type > 1,  Detritus := 0]
+GB.params$model[Type == 3, Discards := 1]
+GB.params$model[Type < 3,  Discards := 0]
+
 #Load biomass
 load(file.path(data.dir, 'GB_biomass.RData'))
 
@@ -79,9 +88,26 @@ for(igear in 1:length(rfleets)){
     GB.params$model[Group == gear.disc[igroup, RPATH], 
                     gear := gear.disc[igroup, Discards]][]
   }
-  #Takes?
   setnames(GB.params$model, 'gear', paste0(rfleets[igear], '.disc'))
 }
 
 #Load Diet
 load(file.path(data.dir, 'GB_diet.RData'))
+#Remove predators that weren't present enough to include
+GB.diet <- GB.diet[!Rpred %in% c('AmShad', 'AtlHalibut', 'Freshwater', 'LargePelagics',
+                                 'RiverHerring', 'StripedBass'), ]
+preds <- unique(GB.diet[, Rpred])
+for(ipred in 1:length(preds)){
+  setnames(GB.params$diet, preds[ipred], 'Pred')
+  pred.diet <- GB.diet[Rpred == preds[ipred], ]
+  prey <- pred.diet[, Rprey]
+  for(iprey in 1:length(prey)){
+    GB.params$diet[Group == prey[iprey], Pred := pred.diet[Rprey == prey[iprey], preyper]]
+  }
+  setnames(GB.params$diet, 'Pred', preds[ipred])
+  GB.params$diet[]
+}
+
+#Biological Parameters
+
+check.rpath.params(GB.params)
