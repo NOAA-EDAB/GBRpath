@@ -63,7 +63,7 @@ prey[PYCOMNAM == 'AMERICAN LOBSTER',        RPATH := 'AmLobster']
 prey[PYCOMNAM == 'KRILL',                   RPATH := 'Krill'] 
 prey[PYCOMNAM == 'EMPTY STOMACH',           RPATH := 'Empty']
 prey[PYCOMNAM == 'BLOWN STOMACH',           RPATH := 'Blown']
-prey[PYCOMNAM == 'NORTHERN SHRIMP',         RPATH := 'OtherShrimp'] #Change to NShrimp for GOM
+prey[PYCOMNAM == 'NORTHERN SHRIMP',         RPATH := 'OtherShrimps'] #Change to NShrimp for GOM
 prey[PYCOMNAM == 'HORSESHOE CRAB',          RPATH := 'Megabenthos']
 #Easy many to ones
 prey[PYCOMNAM %in% c('SEA SCALLOP', 'SEA SCALLOP VISCERA'), RPATH := 'AtlScallop']
@@ -87,7 +87,7 @@ prey[is.na(RPATH) & Collcom %in% c('CANCER CRABS', 'DECAPODA CRAB', 'DECAPODA',
 prey[is.na(RPATH) & AnalCom == 'SQUIDS, OCTOPUS', RPATH := 'OtherCephalopods']
 prey[is.na(RPATH) & Collcom %in% c('JELLYFISH', 'CNIDARIA', 'HYDROZOA'), RPATH := 'GelZooplankton']       
 prey[is.na(RPATH) & Collcom %in% c('PANDALIDAE', 'PENAEIDAE', 'DECAPODA SHRIMP', 
-                                   'CRAGONID SHRIMP'), RPATH := 'OtherShrimp']
+                                   'CRAGONID SHRIMP'), RPATH := 'OtherShrimps']
 
 #Macrobenthos
 prey[is.na(RPATH) & MODCAT == 'BENINV', RPATH := 'Macrobenthos']
