@@ -129,3 +129,8 @@ GB <- rpath(GB.params, 'Georges Bank', 1)
 #Save initial balance for PreBal
 save(GB, file = file.path(data.dir, 'Unbalanced_GB.RData'))
 save(GB.params, file = file.path(data.dir, 'Input_GB_params.RData'))
+
+#look at worst EEs first
+output.GB <- as.data.table(write.Rpath(GB))
+setkey(output.GB, EE)
+
