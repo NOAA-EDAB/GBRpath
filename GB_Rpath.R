@@ -69,6 +69,8 @@ for(igroup in GB.bioparams[, RPATH]){
   GB.params$model[Group == igroup, PB := GB.bioparams[RPATH == igroup, PB]]
   GB.params$model[Group == igroup, QB := GB.bioparams[RPATH == igroup, QB]][]
 }
+#Phytoplankton needs to be NA
+GB.params$model[Group == 'Phytoplankton', QB := NA]
 
 #Load landings
 load(file.path(data.dir, 'GB_landings.RData'))
@@ -120,6 +122,10 @@ for(ipred in 1:length(preds)){
   GB.params$diet[]
 }
 
-
-
 check.rpath.params(GB.params)
+
+#Balance the model--------------------------------------------------------------
+GB <- rpath(GB.params, 'Georges Bank', 1)
+#Save initial balance for PreBal
+save(GB, file = file.path(data.dir, 'Unbalanced_GB.RData'))
+save(GB.params, file = file.path(data.dir, 'Input_GB_params.RData'))
