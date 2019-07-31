@@ -1,35 +1,66 @@
-#PreBal functions
-library(data.table)
-classify <- function(groups, class1, class2){
-  #Available classifications
-  class.type.1 <- c('Dem', 'MedPel', 'SmPel', 'Zoo', 'Phyto', 'BenInvert', 'Shark', 'HMS',
-                    'Mammal', 'Whale', 'Bird')
-  class.type.2 <- c('Flat', 'Round')
-  for(iclass in 1:length(class1)){
-    if(!class1[iclass] %in% class.type.1){
-      errorCondition(message = paste(class1[iclass] 'not valid'))
-    }
-  }
-  out <- data.table(Group = groups, Class1 = class1, Class2 = class2)
-  return(out)
+#Prebalance for Georges Bank
+#SML
+
+#User parameters----------------------------------------------------------------
+if(Sys.info()['sysname']=="Windows"){
+  main.dir <- "C:/Users/Sean.Lucey/Desktop/GBRpath"
 }
 
-prebal <- function(rpath, )
-  #For now REco is the same as rpath
-x <- copy(REco)
-output.table <- data.table(Group = x$Group, type = x$type, TL = x$TL, 
-                           Biomass = x$Biomass)
-living.table <- output.table[type < 2, ]
-setkey(living.table, TL)
+if(Sys.info()['sysname']=="Linux"){
+  main.dir  <- "/home/slucey/slucey/GBRpath"
+}
 
-max.bio <- max(living.table[, Biomass])
-min.bio <- min(living.table[, Biomass])
-group.num <- 1:nrow(living.table)
+data.dir <- file.path(main.dir, 'data')
 
+#Required packages--------------------------------------------------------------
+library(data.table)
+
+#-------------------------------------------------------------------------------
+#User created functions
+
+#-------------------------------------------------------------------------------
+#Load in pre balanced model
+load(file.path(data.dir, 'Input_GB_params.RData'))
+load(file.path(data.dir, 'Unbalanced_GB.RData'))
+unbal.GB <- as.data.table(write.Rpath(GB))
+
+#Need to classify each group
+spclass.GB <- data.table(Group = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
+                                   'Sharks', 'AtlHerring', 'AtlMackerel', 'Butterfish', 
+                                   'SmPelagics', 'Mesopelagics', 'OtherPelagics', 'Cod', 
+                                   'Haddock', 'Goosefish', 'OffHake', 'SilverHake', 
+                                   'RedHake', 'WhiteHake', 'Redfish', 'Pollock', 'OceanPout', 
+                                   'BlackSeaBass', 'Bluefish', 'Scup', 'OtherDemersals', 
+                                   'SouthernDemersals', 'Fourspot', 'SummerFlounder', 
+                                   'AmPlaice', 'Windowpane', 'WinterFlounder', 'WitchFlounder', 
+                                   'YTFlounder', 'OtherFlatfish', 'SmFlatfishes', 'SpinyDogfish', 
+                                   'SmoothDogfish', 'Barndoor', 'WinterSkate', 'LittleSkate', 
+                                   'OtherSkates', 'Illex', 'Loligo', 'OtherCephalopods', 
+                                   'AmLobster', 'Macrobenthos', 'Megabenthos', 'AtlScallop', 
+                                   'Clams', 'OtherShrimps', 'Krill', 'Micronekton', 
+                                   'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 
+                                   'Phytoplankton'), 
+                         type = c('Bird', 'Mammal', 'Whale', 'Whale', 'HMS', 'Shark',
+                                  rep('Forage', 6), rep('DemRound', 15), 
+                                  rep('DemFlat', 9), 'DemRound', 'DemRound', 
+                                  rep('Dem', 4), rep('PelInvert', 3), rep('BenInvert', 5),
+                                  rep('PelInvert', 3), rep('Zoop', 3), 'Phyto'))
+spclass.GB[type %like% 'Round', subtype := 'Round']
+spclass.GB[type %like% 'Flat',  subtype := 'Flat']
+spclass.GB[type %like% 'Dem',   type := 'Demersal']
+
+living.GB <- unbal.GB[type < 2, list(Group, Biomass, TL)]
+
+#Biomass Across Taxa (Criteria 1)
+#Biomass Range
+max.bio <- max(living.GB[, Biomass])
+min.bio <- min(living.GB[, Biomass])
 bio.mag <- round(log(max.bio, base = 10)) - round(log(min.bio, base = 10))
-bio.mod <- lm(log(living.table[, Biomass], base = 10) ~ group.num)
 
-plot(living.table[, Biomass], log = "y")
+#Slope of Biomass
+bio.mod <- lm(log(living.GB[, Biomass], base = 10) ~ living.GB[, TL])
+
+plot(living.GB[, list(TL, Biomass)], log = "y")
 abline(bio.mod)
 #+- 1 Standard Error
 std <- coef(summary(bio.mod))[, 2]
