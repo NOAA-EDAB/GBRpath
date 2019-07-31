@@ -445,21 +445,6 @@ setnames(smpel, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, smpel))
 
-ceph <- data.table(EMAX = c('Large Copepods', 'Micronekton', 'Macrobenthos- crustaceans',
-                            'Macrobenthos- other', 'Shrimp et al.', 'Larval-juv fish- all',
-                            'Small Pelagics- commercial', 'Small Pelagics- other',
-                            'Small Pelagics- squid', 'Small Pelagics- anadromous'),
-                   DC = c(0.1290, 0.4560, 0.0990, 0.0180, 0.0110, 0.1760, 0.0160,
-                          0.0180, 0.0770, 0.0001))
-ceph <- merge(ceph, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
-ceph[, preyper := DC * Rpath.prop]
-#Need to sum many:1 EMAX:Rpath
-ceph <- ceph[, sum(preyper), by = RPATH]
-ceph[, Rpred := 'OtherCephalopods']
-setnames(ceph, c('RPATH', 'V1'), c('Rprey', 'preyper'))
-
-GB.diet.plus <- rbindlist(list(GB.diet.plus, ceph))
-
 shrimp <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Bacteria',
                               'Micronekton', 'Macrobenthos- crustaceans',
                               'Macrobenthos- other', 'Shrimp et al.', 'Discard',
@@ -584,6 +569,32 @@ setnames(micro, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, krill))
 GB.diet.plus <- rbindlist(list(GB.diet.plus, micro))
+
+#Illex, Loligo, and other cephalopods
+ceph <- data.table(EMAX = c('Large Copepods', 'Micronekton', 'Macrobenthos- crustaceans',
+                            'Macrobenthos- other', 'Shrimp et al.', 'Larval-juv fish- all',
+                            'Small Pelagics- commercial', 'Small Pelagics- other',
+                            'Small Pelagics- squid', 'Small Pelagics- anadromous'),
+                   DC = c(0.1290, 0.4560, 0.0990, 0.0180, 0.0110, 0.1760, 0.0160,
+                          0.0180, 0.0770, 0.0001))
+ceph <- merge(ceph, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
+#Fix NAs
+ceph[EMAX == 'Small Pelagics- anadromous', RPATH := 'SmPelagics'] #no river herring in this model
+ceph[EMAX == 'Small Pelagics- anadromous', Rpath.prop := 1]
+ceph[, preyper := DC * Rpath.prop]
+#Need to sum many:1 EMAX:Rpath
+ceph <- ceph[, sum(preyper), by = RPATH]
+#3 Rpath groups
+illex  <- copy(ceph[, Rpred := 'Illex'][])
+loligo <- copy(ceph[, Rpred := 'Loligo'][])
+ceph[, Rpred := 'OtherCephalopods']
+setnames(ceph, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+setnames(illex, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+setnames(loligo, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+
+GB.diet.plus <- rbindlist(list(GB.diet.plus, illex))
+GB.diet.plus <- rbindlist(list(GB.diet.plus, loligo))
+GB.diet.plus <- rbindlist(list(GB.diet.plus, ceph))
 
 #Need to merge multiple EMAX groups for macrobenthos and mesozooplankton
 #Weight DCs by biomass
