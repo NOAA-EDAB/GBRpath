@@ -239,10 +239,54 @@ from EMAX and should be agood approximation.
 
 ## PreBal
 
+Initial balance saw 45/60 groups with EEs > 1.  Going to use PreBal to identify issues.
+
 Coding up the PreBal routines from @link_prebal_2010.  Some of the checks are easy
 to make general.  Some of them require knowing the classification of the species
 node (i.e. demersal flatfish or small pelagic).  Will hard code for this project
 and revisit at a later date.
+
+# Criteria 1 - Biomass across Taxa
+Biomass range - 6 orders of magnitude <span style="color:green">**GOOD**</span>
+
+Slope of biomass - -0.31 <span style = "color:red">**BAD**</span>
+Although this could be due to Georges being an overfished system.  Still I think I
+need to apply q's from EMAX.  There are 9 groups in the system with F's greater than
+1. New slope is -0.30 so still <span style = "color:red">**BAD**</span>.
+
+# Criteria 2 - Biomass Ratios
+*Predators to Prey*
+
+Ratio | Value | Outcome
+----- | ----- | ------
+Sm pelagics:Zooplankton          | 0.69 | <span style = "color:green">**GOOD**</span>
+Zooplankton:Phytoplankton        | 0.94 | <span style = "color:orange">**OK**</span>
+Sm Pelagics:Phytoplankton        | 0.66 | <span style = "color:green">**GOOD**</span>
+Demersals:Benthic Inverts        | 0.14 | <span style = "color:green">**GOOD**</span>
+Sharks/HMS:Sm Pelagics           | 0.002| <span style = "color:green">**GOOD**</span>
+Marine Mammals/Birds:Sm Pelagics | 0.04 | <span style = "color:green">**GOOD**</span>
+Whales:Zooplankton               | 0.02 | <span style = "color:green">**GOOD**</span>
+
+*Energy Pathways*
+
+Ratio | Value | Outcome
+----- | ----- | ------
+Demersal:Pelagic               | 3.23   | <span style = "color:orange">**OK**</span>
+Flatfish:Roundfish             | 1.68   | <span style = "color:green">**GOOD**</span>
+Sm Pelagics:All fish           | 0.24   | <span style = "color:green">**GOOD**</span>
+HMS:All fish                   | 5.3e-4 | <span style = "color:green">**GOOD**</span>
+Sharks:All fish                | 1.9e-5 | <span style = "color:green">**GOOD**</span>
+Demersals:All fish             | 0.76   | <span style = "color:green">**GOOD**</span>
+Macroinverts:All inverts       | 0.87   | <span style = "color:orange">**OK**</span>
+Gelatinous ZP:All inverts      | 0.01   | <span style = "color:green">**GOOD**</span>
+Shrimp/micronekton:All inverts | 0.02   | <span style = "color:green">**GOOD**</span>
+Other Zooplankton:All inverts  | 0.06   | <span style = "color:green">**GOOD**</span>
+Zooplankton:Benthos            | 0.06   | <span style = "color:orange">**OK**</span>
+Benthivores:Piscivores         | 4.31   | <span style = "color:orange">**OK**</span>
+Benthivores:Planktivores       | 2.63   | <span style = "color:orange">**OK**</span>
+Planktivores:Piscivores        | 1.64   | <span style = "color:green">**GOOD**</span>
+<TL3:TL4+                      | 6.86   | <span style = "color:orange">**OK**</span>
+
 
 Moving forward dynamically
 ===

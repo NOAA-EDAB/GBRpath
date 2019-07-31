@@ -1009,8 +1009,151 @@ summary {
 </div>
 <div id="prebal" class="section level2">
 <h2>PreBal</h2>
+<p>Initial balance saw 45/60 groups with EEs &gt; 1. Going to use PreBal to identify issues.</p>
 <p>Coding up the PreBal routines from <span class="citation">Link (2010)</span>. Some of the checks are easy to make general. Some of them require knowing the classification of the species node (i.e. demersal flatfish or small pelagic). Will hard code for this project and revisit at a later date.</p>
 </div>
+</div>
+<div id="criteria-1---biomass-across-taxa" class="section level1">
+<h1>Criteria 1 - Biomass across Taxa</h1>
+<p>Biomass range - 6 orders of magnitude <span style="color:green"><strong>GOOD</strong></span></p>
+<p>Slope of biomass - -0.31 <span style="color:red"><strong>BAD</strong></span> Although this could be due to Georges being an overfished system. Still I think I need to apply q’s from EMAX. There are 9 groups in the system with F’s greater than 1. New slope is -0.30 so still <span style="color:red"><strong>BAD</strong></span>.</p>
+</div>
+<div id="criteria-2---biomass-ratios" class="section level1">
+<h1>Criteria 2 - Biomass Ratios</h1>
+<p><em>Predators to Prey</em></p>
+<table>
+<thead>
+<tr class="header">
+<th>Ratio</th>
+<th>Value</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Sm pelagics:Zooplankton</td>
+<td>0.69</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="even">
+<td>Zooplankton:Phytoplankton</td>
+<td>0.94</td>
+<td><span style="color:orange"><strong>OK</strong></span></td>
+</tr>
+<tr class="odd">
+<td>Sm Pelagics:Phytoplankton</td>
+<td>0.66</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="even">
+<td>Demersals:Benthic Inverts</td>
+<td>0.14</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="odd">
+<td>Sharks/HMS:Sm Pelagics</td>
+<td>0.002</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="even">
+<td>Marine Mammals/Birds:Sm Pelagics</td>
+<td>0.04</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="odd">
+<td>Whales:Zooplankton</td>
+<td>0.02</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+</tbody>
+</table>
+<p><em>Energy Pathways</em></p>
+<table>
+<thead>
+<tr class="header">
+<th>Ratio</th>
+<th>Value</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Demersal:Pelagic</td>
+<td>3.23</td>
+<td><span style="color:orange"><strong>OK</strong></span></td>
+</tr>
+<tr class="even">
+<td>Flatfish:Roundfish</td>
+<td>1.68</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="odd">
+<td>Sm Pelagics:All fish</td>
+<td>0.24</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="even">
+<td>HMS:All fish</td>
+<td>5.3e-4</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="odd">
+<td>Sharks:All fish</td>
+<td>1.9e-5</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="even">
+<td>Demersals:All fish</td>
+<td>0.76</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="odd">
+<td>Macroinverts:All inverts</td>
+<td>0.87</td>
+<td><span style="color:orange"><strong>OK</strong></span></td>
+</tr>
+<tr class="even">
+<td>Gelatinous ZP:All inverts</td>
+<td>0.01</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="odd">
+<td>Shrimp/micronekton:All inverts</td>
+<td>0.02</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="even">
+<td>Other Zooplankton:All inverts</td>
+<td>0.06</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="odd">
+<td>Zooplankton:Benthos</td>
+<td>0.06</td>
+<td><span style="color:orange"><strong>OK</strong></span></td>
+</tr>
+<tr class="even">
+<td>Benthivores:Piscivores</td>
+<td>4.31</td>
+<td><span style="color:orange"><strong>OK</strong></span></td>
+</tr>
+<tr class="odd">
+<td>Benthivores:Planktivores</td>
+<td>2.63</td>
+<td><span style="color:orange"><strong>OK</strong></span></td>
+</tr>
+<tr class="even">
+<td>Planktivores:Piscivores</td>
+<td>1.64</td>
+<td><span style="color:green"><strong>GOOD</strong></span></td>
+</tr>
+<tr class="odd">
+<td>&lt;TL3:TL4+</td>
+<td>6.86</td>
+<td><span style="color:orange"><strong>OK</strong></span></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="moving-forward-dynamically" class="section level1">
 <h1>Moving forward dynamically</h1>
