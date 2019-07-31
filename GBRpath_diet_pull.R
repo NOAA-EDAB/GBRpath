@@ -200,8 +200,8 @@ GB.fh <- merge(GB.fh, rpath.code, by = 'SVSPP', all.x = T)
 setnames(GB.fh, 'RPATH', 'Rpred')
 
 #Stomach table
-stomachs <- unique(GB.fh[, list(CRUISE6, STRATUM, STATION, SVSPP, PDID, Rpred)])
-table(stomachs[ , Rpred])
+#stomachs <- unique(GB.fh[, list(CRUISE6, STRATUM, STATION, SVSPP, PDID, Rpred)])
+#table(stomachs[ , Rpred])
 
 #Assign Rpath codes to prey
 GB.fh <- merge(GB.fh, prey[, list(PYNAM, RPATH)], by = 'PYNAM', all.x = T)
@@ -332,9 +332,10 @@ balwhale <- data.table(EMAX = c('Large Copepods', 'Micronekton', 'Small Pelagics
                               0.03142953, 0.01532696, 0.01102390, 0.04969525))
 balwhale <- merge(balwhale, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX')
 balwhale[, preyper := DC * Rpath.prop]
-balwhale[, c('EMAX', 'DC', 'Rpath.prop') := NULL]
+#Need to sum many:1 EMAX:Rpath
+balwhale <- balwhale[, sum(preyper), by = RPATH]
 balwhale[, Rpred := 'BalWhale']
-setnames(balwhale, 'RPATH', 'Rprey')
+setnames(balwhale, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 tooth <- data.table(EMAX = c('Micronekton', 'Macrobenthos- crustaceans',
                              'Macrobenthos- molluscs', 'Shrimp et al.', 
@@ -346,9 +347,10 @@ tooth <- data.table(EMAX = c('Micronekton', 'Macrobenthos- crustaceans',
                            0.045656540, 0.177298600))
 tooth <- merge(tooth, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX')
 tooth[, preyper := DC * Rpath.prop]
-tooth[, c('EMAX', 'DC', 'Rpath.prop') := NULL]
+#Need to sum many:1 EMAX:Rpath
+tooth <- tooth[, sum(preyper), by = RPATH]
 tooth[, Rpred := 'ToothWhale']
-setnames(tooth, 'RPATH', 'Rprey')
+setnames(tooth, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(balwhale, tooth))
 
@@ -368,9 +370,10 @@ birds <- merge(birds, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX
 birds[EMAX == 'Small Pelagics- anadromous', RPATH := 'SmPelagics'] #no river herring in this model
 birds[EMAX == 'Small Pelagics- anadromous', Rpath.prop := 1]
 birds[, preyper := DC * Rpath.prop]
-birds[, c('EMAX', 'DC', 'Rpath.prop') := NULL]
+#Need to sum many:1 EMAX:Rpath
+birds <- birds[, sum(preyper), by = RPATH]
 birds[, Rpred := 'Seabirds']
-setnames(birds, 'RPATH', 'Rprey')
+setnames(birds, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, birds))
 
@@ -384,9 +387,10 @@ seals <- data.table(EMAX = c('Micronekton', 'Macrobenthos- crustaceans',
                            0.024498740, 0.248609400))
 seals <- merge(seals, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX')
 seals[, preyper := DC * Rpath.prop]
-seals[, c('EMAX', 'DC', 'Rpath.prop') := NULL]
+#Need to sum many:1 EMAX:Rpath
+seals <- seals[, sum(preyper), by = RPATH]
 seals[, Rpred := 'Seals']
-setnames(seals, 'RPATH', 'Rprey')
+setnames(seals, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, seals))
 
@@ -396,9 +400,10 @@ hms <- data.table(EMAX = c('Gelatinous Zooplankton', 'Small Pelagics- commercial
                   DC = c(0.103, 0.135, 0.740, 0.022))
 hms <- merge(hms, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX')
 hms[, preyper := DC * Rpath.prop]
-hms[, c('EMAX', 'DC', 'Rpath.prop') := NULL]
+#Need to sum many:1 EMAX:Rpath
+hms <- hms[, sum(preyper), by = RPATH]
 hms[, Rpred := 'HMS']
-setnames(hms, 'RPATH', 'Rprey')
+setnames(hms, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, hms))
 
