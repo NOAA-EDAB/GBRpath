@@ -153,14 +153,24 @@ setkey(output.GB, EE)
 
 barplot(output.GB[type < 2, EE], log = 'y', names.arg = output.GB[type < 2, Group],
         cex.names = 0.3, las = T)
-abline(h=log(1.1), col = 'red')
+abline(h=1, col = 'red')
 #Balancing Act
 # 1 - Added EMAX q's to bring up most biomass values
 # 2 - Changed Other Flatfish in diets to SmFlatfishes
-diet.cols <- colnames(GB.params.2$diet)[which(colnames(GB.params.2$diet) != 'Group')]
+ofrac <- GB.params.2$model[Group == 'OtherFlatfish', Biomass] / 
+  (GB.params.2$model[Group == 'OtherFlatfish', Biomass] + 
+     GB.params.2$model[Group == 'SmFlatfishes', Biomass])
 for(i in 2:ncol(GB.params.2$diet)){
-  setnames(GB.params.2$diet, colnames(GB.params.2$diet)[i], 'switch')
+  old.name <- colnames(GB.params.2$diet)[i]
+  setnames(GB.params.2$diet, old.name, 'switch')
   off.diet <- GB.params.2$diet[Group == 'OtherFlatfish', switch]
-  GB.params.2$diet[Group == 'SmFlatfishes', switch := switch + off.diet]
-  
+  to.oth <- off.diet * ofrac
+  to.sm  <- off.diet - to.oth
+  GB.params.2$diet[Group == 'SmFlatfishes', switch := switch + to.sm]
+  GB.params.2$diet[Group == 'OtherFlatfish', switch := to.oth]
+  setnames(GB.params.2$diet, 'switch', old.name)
 }
+
+GB.2 <- rpath(GB.params.2, 'Georges Bank', 1)
+output.GB <- as.data.table(write.Rpath(GB.2))
+setkey(output.GB, EE)
