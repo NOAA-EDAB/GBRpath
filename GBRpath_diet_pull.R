@@ -572,6 +572,8 @@ GB.diet.plus <- rbindlist(list(GB.diet.plus, krill))
 GB.diet.plus <- rbindlist(list(GB.diet.plus, micro))
 
 #Illex, Loligo, and other cephalopods
+#Need to drop illex and loligo from diet pull
+GB.diet <- GB.diet[!Rpred %in% c('Illex', 'Loligo'), ]
 ceph <- data.table(EMAX = c('Large Copepods', 'Micronekton', 'Macrobenthos- crustaceans',
                             'Macrobenthos- other', 'Shrimp et al.', 'Larval-juv fish- all',
                             'Small Pelagics- commercial', 'Small Pelagics- other',
