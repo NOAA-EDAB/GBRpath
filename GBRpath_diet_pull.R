@@ -238,14 +238,15 @@ GB.cluster[, c('PYAMTW', 'yij') := NULL]
 #Calculate weighted contribution
 GB.cluster[, Miu := Mi * mu]
 GB.cluster[, rhat := Miu / sumMi]
+GB.cluster[, sum.rhat := sum(rhat), by = .(Rpred, Rprey)]
 
 #Grab unique rows
-GB.diet <- unique(GB.cluster[, list(Rpred, Rprey, rhat)], by = c('Rpred', 'Rprey'))
+GB.diet <- unique(GB.cluster[, list(Rpred, Rprey, sum.rhat)], by = c('Rpred', 'Rprey'))
 
 #Convert to percentages
-GB.diet[, tot.preyw := sum(rhat), by = Rpred]
-GB.diet[, preyper := rhat / tot.preyw]
-GB.diet[, c('rhat', 'tot.preyw') := NULL]
+GB.diet[, tot.preyw := sum(sum.rhat), by = Rpred]
+GB.diet[, preyper := sum.rhat / tot.preyw]
+GB.diet[, c('sum.rhat', 'tot.preyw') := NULL]
 setkey(GB.diet, Rpred, preyper)
 
 #Add diet for groups not surveyed
