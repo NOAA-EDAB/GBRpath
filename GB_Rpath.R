@@ -183,68 +183,6 @@ misplaced <- GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish'
 GB.params$diet[Group == 'Micronekton', RedHake := RedHake + misplaced]
 GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish', 
                             'SpinyDogfish', 'OtherSkates'), RedHake := 0]
-# 2.C - Fix dogfish diet - Not eating sharks. GelZooplankton way too low
-DC.buchheister <- data.table(Group = c('Gelatinous zooplankton', 'Micronekton', 
-                                       'Macrobenthos - polychaetes', 'Macrobenthos - crustaceans',
-                                       'Macrobenthos - molluscs', 'Macrobenthos - other',
-                                       'Megabenthos - filterers', 'Megabenthos - other', 
-                                       'Shrimp and Similar Species', 'Mesopelagics',
-                                       'Atlantic herring', 'Alosines', 'Atlantic menhaden (S)',
-                                       'Atlantic menhaden (M)', 'Atlantic menhaden (L)', 
-                                       'Anchovies', 'Atlantic mackerel', 'Squid', 
-                                       'Butterfish', 'Small pelagic - other', 'Striped bass (S)',
-                                       'SpinyDogfish (S)', 'Atlantic Cod (S)', 'Haddock',
-                                       'Hake', 'Atlantic croaker', 'Yellowtail flounder (S)',
-                                       'SummerFlounder (S)', 'Skates', 
-                                       'Demersal benthivores - other', 'Demersal piscivores - other',
-                                       'Demersal omnivores - other'),
-                             DC = c(0.1391, 0.0183, 0.0049, 0.0171, 0.0684, 0.0037,
-                                    0.0818, 0.0195, 0.0061, 0.0012, 0.1178, 0.0073,
-                                    0.0037, 0.0024, 0.0012, 0.0134, 0.1101, 0.1123,
-                                    0.0183, 0.0720, 0.0012, 0.0012, 0.0012, 0.0012,
-                                    0.0598, 0.0012, 0.0012, 0.0012, 0.0117, 0.0696,
-                                    0.0122, 0.0195),
-                             RPATH = c('GelZooplankton', 'Micronekton', 'Macrobenthos',
-                                       'Macrobenthos', 'Macrobenthos', 'Macrobenthos',
-                                       'AtlScallop', 'AmLobster', 'OtherShrimps', 
-                                       'Mesopelagics', 'AtlHerring', 'SmPelagics',
-                                       'OtherPelagics', 'OtherPelagics', 'OtherPelagics',
-                                       'SmPelagics', 'AtlMackerel', 'Illex', 'Butterfish',
-                                       'SmPelagics', 'OtherPelagics', 'SpinyDogfish',
-                                       'Cod', 'Haddock', 'SilverHake', 'SouthernDemersals',
-                                       'YTFlounder', 'SummerFlounder', 'LittleSkate',
-                                       'OtherDemersals', 'OtherDemersals', 'OtherDemersals'))
-DC.buchheister <- DC.buchheister[, sum(DC), by = RPATH]
-setnames(DC.buchheister, 'V1', 'DC')
-
-split <- GB.params$model[Group %in% c('AtlScallop', 'Clams', 'AmLobster', 'Megabenthos',
-                                      'Illex', 'Loligo', 'OtherCephalopods', 'SilverHake',
-                                      'RedHake', 'Goosefish', 'Fourspot', 'AmPlaice',
-                                      'Windowpane', 'WinterFlounder', 'WitchFlounder',
-                                      'SmFlatfishes'), .(Group, Biomass)]
-split[, Class := c('Dem', 'Hake', 'Hake', rep('Dem', 6), rep('Squid', 3), 'Ben',
-                   'Ben', 'Filter', 'Filter')]
-split[, Class.tot := sum(Biomass), by = Class]
-split[, Class.prop := Biomass / Class.tot]
-
-DC.buchheister[RPATH == 'OtherDemersals', Class := 'Dem']
-DC.buchheister[RPATH == 'SilverHake',     Class := 'Hake']
-DC.buchheister[RPATH == 'Illex',          Class := 'Squid']
-DC.buchheister[RPATH == 'AmLobster',      Class := 'Ben']
-DC.buchheister[RPATH == 'AtlScallop',     Class := 'Filter']
-
-DC.buchheister <- merge(DC.buchheister, split[, .(Group, Class.prop, Class)], by = 'Class', all.x = T)
-DC.buchheister[!is.na(Class.prop), DC := DC * Class.prop]
-DC.buchheister[!is.na(Class.prop), RPATH := Group]
-
-prey <- DC.buchheister[, RPATH]
-
-#Zero out old diet
-GB.params$diet[, SpinyDogfish := NA]
-#Add new diet
-for(iprey in 1:length(prey)){
-  GB.params$diet[Group == prey[iprey], SpinyDogfish := DC.buchheister[RPATH == prey[iprey], DC]]
-}
 
 # 3 - American Plaice EE = 1210 - F was 0.44 on AmPlaice - 
 # 3.A - Reduce fishing on AmPlaice
@@ -253,8 +191,16 @@ GB.params$model[Group == 'AmPlaice', OtterTrawlLg      := OtterTrawlLg      / 2]
 GB.params$model[Group == 'AmPlaice', OtterTrawlSm.disc := OtterTrawlSm.disc / 2]
 GB.params$model[Group == 'AmPlaice', OtterTrawlLg.disc := OtterTrawlLg.disc / 2]
 
-# 3.B - Double Biomass
-GB.params$model[Group == 'AmPlaice', Biomass := Biomass * 3]
+# 3.B - Increase Biomass
+GB.params$model[Group == 'AmPlaice', Biomass := Biomass * 4]
+
+# 3.C - Increase production
+GB.params$model[Group == 'AmPlaice', PB := 0.04]
+
+# 4 - OceanPout
+# 4.A - reduce Consumption by Silver Hake
+oldval <- GB.params$model[Group == 'SilverHake', QB]
+GB.params$model[Group == 'SilverHake', QB := 2.6]
 
 #Check progress
 GB <- rpath(GB.params, 'Georges Bank', 1)
@@ -267,6 +213,17 @@ barplot(output.GB[type < 2, EE], log = 'y', names.arg = output.GB[type < 2, Grou
         cex.names = 0.3, las = T)
 abline(h=1, col = 'red')
 
+unbal.GB <- as.data.table(write.Rpath(GB))
+living.GB <- unbal.GB[type < 2, list(Group, Biomass, Removals, TL, PB, QB)]
+bio.mod <- lm(log(living.GB[, Biomass], base = 10) ~ living.GB[, TL])
+
+plot(living.GB[, list(TL, Biomass)], log = "y", typ = 'n')
+text(living.GB[, TL], living.GB[, Biomass], living.GB[, Group], cex = .5)
+abline(bio.mod)
+#+- 1 Standard Error
+std <- coef(summary(bio.mod))[, 2]
+abline(a = coef(bio.mod)[1] + std[1], b = coef(bio.mod)[2] + std[2], lty = 2)
+abline(a = coef(bio.mod)[1] - std[1], b = coef(bio.mod)[2] - std[2], lty = 2)
 
 #Save initial balance for PreBal
 #save(GB.2, file = file.path(data.dir, 'Unbalanced_GB.RData'))
