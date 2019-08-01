@@ -67,7 +67,8 @@ bio.mag
 #Slope of Biomass
 bio.mod <- lm(log(living.GB[, Biomass], base = 10) ~ living.GB[, TL])
 
-plot(living.GB[, list(TL, Biomass)], log = "y")
+plot(living.GB[, list(TL, Biomass)], log = "y", typ = 'n')
+text(living.GB[, TL], living.GB[, Biomass], living.GB[, Group], cex = .5)
 abline(bio.mod)
 #+- 1 Standard Error
 std <- coef(summary(bio.mod))[, 2]
@@ -117,7 +118,9 @@ living.GB[TL <= 3, sum(Biomass)] / living.GB[TL >= 4, sum(Biomass)]
 cons.mod <- lm(log(living.GB[Group != 'Phytoplankton', QB], base = 10) ~ 
                  living.GB[Group != 'Phytoplankton', TL])
 
-plot(living.GB[Group != 'Phytoplankton', list(TL, QB)], log = "y")
+plot(living.GB[Group != 'Phytoplankton', list(TL, QB)], log = "y", typ = 'n')
+text(living.GB[Group != 'Phytoplankton', TL], living.GB[Group != 'Phytoplankton', QB], 
+     living.GB[, Group], cex = .5)
 abline(cons.mod)
 #+- 1 Standard Error
 std <- coef(summary(cons.mod))[, 2]
@@ -130,7 +133,8 @@ cons.slope
 #PB
 prod.mod <- lm(log(living.GB[, PB], base = 10) ~ living.GB[, TL])
 
-plot(living.GB[, list(TL, PB)], log = "y")
+plot(living.GB[, list(TL, PB)], log = "y", typ = 'n')
+text(living.GB[, TL], living.GB[, PB], living.GB[, Group], cex = .5)
 abline(prod.mod)
 #+- 1 Standard Error
 std <- coef(summary(prod.mod))[, 2]
