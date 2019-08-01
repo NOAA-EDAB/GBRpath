@@ -20,7 +20,7 @@ channel <- odbcConnect('sole', uid, pwd)
 
 #Required packages--------------------------------------------------------------
 library(Survdat); library(data.table); library(rgdal); library(fitdistrplus)
-load(file.path(data.dir, 'SOE_species_list.RData'))
+load(file.path(data.dir, 'Species_codes.RData'))
 
 #User functions-----------------------------------------------------------------
 #Convert output to text for RODBC query
@@ -97,7 +97,7 @@ survdat <- merge(survdat, catch, by = key(survdat), all = T)
 survdat <- survdat[!is.na(LON), ]
 
 #Assign Rpath species designations
-svspp.rpath <- unique(species[!is.na(SVSPP), list(SVSPP, RPATH)])
+svspp.rpath <- unique(spp[!is.na(SVSPP), list(SVSPP, RPATH, Fall.q)])
 
 survdat <- merge(survdat, svspp.rpath, by = 'SVSPP', all.x = T)
 
@@ -132,15 +132,23 @@ mean.swept[, prop.swept := A / mean.swept]
 GB.mean <- merge(GB.mean, mean.swept[, list(YEAR, prop.swept)], by = 'YEAR')
 GB.mean[, swept.bio := strat.biomass * prop.swept]
 
+#Add q's from EMAX
+emax.q <- svspp.rpath[, mean(Fall.q), by = RPATH]
+setnames(emax.q, 'V1', 'q')
+GB.mean <- merge(GB.mean, emax.q, by = 'RPATH', all.x = T)
+GB.mean[, expand.bio := swept.bio / q]
+
 #Calculate total estimate variance
 GB.mean[, swept.var := prop.swept^2 * biomass.var]
 
 #Input for GBRpath
 #Biomass needs to be in mt km^-2
 #Convert swept.bio to metric tons
-GB.mean[, swept.bio.mt := swept.bio * 10^-3]
-
-GB.biomass <- GB.mean[YEAR %in% 2013:2015, mean(swept.bio.mt) / A, by = RPATH]
+GB.mean[, swept.bio.mt  := swept.bio * 10^-3]
+GB.mean[, expand.bio.mt := expand.bio * 10^-3]
+#GB.biomass <- GB.mean[YEAR %in% 2013:2015, mean(swept.bio.mt) / A, by = RPATH]
+#setnames(GB.biomass, 'V1', 'Biomass')
+GB.biomass <- GB.mean[YEAR %in% 2013:2015, mean(expand.bio.mt) / A, by = RPATH]
 setnames(GB.biomass, 'V1', 'Biomass')
 
 #Shellfish surveys--------------------------------------------------------------
@@ -320,8 +328,7 @@ emax <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS
 GB.biomass <- rbindlist(list(GB.biomass, emax))
 
 #Merge raw biomass data to use for biomass accumulation
-setcolorder(GB.scall.mean, colnames(GB.mean))
-GB.raw <- rbindlist(list(GB.mean, GB.scall.mean))
+GB.raw <- rbindlist(list(GB.mean, GB.scall.mean), fill = T)
 
 save(GB.biomass, file = file.path(data.dir, 'GB_biomass.RData'))
 save(GB.raw,     file = file.path(data.dir, 'GB_Biomass_raw.RData'))
