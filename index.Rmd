@@ -237,6 +237,10 @@ due to their size and position in the food web.  I use *OtherDemersals* for
 *OtherFlatfish*.  Those parameters were an average of the three demersal fish groups 
 from EMAX and should be agood approximation.
 
+Rediscovered the R scripts for getting information out of Ecobase.  I'm going to 
+get ballpark estimates from across other models.
+
+
 ## PreBal
 
 Initial balance saw 45/60 groups with EEs > 1.  Going to use PreBal to identify issues.
@@ -253,6 +257,8 @@ Slope of biomass - -0.31 <span style = "color:red">**BAD**</span>
 Although this could be due to Georges being an overfished system.  Still I think I
 need to apply q's from EMAX.  There are 9 groups in the system with F's greater than
 1. New slope is -0.30 so still <span style = "color:red">**BAD**</span>.
+
+Added q's from EMAX and new slope is -0.195 <span style="color:orange">**OK**</span>
 
 # Criteria 2 - Biomass Ratios
 *Predators to Prey*

@@ -1006,6 +1006,7 @@ summary {
 <p>While more indepth methods exist (see Aydin et al. 200x), for this model I pulled the numbers from FishBase (citation?). Actually the FishBase values are not complete and I’m not happy with some of them (PB the same for herring and cod!). Instead I am going to use <span class="citation">Buchheister et al. (2017)</span>. This is a shelf-wide disaggregated Ecopath model based off EMAX. Several groups have multiple stanzas so I will biomass weight their values. Their biological parameters were based on stock assessments.</p>
 <p>There were still many groups that were not broken out by <span class="citation">Buchheister et al. (2017)</span>. I used fishbase.org to pull their parameters where available. For PB I used <span class="math inline">\(1/Longevitywild\)</span>. QB was an average of the QBs on fishbase from different regions.</p>
 <p>After mapping all Buchheister groups and individual new groups, <em>SmFlatfish</em> and <em>OtherFlatfish</em> still did not have parameters. I used <em>SmPelagics</em> for <em>SmFlatfish</em> due to their size and position in the food web. I use <em>OtherDemersals</em> for <em>OtherFlatfish</em>. Those parameters were an average of the three demersal fish groups from EMAX and should be agood approximation.</p>
+<p>Rediscovered the R scripts for getting information out of Ecobase. I’m going to get ballpark estimates from across other models.</p>
 </div>
 <div id="prebal" class="section level2">
 <h2>PreBal</h2>
@@ -1017,6 +1018,7 @@ summary {
 <h1>Criteria 1 - Biomass across Taxa</h1>
 <p>Biomass range - 6 orders of magnitude <span style="color:green"><strong>GOOD</strong></span></p>
 <p>Slope of biomass - -0.31 <span style="color:red"><strong>BAD</strong></span> Although this could be due to Georges being an overfished system. Still I think I need to apply q’s from EMAX. There are 9 groups in the system with F’s greater than 1. New slope is -0.30 so still <span style="color:red"><strong>BAD</strong></span>.</p>
+<p>Added q’s from EMAX and new slope is -0.195 <span style="color:orange"><strong>OK</strong></span></p>
 </div>
 <div id="criteria-2---biomass-ratios" class="section level1">
 <h1>Criteria 2 - Biomass Ratios</h1>
