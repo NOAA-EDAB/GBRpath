@@ -127,10 +127,40 @@ check.rpath.params(GB.params)
 #Balance the model--------------------------------------------------------------
 GB <- rpath(GB.params, 'Georges Bank', 1)
 #Save initial balance for PreBal
-save(GB, file = file.path(data.dir, 'Unbalanced_GB.RData'))
-save(GB.params, file = file.path(data.dir, 'Input_GB_params.RData'))
+#save(GB, file = file.path(data.dir, 'Unbalanced_GB.RData'))
+#save(GB.params, file = file.path(data.dir, 'Input_GB_params.RData'))
 
 #look at worst EEs first
 output.GB <- as.data.table(write.Rpath(GB))
 setkey(output.GB, EE)
 
+#There are 9 groups with F > 1.  They are also some of the more unbalanced groups.
+#Going to remove the biomass estimate and put in an EE and rebalance.
+GB.params.2 <- copy(GB.params)
+notenoughbio <- c('AtlHerring', 'SmPelagics', 'Redfish', 'Pollock', 'SouthernDemersals', 
+                  'AmPlaice', 'WitchFlounder', 'OtherSkates', 'Megabenthos')
+GB.params.2$model[Group %in% notenoughbio, Biomass := NA]
+GB.params.2$model[Group %in% notenoughbio, EE := 0.8]
+
+GB.2 <- rpath(GB.params.2, 'Georges Bank v2', 1)
+#Save initial balance for PreBal
+#save(GB.2, file = file.path(data.dir, 'Unbalanced_GB.RData'))
+#save(GB.params.2, file = file.path(data.dir, 'Input_GB_params.RData'))
+
+#look at worst EEs first
+output.GB <- as.data.table(write.Rpath(GB.2))
+setkey(output.GB, EE)
+
+barplot(output.GB[type < 2, EE], log = 'y', names.arg = output.GB[type < 2, Group],
+        cex.names = 0.3, las = T)
+abline(h=log(1.1), col = 'red')
+#Balancing Act
+# 1 - Added EMAX q's to bring up most biomass values
+# 2 - Changed Other Flatfish in diets to SmFlatfishes
+diet.cols <- colnames(GB.params.2$diet)[which(colnames(GB.params.2$diet) != 'Group')]
+for(i in 2:ncol(GB.params.2$diet)){
+  setnames(GB.params.2$diet, colnames(GB.params.2$diet)[i], 'switch')
+  off.diet <- GB.params.2$diet[Group == 'OtherFlatfish', switch]
+  GB.params.2$diet[Group == 'SmFlatfishes', switch := switch + off.diet]
+  
+}
