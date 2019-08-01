@@ -126,51 +126,78 @@ check.rpath.params(GB.params)
 
 #Balance the model--------------------------------------------------------------
 GB <- rpath(GB.params, 'Georges Bank', 1)
-#Save initial balance for PreBal
-#save(GB, file = file.path(data.dir, 'Unbalanced_GB.RData'))
-#save(GB.params, file = file.path(data.dir, 'Input_GB_params.RData'))
 
+#Balancing Act
 #look at worst EEs first
 output.GB <- as.data.table(write.Rpath(GB))
 setkey(output.GB, EE)
 
-#There are 9 groups with F > 1.  They are also some of the more unbalanced groups.
-#Going to remove the biomass estimate and put in an EE and rebalance.
-GB.params.2 <- copy(GB.params)
-notenoughbio <- c('AtlHerring', 'SmPelagics', 'Redfish', 'Pollock', 'SouthernDemersals', 
-                  'AmPlaice', 'WitchFlounder', 'OtherSkates', 'Megabenthos')
-GB.params.2$model[Group %in% notenoughbio, Biomass := NA]
-GB.params.2$model[Group %in% notenoughbio, EE := 0.8]
+#1 - Landings > Biomass
+# 1.A - Added EMAX q's to bring up most biomass values - included above)
 
-GB.2 <- rpath(GB.params.2, 'Georges Bank v2', 1)
-#Save initial balance for PreBal
-#save(GB.2, file = file.path(data.dir, 'Unbalanced_GB.RData'))
-#save(GB.params.2, file = file.path(data.dir, 'Input_GB_params.RData'))
+#There were still 2 groups with F > 1.  
+# 1.B Top down balancing SmPelagics
+GB.params$model[Group == 'SmPelagics', Biomass := NA]
+GB.params$model[Group == 'SmPelagics', EE := 0.8]
 
-#look at worst EEs first
-output.GB <- as.data.table(write.Rpath(GB.2))
+# 1.C Reducing landings on Redfish because statistical areas overlap Gulf of Maine,
+#which is were the landings are probably coming from
+#Redfish landings - cut catch in 1/4
+GB.params$model[Group == 'Redfish', Gillnet        := Gillnet        / 4]
+GB.params$model[Group == 'Redfish', Longline       := Longline       / 4]
+GB.params$model[Group == 'Redfish', Midwater       := Midwater       / 4]
+GB.params$model[Group == 'Redfish', OtherFisheries := OtherFisheries / 4]
+GB.params$model[Group == 'Redfish', OtterTrawlSm   := OtterTrawlSm   / 4]
+GB.params$model[Group == 'Redfish', OtterTrawlLg   := OtterTrawlLg   / 4]
+GB.params$model[Group == 'Redfish', DredgeScallop.disc  := DredgeScallop.disc  / 4]
+GB.params$model[Group == 'Redfish', Gillnet.disc        := Gillnet.disc        / 4]
+GB.params$model[Group == 'Redfish', PotTrap.disc        := PotTrap.disc        / 4]
+GB.params$model[Group == 'Redfish', Midwater.disc       := Midwater.disc       / 4]
+GB.params$model[Group == 'Redfish', OtherFisheries.disc := OtherFisheries.disc / 4]
+GB.params$model[Group == 'Redfish', OtterTrawlSm.disc   := OtterTrawlSm.disc   / 4]
+GB.params$model[Group == 'Redfish', OtterTrawlLg.disc   := OtterTrawlLg.disc   / 4]
+
+#Deal with worst EEs
+#2 Revisit diets to ensure they make sense
+# 2.A - Changed Other Flatfish in diets to SmFlatfishes - OtherFlatfish are mostly
+#unidentified flatfish in stomachs but biomass is Atl Halibut
+ofrac <- GB.params$model[Group == 'OtherFlatfish', Biomass] / 
+  (GB.params$model[Group == 'OtherFlatfish', Biomass] + 
+     GB.params$model[Group == 'SmFlatfishes', Biomass])
+for(i in 2:ncol(GB.params$diet)){
+  old.name <- colnames(GB.params$diet)[i]
+  setnames(GB.params$diet, old.name, 'switch')
+  off.diet <- GB.params$diet[Group == 'OtherFlatfish', switch]
+  to.oth <- off.diet * ofrac
+  to.sm  <- off.diet - to.oth
+  GB.params$diet[Group == 'SmFlatfishes', switch := switch + to.sm]
+  GB.params$diet[Group == 'OtherFlatfish', switch := to.oth]
+  setnames(GB.params$diet, 'switch', old.name)
+}
+
+# 2.B - Fix Red Hake diet - Red Hake way too high in the trophic spectrum
+#listed as eating sharks and cod...these must be juveniles/larval versions
+#moving to micronekton
+misplaced <- GB.params.2$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish',
+                                           'SpinyDogfish', 'OtherSkates'), sum(RedHake)]
+GB.params.2$diet[Group == 'Micronekton', RedHake := RedHake + misplaced]
+GB.params.2$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish', 
+                              'SpinyDogfish', 'OtherSkates'), RedHake := 0]
+
+
+
+
+
+#Check progress
+GB <- rpath(GB.params, 'Georges Bank', 1)
+output.GB <- as.data.table(write.Rpath(GB))
 setkey(output.GB, EE)
 
 barplot(output.GB[type < 2, EE], log = 'y', names.arg = output.GB[type < 2, Group],
         cex.names = 0.3, las = T)
 abline(h=1, col = 'red')
-#Balancing Act
-# 1 - Added EMAX q's to bring up most biomass values
-# 2 - Changed Other Flatfish in diets to SmFlatfishes
-ofrac <- GB.params.2$model[Group == 'OtherFlatfish', Biomass] / 
-  (GB.params.2$model[Group == 'OtherFlatfish', Biomass] + 
-     GB.params.2$model[Group == 'SmFlatfishes', Biomass])
-for(i in 2:ncol(GB.params.2$diet)){
-  old.name <- colnames(GB.params.2$diet)[i]
-  setnames(GB.params.2$diet, old.name, 'switch')
-  off.diet <- GB.params.2$diet[Group == 'OtherFlatfish', switch]
-  to.oth <- off.diet * ofrac
-  to.sm  <- off.diet - to.oth
-  GB.params.2$diet[Group == 'SmFlatfishes', switch := switch + to.sm]
-  GB.params.2$diet[Group == 'OtherFlatfish', switch := to.oth]
-  setnames(GB.params.2$diet, 'switch', old.name)
-}
 
-GB.2 <- rpath(GB.params.2, 'Georges Bank', 1)
-output.GB <- as.data.table(write.Rpath(GB.2))
-setkey(output.GB, EE)
+
+#Save initial balance for PreBal
+#save(GB.2, file = file.path(data.dir, 'Unbalanced_GB.RData'))
+#save(GB.params.2, file = file.path(data.dir, 'Input_GB_params.RData'))
