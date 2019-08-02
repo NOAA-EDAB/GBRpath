@@ -189,8 +189,10 @@ GB.params$model[Group == 'Redfish', OtherFisheries.disc := OtherFisheries.disc /
 GB.params$model[Group == 'Redfish', OtterTrawlSm.disc   := OtterTrawlSm.disc   / 4]
 GB.params$model[Group == 'Redfish', OtterTrawlLg.disc   := OtterTrawlLg.disc   / 4]
 
-#Deal with worst EEs
-#2 Revisit diets to ensure they make sense ----
+# 1.D Increase redfish biomass
+GB.params$model[Group == 'Redfish', Biomass := Biomass * 2]
+
+#2 Other Flatfish ----
 # 2.A - Changed Other Flatfish in diets to SmFlatfishes - OtherFlatfish are mostly
 #unidentified flatfish in stomachs but biomass is Atl Halibut
 ofrac <- GB.params$model[Group == 'OtherFlatfish', Biomass] / 
@@ -207,14 +209,27 @@ for(i in 2:ncol(GB.params$diet)){
   setnames(GB.params$diet, 'switch', old.name)
 }
 
-# 2.B - Fix Red Hake diet - Red Hake way too high in the trophic spectrum
+# 2.B - Reduce preadator biomass
+#q applied to spiny dogfish way too low (0.199)
+#EEs also very low (Spiny dogfish 0.04, Cod 0.51)
+orig.spinybio <- GB.params$model[Group == 'SpinyDogfish', Biomass]
+orig.cod      <- GB.params$model[Group == 'Cod',          Biomass]
+GB.params$model[Group == 'SpinyDogfish', Biomass := 1.64]
+GB.params$model[Group == 'Cod',          Biomass := 0.5]
+
+# 2.C - Increase biomass
+orig.offbio <- GB.params$model[Group == 'OtherFlatfish', Biomass]
+GB.params$model[Group == 'OtherFlatfish', Biomass := Biomass * 4]
+
+#Fix Red Hake diet ---- 
+#Red Hake way too high in the trophic spectrum
 #listed as eating sharks and cod...these must be juveniles/larval versions
 #moving to micronekton
 misplaced <- GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish',
                                          'SpinyDogfish', 'OtherSkates'), sum(RedHake)]
 GB.params$diet[Group == 'Micronekton', RedHake := RedHake + misplaced]
 GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish', 
-                            'SpinyDogfish', 'OtherSkates'), RedHake := 0]
+                            'SpinyDogfish', 'OtherSkates'), RedHake := NA]
 
 # 3 - OceanPout ----
 # 3.A Reduce Spiny Dogfish Biomass
@@ -330,7 +345,8 @@ abline(h=1, col = 'red')
 
 unbal.GB <- as.data.table(write.Rpath(GB))
 living.GB <- unbal.GB[type < 2, list(Group, Biomass, Removals, TL, PB, QB)]
-bio.mod <- lm(log(living.GB[, Biomass], base = 10) ~ living.GB[, TL])
+bio.mod <- lm(log(living.GB[!Group %in% c('SouthernDemersals', 'OtherFlatfish'), Biomass], base = 10) 
+              ~ living.GB[!Group %in% c('SouthernDemersals', 'OtherFlatfish'), TL])
 
 plot(living.GB[, list(TL, Biomass)], log = "y", typ = 'n')
 text(living.GB[, TL], living.GB[, Biomass], living.GB[, Group], cex = .8)
