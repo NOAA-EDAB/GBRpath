@@ -184,23 +184,73 @@ GB.params$diet[Group == 'Micronekton', RedHake := RedHake + misplaced]
 GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish', 
                             'SpinyDogfish', 'OtherSkates'), RedHake := 0]
 
-# 3 - American Plaice EE = 1210 - F was 0.44 on AmPlaice - 
-# 3.A - Reduce fishing on AmPlaice
-GB.params$model[Group == 'AmPlaice', OtterTrawlSm      := OtterTrawlSm      / 2]
-GB.params$model[Group == 'AmPlaice', OtterTrawlLg      := OtterTrawlLg      / 2]
-GB.params$model[Group == 'AmPlaice', OtterTrawlSm.disc := OtterTrawlSm.disc / 2]
-GB.params$model[Group == 'AmPlaice', OtterTrawlLg.disc := OtterTrawlLg.disc / 2]
+# 3 - OceanPout
+# 3.A Reduce Spiny Dogfish Biomass
+GB.params$model[Group == 'SpinyDogfish', Biomass := 0.800]
+# 3.B Increase Biomass
+GB.params$model[Group == 'OceanPout', Biomass := NA]
+GB.params$model[Group == 'OceanPout', EE := 0.8]
 
-# 3.B - Increase Biomass
-GB.params$model[Group == 'AmPlaice', Biomass := Biomass * 4]
+# 3.C Increase productivity
+GB.params$model[Group == 'OceanPout', PB := 0.0625]
 
-# 3.C - Increase production
-GB.params$model[Group == 'AmPlaice', PB := 0.04]
+# 4 - American Plaice  
+# 4.A - Increase Biomass
+GB.params$model[Group == 'AmPlaice', Biomass := Biomass * 6]
 
-# 4 - OceanPout
-# 4.A - reduce Consumption by Silver Hake
-oldval <- GB.params$model[Group == 'SilverHake', QB]
-GB.params$model[Group == 'SilverHake', QB := 2.6]
+# # 3.A - Reduce fishing on AmPlaice
+# GB.params$model[Group == 'AmPlaice', OtterTrawlSm      := OtterTrawlSm      / 2]
+# GB.params$model[Group == 'AmPlaice', OtterTrawlLg      := OtterTrawlLg      / 2]
+# GB.params$model[Group == 'AmPlaice', OtterTrawlSm.disc := OtterTrawlSm.disc / 2]
+# GB.params$model[Group == 'AmPlaice', OtterTrawlLg.disc := OtterTrawlLg.disc / 2]
+# 
+# # 3.C - Increase production
+# GB.params$model[Group == 'AmPlaice', PB := 0.04]
+
+# 5 - OtherCephalopods
+# 5.A Increase biomass - 4x and 6x not enough
+GB.params$model[Group == 'OtherCephalopods', Biomass := Biomass * 6]
+# 5.B Top down balance
+GB.params$model[Group == 'OtherCephalopods', Biomass := NA]
+GB.params$model[Group == 'OtherCephalopods', EE := 0.8]
+
+# 6 - OtherShrimps
+# 6.A Increase biomass
+GB.params$model[Group == 'OtherShrimps', Biomass := Biomass * 4]
+
+# 7 - Megabenthos
+# 7.A Increase biomass
+GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 3]
+
+# 8 - OtherPelagics
+# 8.A - Fix diet - done in GBRpath_diet_pull
+# 8.B - Decrease Silver Hake - did not work cause silver hake are unbalanced
+# 8.C - Increase biomass
+oldval <- GB.params$model[Group == 'OtherPelagics', Biomass]
+GB.params$model[Group == 'OtherPelagics', Biomass := Biomass * 3]
+
+# 9 - OtherSkates
+# 9.A - Move diet in Goosefish to little skate species
+tolittle <- GB.params$diet[Group == 'OtherSkates', Goosefish]
+GB.params$diet[Group == 'LittleSkate', Goosefish := Goosefish + tolittle]
+GB.params$diet[Group == 'OtherSkates', Goosefish := NA]
+
+# 10 - SilverHake 
+# 10.A - probably cause by too much cannibalism - move most of silver hake to red hake
+tored <- GB.params$diet[Group == 'SilverHake', SilverHake] / 1.1
+GB.params$diet[Group == 'RedHake', SilverHake := SilverHake + tored]
+GB.params$diet[Group == 'SilverHake', SilverHake := SilverHake - tored]
+
+# 11 - AtlMackerel
+# 11.A - reduce predators
+oldval <- GB.params$model[Group == 'Haddock', Biomass]
+GB.params$model[Group == 'Haddock', Biomass := Biomass / 3]
+
+# 12 - Witch Flounder
+# 12.A - Increase biomass
+oldval <- GB.params$model[Group == 'WitchFlounder', Biomass]
+GB.params$model[Group == 'WitchFlounder', Biomass := Biomass * 4]
+
 
 #Check progress
 GB <- rpath(GB.params, 'Georges Bank', 1)
@@ -209,8 +259,9 @@ setkey(output.GB, EE)
 output.GB
 
 morts <- as.data.table(write.Rpath(GB, morts = T))
+
 barplot(output.GB[type < 2, EE], log = 'y', names.arg = output.GB[type < 2, Group],
-        cex.names = 0.3, las = T)
+        cex.names = 0.5, las = T)
 abline(h=1, col = 'red')
 
 unbal.GB <- as.data.table(write.Rpath(GB))
@@ -218,7 +269,7 @@ living.GB <- unbal.GB[type < 2, list(Group, Biomass, Removals, TL, PB, QB)]
 bio.mod <- lm(log(living.GB[, Biomass], base = 10) ~ living.GB[, TL])
 
 plot(living.GB[, list(TL, Biomass)], log = "y", typ = 'n')
-text(living.GB[, TL], living.GB[, Biomass], living.GB[, Group], cex = .5)
+text(living.GB[, TL], living.GB[, Biomass], living.GB[, Group], cex = .8)
 abline(bio.mod)
 #+- 1 Standard Error
 std <- coef(summary(bio.mod))[, 2]
