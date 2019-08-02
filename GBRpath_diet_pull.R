@@ -491,6 +491,32 @@ setnames(micro, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, micro))
 
+#OtherPelagics
+GB.diet <- GB.diet[!Rpred == 'OtherPelagics', ]
+
+medpel <- data.table(EMAX = c('Gelatinous Zooplankton',  'Mesopelagics', 
+                              'Macrobenthos- crustaceans', 'Macrobenthos- other',
+                              'Megabenthos- filterers', 'Megabenthos- other', 
+                              'Shrimp et al.', 'Larval-juv fish- all', 
+                              'Small Pelagics- commercial', 'Small Pelagics- other',
+                              'Small Pelagics- squid', 'Small Pelagics- anadromous',
+                              'Medium Pelagics- (piscivores & other)', 'Demersals- benthivores',
+                              'Demersals- omnivores', 'Demersals- piscivores', 'Detritus-POC'),
+                     DC = c(0.001, 0.003, 0.013, 0.011, 0.003, 0.018, 0.001, 0.002,
+                            0.577, 0.044, 0.114, 0.010, 0.011, 0.098, 0.014, 0.079,
+                            0.001))
+medpel <- merge(medpel, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
+#Fix NAs
+medpel[EMAX == 'Small Pelagics- anadromous', RPATH := 'SmPelagics'] #no river herring in this model
+medpel[EMAX == 'Small Pelagics- anadromous', Rpath.prop := 1]
+medpel[, preyper := DC * Rpath.prop]
+#Need to sum many:1 EMAX:Rpath
+medpel <- medpel[, sum(preyper), by = RPATH]
+medpel[, Rpred := 'OtherPelagics']
+setnames(medpel, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+
+GB.diet.plus <- rbindlist(list(GB.diet.plus, medpel))
+
 #EMAX groups that apply to more than one Rpath
 #Southern Demrsals and Otherflatfish will use Demersal- benthivore diet
 dems <- data.table(EMAX = c('Gelatinous Zooplankton', 'Micronekton', 'Macrobenthos- polychaetes',
