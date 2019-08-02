@@ -9,7 +9,7 @@ diagnose <- function(rpath.params, group){
   opar <- par(mfrow = c(3, 1), mar = c(3, 4, 1, 1))
   
   living <- output[type < 2, list(Group, Biomass, Removals, TL, PB, QB)]
-  bio.mod <- lm(log(living.GB[, Biomass], base = 10) ~ living.GB[, TL])
+  bio.mod <- lm(log(living[, Biomass], base = 10) ~ living[, TL])
   
   plot(living[, list(TL, Biomass)], log = "y", typ = 'n')
   text(living[, TL], living[, Biomass], living[, Group], cex = .8)
@@ -21,12 +21,12 @@ diagnose <- function(rpath.params, group){
   points(living[Group == group, TL], living[Group == group, Biomass], pch = 19, col = 'red')
   
   #QB
-  cons.mod <- lm(log(living.GB[Group != 'Phytoplankton', QB], base = 10) ~ 
-                   living.GB[Group != 'Phytoplankton', TL])
+  cons.mod <- lm(log(living[Group != 'Phytoplankton', QB], base = 10) ~ 
+                   living[Group != 'Phytoplankton', TL])
   
-  plot(living.GB[Group != 'Phytoplankton', list(TL, QB)], log = "y", typ = 'n')
-  text(living.GB[Group != 'Phytoplankton', TL], living.GB[Group != 'Phytoplankton', QB], 
-       living.GB[, Group], cex = .5)
+  plot(living[Group != 'Phytoplankton', list(TL, QB)], log = "y", typ = 'n')
+  text(living[Group != 'Phytoplankton', TL], living[Group != 'Phytoplankton', QB], 
+       living[, Group], cex = .5)
   abline(cons.mod)
   #+- 1 Standard Error
   std <- coef(summary(cons.mod))[, 2]
@@ -35,10 +35,10 @@ diagnose <- function(rpath.params, group){
   points(living[Group == group, TL], living[Group == group, QB], pch = 19, col = 'red')
   
   #PB
-  prod.mod <- lm(log(living.GB[, PB], base = 10) ~ living.GB[, TL])
+  prod.mod <- lm(log(living[, PB], base = 10) ~ living[, TL])
   
-  plot(living.GB[, list(TL, PB)], log = "y", typ = 'n')
-  text(living.GB[, TL], living.GB[, PB], living.GB[, Group], cex = .5)
+  plot(living[, list(TL, PB)], log = "y", typ = 'n')
+  text(living[, TL], living[, PB], living[, Group], cex = .5)
   abline(prod.mod)
   #+- 1 Standard Error
   std <- coef(summary(prod.mod))[, 2]
@@ -54,8 +54,8 @@ diagnose <- function(rpath.params, group){
   prey.table <- data.table(Rpred = colnames(rpath.params$diet), 
                            DC = as.numeric(rpath.params$diet[Group == group, ]))
   prey.table <- prey.table[Rpred != 'Group', ]
-  out <- list(Balance = output[Group == group, ], Mortalities = mort.table,
+  out <- list(Mortalities = mort.table,
               AsPred = rpath.params$diet[, .(Group, get(group))], 
-              AsPrey = prey.table)
+              AsPrey = prey.table, Balance = output[Group == group, ])
   return(out)
 }
