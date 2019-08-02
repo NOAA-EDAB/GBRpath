@@ -256,12 +256,11 @@ and revisit at a later date.
 # Criteria 1 - Biomass across Taxa
 Biomass range - 6 orders of magnitude <span style="color:green">**GOOD**</span>
 
-Slope of biomass - -0.31 <span style = "color:red">**BAD**</span>
-Although this could be due to Georges being an overfished system.  Still I think I
-need to apply q's from EMAX.  There are 9 groups in the system with F's greater than
-1. New slope is -0.30 so still <span style = "color:red">**BAD**</span>.
+Slope of biomass - -0.70 <span style = "color:red">**BAD**</span>
 
-Added q's from EMAX and new slope is -0.195 <span style="color:orange">**OK**</span>
+Decreased the biomass of many lower trophic levels by an order of magnitude and
+increased the biomass of everything else by a factor of 4.  This gives a slope
+of -32% which I will accredit to GB being a highly productive but overfished system.
 
 # Criteria 2 - Biomass Ratios
 *Predators to Prey*
@@ -296,6 +295,15 @@ Benthivores:Planktivores       | 2.63   | <span style = "color:orange">**OK**</s
 Planktivores:Piscivores        | 1.64   | <span style = "color:green">**GOOD**</span>
 <TL3:TL4+                      | 6.86   | <span style = "color:orange">**OK**</span>
 
+# Criteria 3
+```{r Production table}
+ecobase <- data.table(TL = c('1-2', '2-3', '3-4', '4+'), 
+                      mean.PB = c(70.91, 27.47, 1.56, 0.605),
+                      GB.initialPB = c(91.25, 20.78, 1.28, 0.27))
+
+kable(ecobase, caption = "Mean production to biomass ratios by trophic level from shelf models on Ecobase and the initial values for Georges Bank.", 
+      booktabs = T, align = c('c', 'c', 'c'))
+```
 
 Moving forward dynamically
 ===
