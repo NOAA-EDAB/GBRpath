@@ -262,8 +262,6 @@ orig.sumfqb <- GB.params$model[Group == 'SummerFlounder', QB]
 GB.params$model[Group == 'SummerFlounder', QB := 2.5]
 
 # 5 - American Plaice  ----
-diagnose(GB.params, 'AmPlaice')
-
 # 5.A - Increase Biomass
 orig.ampbio <- GB.params$model[Group == 'AmPlaice', Biomass]
 GB.params$model[Group == 'AmPlaice', Biomass := Biomass * 3]
@@ -276,21 +274,28 @@ GB.params$model[Group == 'AmPlaice', PB := PB * 6]
 orig.ampqb <- GB.params$model[Group == 'AmPlaice', QB]
 GB.params$model[Group == 'AmPlaice', QB := QB * 3]
 
-
 # 6 - OtherShrimps ----
-# 6.A Increase biomass
-GB.params$model[Group == 'OtherShrimps', Biomass := Biomass * 4]
+# 6.A Increase production
+orig.shmppb <- GB.params$model[Group == 'OtherShrimps', PB]
+GB.params$model[Group == 'OtherShrimps', PB := 20]
+
+# 6.B Increase biomass
+orig.shmpbio <- GB.params$model[Group == 'OtherShrimps', Biomass]
+GB.params$model[Group == 'OtherShrimps', Biomass := Biomass * 2]
+
+# 7 - OtherPelagics -----
+# 7.A - Fix diet - done in GBRpath_diet_pull
+diagnose(GB.params, 'OtherPelagics')
+# 7.A - Increase biomass
+orig.opelbio <- GB.params$model[Group == 'OtherPelagics', Biomass]
+GB.params$model[Group == 'OtherPelagics', Biomass := Biomass * 4]
+
+#Pick up here---------------
 
 # 7 - Megabenthos ----
 # 7.A Increase biomass
 GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 6]
 
-# 8 - OtherPelagics -----
-# 8.A - Fix diet - done in GBRpath_diet_pull
-# 8.B - Decrease Silver Hake - did not work cause silver hake are unbalanced
-# 8.C - Increase biomass
-oldval <- GB.params$model[Group == 'OtherPelagics', Biomass]
-GB.params$model[Group == 'OtherPelagics', Biomass := Biomass * 3]
 
 # 9 - OtherSkates----
 # 9.A - Move diet in Goosefish to little skate species
