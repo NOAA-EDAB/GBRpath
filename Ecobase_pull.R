@@ -44,3 +44,5 @@ all.mod[Group %like% 'Gel', mean(PB)]
 all.mod[Group %like% 'Gel', mean(QB)]
 all.mod[!Group %like% 'Gel' & Group %like% 'Zoo', mean(PB)]
 all.mod[!Group %like% 'Gel' & Group %like% 'Zoo', mean(QB)]
+
+all.mod[Group %like% 'hake',]

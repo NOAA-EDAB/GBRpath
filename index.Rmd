@@ -218,6 +218,9 @@ Also noticed that the food habits data from the survey does not include discards
 or detritus.  The EMAX groups did have some nodes feeding on them.  I will try and 
 balance without it and see where I get.
 
+**Note** Calculated the clustering wrong which resulted in fish dominating diets 
+rather than lower trophic levels.  Fixed.
+
 ## Biological parameters
 
 While more indepth methods exist (see Aydin et al. 200x), for this model I pulled

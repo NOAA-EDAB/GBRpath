@@ -132,7 +132,7 @@ GB <- rpath(GB.params, 'Georges Bank', 1)
 output.GB <- as.data.table(write.Rpath(GB))
 setkey(output.GB, EE)
 
-#1 - Landings > Biomass
+#1 - Landings > Biomass----
 # 1.A - Added EMAX q's to bring up most biomass values - included above)
 
 #There were still 2 groups with F > 1.  
@@ -158,7 +158,7 @@ GB.params$model[Group == 'Redfish', OtterTrawlSm.disc   := OtterTrawlSm.disc   /
 GB.params$model[Group == 'Redfish', OtterTrawlLg.disc   := OtterTrawlLg.disc   / 4]
 
 #Deal with worst EEs
-#2 Revisit diets to ensure they make sense
+#2 Revisit diets to ensure they make sense ----
 # 2.A - Changed Other Flatfish in diets to SmFlatfishes - OtherFlatfish are mostly
 #unidentified flatfish in stomachs but biomass is Atl Halibut
 ofrac <- GB.params$model[Group == 'OtherFlatfish', Biomass] / 
@@ -184,7 +184,7 @@ GB.params$diet[Group == 'Micronekton', RedHake := RedHake + misplaced]
 GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish', 
                             'SpinyDogfish', 'OtherSkates'), RedHake := 0]
 
-# 3 - OceanPout
+# 3 - OceanPout ----
 # 3.A Reduce Spiny Dogfish Biomass
 GB.params$model[Group == 'SpinyDogfish', Biomass := 0.800]
 # 3.B Increase Biomass
@@ -194,65 +194,97 @@ GB.params$model[Group == 'OceanPout', EE := 0.8]
 # 3.C Increase productivity
 GB.params$model[Group == 'OceanPout', PB := 0.0625]
 
-# 4 - American Plaice  
+# 4 - American Plaice  ----
 # 4.A - Increase Biomass
-GB.params$model[Group == 'AmPlaice', Biomass := Biomass * 6]
+GB.params$model[Group == 'AmPlaice', Biomass := Biomass * 8]
 
-# # 3.A - Reduce fishing on AmPlaice
-# GB.params$model[Group == 'AmPlaice', OtterTrawlSm      := OtterTrawlSm      / 2]
-# GB.params$model[Group == 'AmPlaice', OtterTrawlLg      := OtterTrawlLg      / 2]
-# GB.params$model[Group == 'AmPlaice', OtterTrawlSm.disc := OtterTrawlSm.disc / 2]
-# GB.params$model[Group == 'AmPlaice', OtterTrawlLg.disc := OtterTrawlLg.disc / 2]
-# 
-# # 3.C - Increase production
-# GB.params$model[Group == 'AmPlaice', PB := 0.04]
+# 4.B - Reduce fishing on AmPlaice ----
+GB.params$model[Group == 'AmPlaice', OtterTrawlSm      := OtterTrawlSm      / 2]
+GB.params$model[Group == 'AmPlaice', OtterTrawlLg      := OtterTrawlLg      / 2]
+GB.params$model[Group == 'AmPlaice', OtterTrawlSm.disc := OtterTrawlSm.disc / 2]
+GB.params$model[Group == 'AmPlaice', OtterTrawlLg.disc := OtterTrawlLg.disc / 2]
 
-# 5 - OtherCephalopods
+# 4.C - Increase production
+GB.params$model[Group == 'AmPlaice', PB := 0.04]
+
+# 4.D - Top down balance
+GB.params$model[Group == 'AmPlaice', Biomass := NA]
+GB.params$model[Group == 'AmPlaice', EE := 0.8]
+
+# 5 - OtherCephalopods ----
 # 5.A Increase biomass - 4x and 6x not enough
 GB.params$model[Group == 'OtherCephalopods', Biomass := Biomass * 6]
 # 5.B Top down balance
 GB.params$model[Group == 'OtherCephalopods', Biomass := NA]
 GB.params$model[Group == 'OtherCephalopods', EE := 0.8]
 
-# 6 - OtherShrimps
+# 6 - OtherShrimps ----
 # 6.A Increase biomass
 GB.params$model[Group == 'OtherShrimps', Biomass := Biomass * 4]
 
-# 7 - Megabenthos
+# 7 - Megabenthos ----
 # 7.A Increase biomass
-GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 3]
+GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 6]
 
-# 8 - OtherPelagics
+# 8 - OtherPelagics -----
 # 8.A - Fix diet - done in GBRpath_diet_pull
 # 8.B - Decrease Silver Hake - did not work cause silver hake are unbalanced
 # 8.C - Increase biomass
 oldval <- GB.params$model[Group == 'OtherPelagics', Biomass]
 GB.params$model[Group == 'OtherPelagics', Biomass := Biomass * 3]
 
-# 9 - OtherSkates
+# 9 - OtherSkates----
 # 9.A - Move diet in Goosefish to little skate species
 tolittle <- GB.params$diet[Group == 'OtherSkates', Goosefish]
 GB.params$diet[Group == 'LittleSkate', Goosefish := Goosefish + tolittle]
 GB.params$diet[Group == 'OtherSkates', Goosefish := NA]
 
-# 10 - SilverHake 
+# 9.B - increase production
+oldval <- GB.params$model[Group == 'OtherSkates', PB]
+GB.params$model[Group == 'OtherSkates', PB := 0.08]
+
+# 10 - SilverHake ----
 # 10.A - probably cause by too much cannibalism - move most of silver hake to red hake
 tored <- GB.params$diet[Group == 'SilverHake', SilverHake] / 1.1
-GB.params$diet[Group == 'RedHake', SilverHake := SilverHake + tored]
+GB.params$diet[Group == 'RedHake', SilverHake    := SilverHake + tored]
 GB.params$diet[Group == 'SilverHake', SilverHake := SilverHake - tored]
 
-# 11 - AtlMackerel
+# 10.B - Moving 1/2 of fish biomass to micronekton as they are juveniles
+fish.taxa <- c('Cod', 'Haddock', 'WhiteHake', 'OceanPout', 'OtherDemersals', 
+               'Fourspot', 'SummerFlounder', 'OtherFlatfish')
+for(ifish in 1:length(fish.taxa)){
+  tonekton <- GB.params$diet[Group == fish.taxa[ifish], SilverHake] / 2
+  GB.params$diet[Group == 'Micronekton', SilverHake    := SilverHake + tonekton]
+  GB.params$diet[Group == fish.taxa[ifish], SilverHake := SilverHake - tonekton]
+}
+
+# 11 - AtlMackerel ----
 # 11.A - reduce predators
 oldval <- GB.params$model[Group == 'Haddock', Biomass]
 GB.params$model[Group == 'Haddock', Biomass := Biomass / 3]
 
-# 12 - Witch Flounder
+# 12 - Witch Flounder -----
 # 12.A - Increase biomass
 oldval <- GB.params$model[Group == 'WitchFlounder', Biomass]
 GB.params$model[Group == 'WitchFlounder', Biomass := Biomass * 4]
 
+# 13 - Pollock -----
+# 13.A - Increase biomass
+oldval <- GB.params$model[Group == 'Pollock', Biomass]
+GB.params$model[Group == 'Pollock', Biomass := Biomass * 4]
 
-#Check progress
+# 14 - White Hake -----
+# 14.A - Increase biomass
+oldval <- GB.params$model[Group == 'WhiteHake', Biomass]
+GB.params$model[Group == 'WhiteHake', Biomass := Biomass * 4]
+
+# 15 - Offshore Hake -----
+# 15.A - Increase biomass
+oldval <- GB.params$model[Group == 'OffHake', Biomass]
+GB.params$model[Group == 'OffHake', Biomass := Biomass * 4]
+
+
+#Check progress ----
 GB <- rpath(GB.params, 'Georges Bank', 1)
 output.GB <- as.data.table(write.Rpath(GB))
 setkey(output.GB, EE)

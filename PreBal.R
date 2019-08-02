@@ -22,7 +22,7 @@ library(data.table)
 #Load in pre balanced model
 load(file.path(data.dir, 'Input_GB_params.RData'))
 load(file.path(data.dir, 'Unbalanced_GB.RData'))
-unbal.GB <- as.data.table(write.Rpath(GB.2))
+unbal.GB <- as.data.table(write.Rpath(GB))
 
 #Need to classify each group
 spclass.GB <- data.table(Group = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
