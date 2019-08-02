@@ -232,38 +232,50 @@ GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish',
                             'SpinyDogfish', 'OtherSkates'), RedHake := NA]
 
 # 3 - OceanPout ----
-# 3.A Reduce Spiny Dogfish Biomass
-GB.params$model[Group == 'SpinyDogfish', Biomass := 0.800]
-# 3.B Increase Biomass
-GB.params$model[Group == 'OceanPout', Biomass := NA]
-GB.params$model[Group == 'OceanPout', EE := 0.8]
+# 3.A Increase Biomass - Not well sampled
+orig.opbio <- GB.params$model[Group == 'OceanPout', Biomass]
+GB.params$model[Group == 'OceanPout', Biomass := Biomass * 2]
 
-# 3.C Increase productivity
-GB.params$model[Group == 'OceanPout', PB := 0.0625]
+# 3.B Increase production
+orig.oppb <- GB.params$model[Group == 'OceanPout', PB]
+GB.params$model[Group == 'OceanPout', PB := PB * 3]
 
-# 4 - American Plaice  ----
-# 4.A - Increase Biomass
-GB.params$model[Group == 'AmPlaice', Biomass := Biomass * 8]
+# 3.C Increase consumption
+orig.opqb <- GB.params$model[Group == 'OceanPout', QB]
+GB.params$model[Group == 'OceanPout', PB := QB * 2]
 
-# 4.B - Reduce fishing on AmPlaice ----
-GB.params$model[Group == 'AmPlaice', OtterTrawlSm      := OtterTrawlSm      / 2]
-GB.params$model[Group == 'AmPlaice', OtterTrawlLg      := OtterTrawlLg      / 2]
-GB.params$model[Group == 'AmPlaice', OtterTrawlSm.disc := OtterTrawlSm.disc / 2]
-GB.params$model[Group == 'AmPlaice', OtterTrawlLg.disc := OtterTrawlLg.disc / 2]
+#diagnose(GB.params, 'OceanPout')
+#May need to revist DC of OtherDemersal (16%)
 
-# 4.C - Increase production
-GB.params$model[Group == 'AmPlaice', PB := 0.04]
+# 4 - OtherCephalopods ----
+# 4.A Increase biomass - 4x and 6x not enough
+GB.params$model[Group == 'OtherCephalopods', Biomass := Biomass * 8]
 
-# 4.D - Top down balance
-GB.params$model[Group == 'AmPlaice', Biomass := NA]
-GB.params$model[Group == 'AmPlaice', EE := 0.8]
+# 4.B Drop pred biomasses
+orig.predbio <- GB.params$model[Group %in% c('Haddock', 'LittleSkate', 'WinterSkate',
+                                             'Barndoor', 'SummerFlounder'), Biomass]
+GB.params$model[Group %in% c('Haddock', 'LittleSkate', 'WinterSkate', 'Barndoor',
+                             'SummerFlounder'), Biomass := Biomass / 10]
 
-# 5 - OtherCephalopods ----
-# 5.A Increase biomass - 4x and 6x not enough
-GB.params$model[Group == 'OtherCephalopods', Biomass := Biomass * 6]
-# 5.B Top down balance
-GB.params$model[Group == 'OtherCephalopods', Biomass := NA]
-GB.params$model[Group == 'OtherCephalopods', EE := 0.8]
+# 4.C Reduce QB of summer flounder
+orig.sumfqb <- GB.params$model[Group == 'SummerFlounder', QB]
+GB.params$model[Group == 'SummerFlounder', QB := 2.5]
+
+# 5 - American Plaice  ----
+diagnose(GB.params, 'AmPlaice')
+
+# 5.A - Increase Biomass
+orig.ampbio <- GB.params$model[Group == 'AmPlaice', Biomass]
+GB.params$model[Group == 'AmPlaice', Biomass := Biomass * 3]
+
+# 5.B - Increase production
+orig.amppb <- GB.params$model[Group == 'AmPlaice', PB]
+GB.params$model[Group == 'AmPlaice', PB := PB * 6]
+
+# 5.C - Increase consumption
+orig.ampqb <- GB.params$model[Group == 'AmPlaice', QB]
+GB.params$model[Group == 'AmPlaice', QB := QB * 3]
+
 
 # 6 - OtherShrimps ----
 # 6.A Increase biomass
