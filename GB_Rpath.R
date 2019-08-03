@@ -413,8 +413,9 @@ GB.params$diet[Group == 'SilverHake',   OffHake := OffHake - toothers]
 # 14 - Megabenthos ----
 # 14.A Increase biomass
 orig.megbbio <- GB.params$model[Group == 'Megabenthos', Biomass]
-GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 2]
+GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 3]
 
+diagnose(GB.params, 'Megabenthos')
 # 14.B Increase PB
 orig.megbpb <- GB.params$model[Group == 'Megabenthos', PB]
 GB.params$model[Group == 'Megabenthos', PB := PB * 2]
@@ -579,7 +580,22 @@ for(iprey in 1:length(sp.tomacro)){
 orig.otdpb <- GB.params$model[Group == 'OtherDemersals', PB]
 GB.params$model[Group == 'OtherDemersals', PB := 0.71]
 
-diagnose(GB.params, 'OtherDemersals')
+# 28 - Atlantic Herring ----
+# 28.A reduce seabird consumption
+orig.sbqb <- GB.params$model[Group == 'Seabirds', QB]
+GB.params$model[Group == 'Seabirds', QB := 35]
+
+# 28.B - move DC to smpelagics
+tospel <- GB.params$diet[Group == 'AtlHerring', SilverHake] / 2
+GB.params$diet[Group == 'SmPelagics', SilverHake := SilverHake + tospel]
+GB.params$diet[Group == 'AtlHerring', SilverHake := SilverHake - tospel]
+
+tospel <- GB.params$diet[Group == 'AtlHerring', Loligo] / 2
+GB.params$diet[Group == 'SmPelagics', Loligo := Loligo + tospel]
+GB.params$diet[Group == 'AtlHerring', Loligo := Loligo - tospel]
+
+
+diagnose(GB.params, 'AtlHerring')
 #Pick up here---------------
 
 
