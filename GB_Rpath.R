@@ -446,7 +446,7 @@ GB.params$model[Group == 'WitchFlounder', Biomass := Biomass * 4]
 orig.witchpb <- GB.params$model[Group == 'WitchFlounder', PB]
 GB.params$model[Group == 'WitchFlounder', PB := PB * 4]
 
-# 16 - Macrobenthos
+# 16 - Macrobenthos ----
 # 16.A - Increase production
 orig.macbpb <- GB.params$model[Group == 'Macrobenthos', PB]
 GB.params$model[Group == 'Macrobenthos', PB := PB * 10]
@@ -504,7 +504,7 @@ GB.params$model[Group == 'Pollock', Midwater.disc       := Midwater.disc       /
 GB.params$model[Group == 'Pollock', OtterTrawlSm.disc   := OtterTrawlSm.disc   / 4]
 GB.params$model[Group == 'Pollock', OtterTrawlLg.disc   := OtterTrawlLg.disc   / 4]
 
-# 19 - Mesozooplankton
+# 19 - Mesozooplankton ----
 # 19.A Increase Biomass
 orig.mesobio <- GB.params$model[Group == 'Mesozooplankton', Biomass]
 GB.params$model[Group == 'Mesozooplankton', Biomass := Biomass * 4]
@@ -523,7 +523,7 @@ GB.params$model[Group == 'Mesozooplankton', QB := 100]
 orig.mzppb <- GB.params$model[Group == 'Mesozooplankton', PB]
 GB.params$model[Group == 'Mesozooplankton', PB := PB * 2]
 
-# 20 - Spiny Dogfish
+# 20 - Spiny Dogfish ----
 # 20.A - Drop consumption of predator
 orig.twqb <- GB.params$model[Group == 'ToothWhale', QB]
 GB.params$model[Group == 'ToothWhale', QB := 8]
@@ -542,12 +542,26 @@ tored <- GB.params$diet[Group == 'OffHake', WhiteHake] * 0.66
 GB.params$diet[Group == 'RedHake', WhiteHake := WhiteHake + tored]
 GB.params$diet[Group == 'OffHake', WhiteHake := WhiteHake - tored]
 
-# 22 - Atlantic Mackerel
+# 22 - Atlantic Mackerel ----
 # 22.A - Increase production
 orig.mackpb <- GB.params$model[Group == 'AtlMackerel', PB]
 GB.params$model[Group == 'AtlMackerel', PB := PB * 3]
 
-diagnose(GB.params, 'AtlMackerel')
+# 23 - Mesopelagics -----
+# 23.A - Increase biomass
+orig.mesobio <- GB.params$model[Group == 'Mesopelagics', Biomass]
+GB.params$model[Group == 'Mesopelagics', Biomass := Biomass * 2]
+
+# 23.B - Increase production
+orig.mesopb <- GB.params$model[Group == 'Mesopelagics', PB]
+GB.params$model[Group == 'Mesopelagics', PB := PB * 1.5]
+
+# 24 - Goosefish ----
+# 24.A - Increase production
+orig.gfpb <- GB.params$model[Group == 'Goosefish', PB]
+GB.params$model[Group == 'Goosefish', PB := PB * 3]
+
+diagnose(GB.params, 'Goosefish')
 #Pick up here---------------
 
 
