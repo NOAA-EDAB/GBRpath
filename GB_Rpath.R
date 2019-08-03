@@ -274,7 +274,6 @@ GB.params$model[Group == 'AmPlaice', PB := .6]
 orig.ampqb <- GB.params$model[Group == 'AmPlaice', QB]
 GB.params$model[Group == 'AmPlaice', QB := QB * 3]
 
-diagnose(GB.params, 'AmPlaice')
 # 6 - OtherShrimps ----
 # 6.A Increase production
 orig.shmppb <- GB.params$model[Group == 'OtherShrimps', PB]
@@ -296,28 +295,21 @@ GB.params$model[Group == 'SilverHake', Biomass := Biomass * 0.6]
 orig.bfbio <- GB.params$model[Group == 'Bluefish', Biomass]
 GB.params$model[Group == 'Bluefish', Biomass := Biomass / 2]
 
-# 7.D - Move 1/2 of DC to SmPelagics
-tospel <- GB.params$diet[Group == 'OtherPelagics', SilverHake] / 2
-GB.params$diet[Group == 'OtherPelagics', SilverHake := SilverHake - tospel] 
-GB.params$diet[Group == 'SmPelagics',    SilverHake := SilverHake + tospel] 
-
-tospel <- GB.params$diet[Group == 'OtherPelagics', Goosefish] / 2
-GB.params$diet[Group == 'OtherPelagics', Goosefish := Goosefish - tospel] 
-GB.params$diet[Group == 'SmPelagics',    Goosefish := Goosefish + tospel] 
-
-tospel <- GB.params$diet[Group == 'OtherPelagics', SpinyDogfish] / 2
-GB.params$diet[Group == 'OtherPelagics', SpinyDogfish := SpinyDogfish - tospel] 
-GB.params$diet[Group == 'SmPelagics',    SpinyDogfish := SpinyDogfish + tospel] 
-
-tospel <- GB.params$diet[Group == 'OtherPelagics', WinterSkate] / 2
-GB.params$diet[Group == 'OtherPelagics', WinterSkate := WinterSkate - tospel] 
-GB.params$diet[Group == 'SmPelagics',    WinterSkate := WinterSkate + tospel] 
+# 7.D - Move 2/3 of DC to SmPelagics
+preds <- c('SilverHake', 'Goosefish', 'SpinyDogfish', 'WinterSkate')
+for(ipred in 1:length(preds)){
+  setnames(GB.params$diet, preds[ipred], 'switch')
+  tospel <- GB.params$diet[Group == 'OtherPelagics', switch] * 0.66
+  GB.params$diet[Group == 'OtherPelagics', switch := switch - tospel] 
+  GB.params$diet[Group == 'SmPelagics',    switch := switch + tospel]
+  setnames(GB.params$diet, 'switch', preds[ipred])
+}
 
 # 8 - Micronekton ----
 # 8.A - Increase Biomass
 orig.mnkbio <- GB.params$model[Group == 'Micronekton', Biomass]
 GB.params$model[Group == 'Micronekton', Biomass := Biomass * 8]
-diagnose(GB.params, 'Loligo')
+
 # 8.B - Increase production
 orig.mnkpb <- GB.params$model[Group == 'Micronekton', PB]
 GB.params$model[Group == 'Micronekton', PB := PB * 2]
@@ -563,11 +555,16 @@ orig.gfpb <- GB.params$model[Group == 'Goosefish', PB]
 GB.params$model[Group == 'Goosefish', PB := PB * 3]
 
 # 25 - Microzooplankton
-# 25.A - Increase production
+# 25.A - Increase biomass
 orig.microzbio <- GB.params$model[Group == 'Microzooplankton', Biomass]
 GB.params$model[Group == 'Microzooplankton', Biomass := Biomass * 3]
 
-diagnose(GB.params, 'Microzooplankton')
+# 26 - Winter Skate
+# 26.A - Increase production
+orig.winskpb <- GB.params$model[Group == 'WinterSkate', PB]
+GB.params$model[Group == 'WinterSkate', PB := PB * 3]
+
+diagnose(GB.params, 'WinterSkate')
 #Pick up here---------------
 
 
