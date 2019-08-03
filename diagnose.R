@@ -1,8 +1,18 @@
 #Check progress ----
+GB <- rpath(GB.params, 'Georges Bank', 1)
+output.GB <- as.data.table(write.Rpath(GB))
+setkey(output.GB, EE)
+output.GB
+morts <- as.data.table(write.Rpath(GB, morts = T))
+
+
 diagnose <- function(rpath.params, group){
   model <- rpath(rpath.params)
   output <- as.data.table(write.Rpath(model))
   setkey(output, EE)
+  
+  output[, Q := QB * Biomass]
+  output[, PQ := PB / QB]
   
   morts <- as.data.table(write.Rpath(model, morts = T))
   
@@ -24,9 +34,8 @@ diagnose <- function(rpath.params, group){
   cons.mod <- lm(log(living[Group != 'Phytoplankton', QB], base = 10) ~ 
                    living[Group != 'Phytoplankton', TL])
   
-  plot(living[Group != 'Phytoplankton', list(TL, QB)], log = "y", typ = 'n')
-  text(living[Group != 'Phytoplankton', TL], living[Group != 'Phytoplankton', QB], 
-       living[, Group], cex = .5)
+  plot(living[, list(TL, QB)], log = "y", typ = 'n')
+  text(living[, TL], living[, QB], living[, Group], cex = .8)
   abline(cons.mod)
   #+- 1 Standard Error
   std <- coef(summary(cons.mod))[, 2]
@@ -38,7 +47,7 @@ diagnose <- function(rpath.params, group){
   prod.mod <- lm(log(living[, PB], base = 10) ~ living[, TL])
   
   plot(living[, list(TL, PB)], log = "y", typ = 'n')
-  text(living[, TL], living[, PB], living[, Group], cex = .5)
+  text(living[, TL], living[, PB], living[, Group], cex = .8)
   abline(prod.mod)
   #+- 1 Standard Error
   std <- coef(summary(prod.mod))[, 2]
