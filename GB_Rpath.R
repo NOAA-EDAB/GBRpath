@@ -285,11 +285,47 @@ GB.params$model[Group == 'OtherShrimps', Biomass := Biomass * 2]
 
 # 7 - OtherPelagics -----
 # 7.A - Fix diet - done in GBRpath_diet_pull
-diagnose(GB.params, 'OtherPelagics')
 # 7.A - Increase biomass
 orig.opelbio <- GB.params$model[Group == 'OtherPelagics', Biomass]
 GB.params$model[Group == 'OtherPelagics', Biomass := Biomass * 4]
 
+# 8 Micronekton ----
+# 8.A - Increase Biomass
+orig.mnkbio <- GB.params$model[Group == 'Micronekton', Biomass]
+GB.params$model[Group == 'Micronekton', Biomass := Biomass * 2]
+
+# 8.B - Increase production
+orig.mnkpb <- GB.params$model[Group == 'Micronekton', PB]
+GB.params$model[Group == 'Micronekton', PB := PB * 2]
+
+# 9 - OtherSkates----
+# 9.A - increase production
+orig.oskpb <- GB.params$model[Group == 'OtherSkates', PB]
+GB.params$model[Group == 'OtherSkates', PB := 0.5]
+
+# 10 Discards ----
+# EE is ratio of DetOut to DetIN - need to lower out unless jacking up landings
+# This makes sense as discards should be a low portion of diets
+sp.todet <- c('AmLobster', 'Megabenthos', 'OtherShrimps', 'SouthernDemersals',
+              'OtherFlatfish')
+for(isp in 1:length(sp.todet)){
+  setnames(GB.params$diet, sp.todet[isp], 'switch')
+  todet <- GB.params$diet[Group == 'Discards', switch]
+  GB.params$diet[Group == 'Detritus', switch := switch + todet]
+  GB.params$diet[Group == 'Discards', switch := NA]
+  setnames(GB.params$diet, 'switch', sp.todet[isp])
+}
+
+# 11 Krill ----
+# 11.A Increase biomass
+orig.krillbio <- GB.params$model[Group == 'Krill', Biomass]
+GB.params$model[Group == 'Krill', Biomass := Biomass * 4]
+
+# 11.B Increase productivity
+orig.krillpb <- GB.params$model[Group == 'Krill', PB]
+GB.params$model[Group == 'Krill', PB := PB * 2]
+
+diagnose(GB.params, 'Krill')
 #Pick up here---------------
 
 # 7 - Megabenthos ----
@@ -297,15 +333,7 @@ GB.params$model[Group == 'OtherPelagics', Biomass := Biomass * 4]
 GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 6]
 
 
-# 9 - OtherSkates----
-# 9.A - Move diet in Goosefish to little skate species
-tolittle <- GB.params$diet[Group == 'OtherSkates', Goosefish]
-GB.params$diet[Group == 'LittleSkate', Goosefish := Goosefish + tolittle]
-GB.params$diet[Group == 'OtherSkates', Goosefish := NA]
 
-# 9.B - increase production
-oldval <- GB.params$model[Group == 'OtherSkates', PB]
-GB.params$model[Group == 'OtherSkates', PB := 0.08]
 
 # 10 - SilverHake ----
 # 10.A - probably cause by too much cannibalism - move most of silver hake to red hake
