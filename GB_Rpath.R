@@ -268,12 +268,13 @@ GB.params$model[Group == 'AmPlaice', Biomass := Biomass * 3]
 
 # 5.B - Increase production
 orig.amppb <- GB.params$model[Group == 'AmPlaice', PB]
-GB.params$model[Group == 'AmPlaice', PB := PB * 6]
+GB.params$model[Group == 'AmPlaice', PB := .6]
 
 # 5.C - Increase consumption
 orig.ampqb <- GB.params$model[Group == 'AmPlaice', QB]
 GB.params$model[Group == 'AmPlaice', QB := QB * 3]
 
+diagnose(GB.params, 'AmPlaice')
 # 6 - OtherShrimps ----
 # 6.A Increase production
 orig.shmppb <- GB.params$model[Group == 'OtherShrimps', PB]
@@ -561,7 +562,12 @@ GB.params$model[Group == 'Mesopelagics', PB := PB * 1.5]
 orig.gfpb <- GB.params$model[Group == 'Goosefish', PB]
 GB.params$model[Group == 'Goosefish', PB := PB * 3]
 
-diagnose(GB.params, 'Goosefish')
+# 25 - Microzooplankton
+# 25.A - Increase production
+orig.microzbio <- GB.params$model[Group == 'Microzooplankton', Biomass]
+GB.params$model[Group == 'Microzooplankton', Biomass := Biomass * 3]
+
+diagnose(GB.params, 'Microzooplankton')
 #Pick up here---------------
 
 
