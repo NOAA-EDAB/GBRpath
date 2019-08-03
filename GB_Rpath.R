@@ -250,7 +250,6 @@ for(ipred in 1:length(top.preds)){
   GB.params$diet[Group == 'OtherCephalopods', switch := switch - tolol]
   setnames(GB.params$diet, 'switch', top.preds[ipred])
 }
-diagnose(GB.params, 'OtherCephalopods')
 
 # 4.B Drop pred biomasses
 orig.predbio <- GB.params$model[Group %in% c('Haddock', 'LittleSkate', 'WinterSkate',
@@ -334,7 +333,7 @@ GB.params$model[Group == 'OtherSkates', PB := 0.5]
 # EE is ratio of DetOut to DetIN - need to lower out unless jacking up landings
 # This makes sense as discards should be a low portion of diets
 sp.todet <- c('AmLobster', 'Megabenthos', 'OtherShrimps', 'SouthernDemersals',
-              'OtherFlatfish')
+              'OtherFlatfish', 'Macrobenthos')
 for(isp in 1:length(sp.todet)){
   setnames(GB.params$diet, sp.todet[isp], 'switch')
   todet <- GB.params$diet[Group == 'Discards', switch]
@@ -533,9 +532,22 @@ GB.params$model[Group == 'ToothWhale', QB := 8]
 orig.spdpb <- GB.params$model[Group == 'SpinyDogfish', PB]
 GB.params$model[Group == 'SpinyDogfish', PB := PB * 2]
 
+# 21 - Offshore Hake -----
+# 21.A - Increase biomass
+orig.ohbio <- GB.params$model[Group == 'OffHake', Biomass]
+GB.params$model[Group == 'OffHake', Biomass := Biomass * 2]
 
+# 21.B - Decrease DC of white hake
+tored <- GB.params$diet[Group == 'OffHake', WhiteHake] * 0.66
+GB.params$diet[Group == 'RedHake', WhiteHake := WhiteHake + tored]
+GB.params$diet[Group == 'OffHake', WhiteHake := WhiteHake - tored]
 
-diagnose(GB.params, 'SpinyDogfish')
+# 22 - Atlantic Mackerel
+# 22.A - Increase production
+orig.mackpb <- GB.params$model[Group == 'AtlMackerel', PB]
+GB.params$model[Group == 'AtlMackerel', PB := PB * 3]
+
+diagnose(GB.params, 'AtlMackerel')
 #Pick up here---------------
 
 
@@ -548,10 +560,7 @@ diagnose(GB.params, 'SpinyDogfish')
 
 
 
-# 15 - Offshore Hake -----
-# 15.A - Increase biomass
-oldval <- GB.params$model[Group == 'OffHake', Biomass]
-GB.params$model[Group == 'OffHake', Biomass := Biomass * 4]
+
 
 
 #Check progress ----
