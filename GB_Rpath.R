@@ -329,29 +329,64 @@ GB.params$model[Group == 'Krill', PB := PB * 2]
 #Increase unassim to 0.4 for zooplankton
 GB.params$model[Group %in% c('Microzooplankton', 'Mesozooplankton'), Unassim := 0.4]
 
+#Increase unassim to 0.3 for other detritavores
+GB.params$model[Group %in% c('AmLobster', 'Macrobenthos', 'Megabenthos', 'AtlScallop', 
+                             'Clams', 'OtherShrimps'), Unassim := 0.3]
+
+#Decrease consumption of Bacteria
+orig.bacqb <- GB.params$model[Group == 'Bacteria', QB]
+GB.params$model[Group == 'Bacteria', QB := 300]
+
 # 13 - SilverHake ----
 # 13.A Increase production
 orig.shpb <- GB.params$model[Group == 'SilverHake', PB]
 GB.params$model[Group == 'SilverHake', PB := 0.4]
 
-# 13.A - probably cause by too much cannibalism - move most of silver hake to red hake
-tored <- GB.params$diet[Group == 'SilverHake', SilverHake] / 1.1
-GB.params$diet[Group == 'RedHake', SilverHake    := SilverHake + tored]
-GB.params$diet[Group == 'SilverHake', SilverHake := SilverHake - tored]
+# 13.A - probably cause by too much cannibalism - move most of silver hake to micronekton
+tomicro <- GB.params$diet[Group == 'SilverHake', SilverHake] / 1.1
+GB.params$diet[Group == 'Micronekton', SilverHake := SilverHake + tomicro]
+GB.params$diet[Group == 'SilverHake',  SilverHake := SilverHake - tomicro]
 
-#Pick up here---------------
-#Look into trophic position, can lower biomass a bit to help out prey
-# 13.B - Moving 1/2 of fish biomass to micronekton as they are juveniles
-fish.taxa <- c('Cod', 'Haddock', 'WhiteHake', 'OceanPout', 'OtherDemersals', 
-               'Fourspot', 'SummerFlounder', 'OtherFlatfish')
-for(ifish in 1:length(fish.taxa)){
-  tonekton <- GB.params$diet[Group == fish.taxa[ifish], SilverHake] / 2
-  GB.params$diet[Group == 'Micronekton', SilverHake    := SilverHake + tonekton]
-  GB.params$diet[Group == fish.taxa[ifish], SilverHake := SilverHake - tonekton]
-}
+# 13.B Decrease consumption - PQ ratio = 0.09 should be between .1 and .3
+orig.shqb <- GB.params$model[Group == 'SilverHake', QB]
+GB.params$model[Group == 'SilverHake', QB := 3.055]
+
+#All EE's under 10 need to investigate systematic issues now---------------
+#Identified 8 species that look out of place on the trophic spectrum
+#Mackerel, Herring, 3 squids, 3 hakes
+#Mackerel diet appears spot on based on Bigelow and Shroeder...~10% from other 
+#trouble groups.
+#Squids look good too.  Mostly micronekton (45%).
+#AtlHerring had seabird in its diet (really small but still)...remove
+tozoop <- GB.params$diet[Group == 'Seabirds', AtlHerring]
+GB.params$diet[Group == 'Mesozooplankton', AtlHerring := AtlHerring + tozoop]
+GB.params$diet[Group == 'Seabirds', AtlHerring := NA]
+#Changed Excess cannibalism from red hake to micronekton for silver Hake
+#Move 2/3 of fish diet to macrobenthos for redhake
+tomacro <- GB.params$diet[Group %in% c('AtlHerring', 'AtlMackerel', 'SmPelagics',
+                                        'Mesopelagics', 'SilverHake', 'RedHake', 
+                                        'OceanPout', 'OtherDemersals', 'Windowpane',
+                                        'OtherFlatfish', 'SmFlatfishes'), 
+                          sum(RedHake)] * 2/3
+GB.params$diet[Group == 'Macrobenthos', RedHake := RedHake + tomacro]
+GB.params$diet[Group %in% c('AtlHerring', 'AtlMackerel', 'SmPelagics', 'Mesopelagics', 
+                            'SilverHake', 'RedHake', 'OceanPout', 'OtherDemersals', 
+                            'Windowpane', 'OtherFlatfish', 'SmFlatfishes'), 
+               RedHake := RedHake / 3]
+
+#According to Bigelow and Schroeder Offshore Hake eat mostly herring, anchovies, 
+#and laternfish. Moving 90% from silver hake and redistributing
+toothers <- GB.params$diet[Group == 'SilverHake', OffHake] * 0.9
+GB.params$diet[Group == 'SmPelagics',   OffHake := toothers * 0.55]
+GB.params$diet[Group == 'AtlHerring',   OffHake := toothers * 0.44]
+GB.params$diet[Group == 'Mesopelagics', OffHake := toothers * 0.01]
+GB.params$diet[Group == 'SilverHake',   OffHake := OffHake - toothers]
+
+# Back to EEs--------
 
 
-diagnose(GB.params, 'SilverHake')
+
+diagnose(GB.params, 'OffHake')
 #Pick up here---------------
 
 # 7 - Megabenthos ----
