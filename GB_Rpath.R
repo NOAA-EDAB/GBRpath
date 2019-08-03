@@ -241,6 +241,17 @@ GB.params$model[Group == 'OceanPout', PB := QB * 2]
 # 4.A Increase biomass - 4x and 6x not enough
 GB.params$model[Group == 'OtherCephalopods', Biomass := Biomass * 8]
 
+# 4.B - Move DC to loligo
+top.preds <- c('Goosefish', 'SilverHake', 'RedHake', 'Fourspot', 'SpinyDogfish')
+for(ipred in 1:length(top.preds)){
+  setnames(GB.params$diet, top.preds[ipred], 'switch')
+  tolol <- GB.params$diet[Group == 'OtherCephalopods', switch] * 0.9
+  GB.params$diet[Group == 'Loligo',           switch := switch + tolol]
+  GB.params$diet[Group == 'OtherCephalopods', switch := switch - tolol]
+  setnames(GB.params$diet, 'switch', top.preds[ipred])
+}
+diagnose(GB.params, 'OtherCephalopods')
+
 # 4.B Drop pred biomasses
 orig.predbio <- GB.params$model[Group %in% c('Haddock', 'LittleSkate', 'WinterSkate',
                                              'Barndoor', 'SummerFlounder'), Biomass]
@@ -512,7 +523,19 @@ GB.params$model[Group == 'Mesozooplankton', QB := 100]
 # 19.C - Increase production
 orig.mzppb <- GB.params$model[Group == 'Mesozooplankton', PB]
 GB.params$model[Group == 'Mesozooplankton', PB := PB * 2]
-diagnose(GB.params, 'Mesozooplankton')
+
+# 20 - Spiny Dogfish
+# 20.A - Drop consumption of predator
+orig.twqb <- GB.params$model[Group == 'ToothWhale', QB]
+GB.params$model[Group == 'ToothWhale', QB := 8]
+
+#20.B - Increase productivity
+orig.spdpb <- GB.params$model[Group == 'SpinyDogfish', PB]
+GB.params$model[Group == 'SpinyDogfish', PB := PB * 2]
+
+
+
+diagnose(GB.params, 'SpinyDogfish')
 #Pick up here---------------
 
 
