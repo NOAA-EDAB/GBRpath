@@ -192,7 +192,7 @@ GB.params$model[Group == 'Redfish', OtterTrawlLg.disc   := OtterTrawlLg.disc   /
 # 1.D Increase redfish biomass
 GB.params$model[Group == 'Redfish', Biomass := Biomass * 2]
 
-#2 Other Flatfish ----
+#2 - Other Flatfish ----
 # 2.A - Changed Other Flatfish in diets to SmFlatfishes - OtherFlatfish are mostly
 #unidentified flatfish in stomachs but biomass is Atl Halibut
 ofrac <- GB.params$model[Group == 'OtherFlatfish', Biomass] / 
@@ -220,16 +220,6 @@ GB.params$model[Group == 'Cod',          Biomass := 0.5]
 # 2.C - Increase biomass
 orig.offbio <- GB.params$model[Group == 'OtherFlatfish', Biomass]
 GB.params$model[Group == 'OtherFlatfish', Biomass := Biomass * 4]
-
-#Fix Red Hake diet ---- 
-#Red Hake way too high in the trophic spectrum
-#listed as eating sharks and cod...these must be juveniles/larval versions
-#moving to micronekton
-misplaced <- GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish',
-                                         'SpinyDogfish', 'OtherSkates'), sum(RedHake)]
-GB.params$diet[Group == 'Micronekton', RedHake := RedHake + misplaced]
-GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish', 
-                            'SpinyDogfish', 'OtherSkates'), RedHake := NA]
 
 # 3 - OceanPout ----
 # 3.A Increase Biomass - Not well sampled
@@ -289,7 +279,7 @@ GB.params$model[Group == 'OtherShrimps', Biomass := Biomass * 2]
 orig.opelbio <- GB.params$model[Group == 'OtherPelagics', Biomass]
 GB.params$model[Group == 'OtherPelagics', Biomass := Biomass * 4]
 
-# 8 Micronekton ----
+# 8 - Micronekton ----
 # 8.A - Increase Biomass
 orig.mnkbio <- GB.params$model[Group == 'Micronekton', Biomass]
 GB.params$model[Group == 'Micronekton', Biomass := Biomass * 2]
@@ -303,7 +293,7 @@ GB.params$model[Group == 'Micronekton', PB := PB * 2]
 orig.oskpb <- GB.params$model[Group == 'OtherSkates', PB]
 GB.params$model[Group == 'OtherSkates', PB := 0.5]
 
-# 10 Discards ----
+# 10 - Discards ----
 # EE is ratio of DetOut to DetIN - need to lower out unless jacking up landings
 # This makes sense as discards should be a low portion of diets
 sp.todet <- c('AmLobster', 'Megabenthos', 'OtherShrimps', 'SouthernDemersals',
@@ -316,7 +306,7 @@ for(isp in 1:length(sp.todet)){
   setnames(GB.params$diet, 'switch', sp.todet[isp])
 }
 
-# 11 Krill ----
+# 11 - Krill ----
 # 11.A Increase biomass
 orig.krillbio <- GB.params$model[Group == 'Krill', Biomass]
 GB.params$model[Group == 'Krill', Biomass := Biomass * 4]
@@ -325,7 +315,7 @@ GB.params$model[Group == 'Krill', Biomass := Biomass * 4]
 orig.krillpb <- GB.params$model[Group == 'Krill', PB]
 GB.params$model[Group == 'Krill', PB := PB * 2]
 
-# 12 Detritus ----
+# 12 - Detritus ----
 #Increase unassim to 0.4 for zooplankton
 GB.params$model[Group %in% c('Microzooplankton', 'Mesozooplankton'), Unassim := 0.4]
 
@@ -361,7 +351,14 @@ GB.params$model[Group == 'SilverHake', QB := 3.055]
 tozoop <- GB.params$diet[Group == 'Seabirds', AtlHerring]
 GB.params$diet[Group == 'Mesozooplankton', AtlHerring := AtlHerring + tozoop]
 GB.params$diet[Group == 'Seabirds', AtlHerring := NA]
-#Changed Excess cannibalism from red hake to micronekton for silver Hake
+#Changed Excess cannibalism from red hake to micronekton for silver Hake (above)
+#Red Hake listed as eating sharks and cod...these must be juveniles/larval versions
+#moving to micronekton
+misplaced <- GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish',
+                                         'SpinyDogfish', 'OtherSkates'), sum(RedHake)]
+GB.params$diet[Group == 'Micronekton', RedHake := RedHake + misplaced]
+GB.params$diet[Group %in% c('Sharks', 'Cod', 'Haddock', 'Goosefish', 
+                            'SpinyDogfish', 'OtherSkates'), RedHake := NA]
 #Move 2/3 of fish diet to macrobenthos for redhake
 tomacro <- GB.params$diet[Group %in% c('AtlHerring', 'AtlMackerel', 'SmPelagics',
                                         'Mesopelagics', 'SilverHake', 'RedHake', 
@@ -383,15 +380,75 @@ GB.params$diet[Group == 'Mesopelagics', OffHake := toothers * 0.01]
 GB.params$diet[Group == 'SilverHake',   OffHake := OffHake - toothers]
 
 # Back to EEs--------
+# 14 - Megabenthos ----
+# 14.A Increase biomass
+orig.megbbio <- GB.params$model[Group == 'Megabenthos', Biomass]
+GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 2]
 
+# 14.B Increase PB
+orig.megbpb <- GB.params$model[Group == 'Megabenthos', PB]
+GB.params$model[Group == 'Megabenthos', PB := PB * 2]
 
+# 14.C Decrease Bio of Pred
+orig.hadbio <- GB.params$model[Group == 'Haddock', Biomass]
+orig.otdbio <- GB.params$model[Group == 'OtherDemersals', Biomass]
+orig.smdbio <- GB.params$model[Group == 'SmoothDogfish', Biomass]
+GB.params$model[Group %in% c('Haddock', 'OtherDemersals', 'SmoothDogfish'), 
+                Biomass := Biomass / 2]
 
-diagnose(GB.params, 'OffHake')
+# 14.D Move portion of SmoothDogfish DC to Macrobenthos
+tomacro <- GB.params$diet[Group == 'Megabenthos', SmoothDogfish] * 0.25
+GB.params$diet[Group == 'Macrobenthos', SmoothDogfish := SmoothDogfish + tomacro]
+GB.params$diet[Group == 'Megabenthos',  SmoothDogfish := SmoothDogfish - tomacro]
+
+# 15 - Witch Flounder -----
+# 15.A - Increase biomass
+orig.witchbio <- GB.params$model[Group == 'WitchFlounder', Biomass]
+GB.params$model[Group == 'WitchFlounder', Biomass := Biomass * 4]
+
+# 15.B Increase production
+orig.witchpb <- GB.params$model[Group == 'WitchFlounder', PB]
+GB.params$model[Group == 'WitchFlounder', PB := PB * 4]
+
+# 16 - Macrobenthos
+# 16.A - Increase production
+orig.macbpb <- GB.params$model[Group == 'Macrobenthos', PB]
+GB.params$model[Group == 'Macrobenthos', PB := PB * 10]
+
+# 17 - White Hake -----
+# 17.A - Increase Production
+orig.whpb <- GB.params$model[Group == 'WhiteHake', PB]
+GB.params$model[Group == 'WhiteHake', PB := 0.18]
+
+# 17.B - Diet is a little suspect - moving 10% to Loligo and 20% to macrobenthos
+# from Silver Hake
+toother <- .30
+GB.params$diet[Group == 'SilverHake',   WhiteHake := WhiteHake - 0.30]
+GB.params$diet[Group == 'Loligo',       WhiteHake := WhiteHake + 0.10]
+GB.params$diet[Group == 'Macrobenthos', WhiteHake := WhiteHake + 0.20]
+
+# 17.C - cut landings in half (more of a GoM fishery)
+GB.params$model[Group == 'WhiteHake', Gillnet        := Gillnet        / 2]
+GB.params$model[Group == 'WhiteHake', Longline       := Longline       / 2]
+GB.params$model[Group == 'WhiteHake', Midwater       := Midwater       / 2]
+GB.params$model[Group == 'WhiteHake', OtherFisheries := OtherFisheries / 2]
+GB.params$model[Group == 'WhiteHake', OtterTrawlSm   := OtterTrawlSm   / 2]
+GB.params$model[Group == 'WhiteHake', OtterTrawlLg   := OtterTrawlLg   / 2]
+GB.params$model[Group == 'WhiteHake', DredgeScallop.disc  := DredgeScallop.disc  / 2]
+GB.params$model[Group == 'WhiteHake', Gillnet.disc        := Gillnet.disc        / 2]
+GB.params$model[Group == 'WhiteHake', PotTrap.disc        := PotTrap.disc        / 2]
+GB.params$model[Group == 'WhiteHake', Midwater.disc       := Midwater.disc       / 2]
+GB.params$model[Group == 'WhiteHake', OtterTrawlSm.disc   := OtterTrawlSm.disc   / 2]
+GB.params$model[Group == 'WhiteHake', OtterTrawlLg.disc   := OtterTrawlLg.disc   / 2]
+
+# 17.D - Reduce cannibalism
+tomega <- GB.params$diet[Group == 'WhiteHake', WhiteHake] / 2
+GB.params$diet[Group == 'WhiteHake', WhiteHake := WhiteHake - tomega]
+GB.params$diet[Group == 'Megabenthos', WhiteHake := WhiteHake + tomega]
+
+diagnose(GB.params, 'WhiteHake')
 #Pick up here---------------
 
-# 7 - Megabenthos ----
-# 7.A Increase biomass
-GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 6]
 
 
 
@@ -402,20 +459,12 @@ GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 6]
 oldval <- GB.params$model[Group == 'Haddock', Biomass]
 GB.params$model[Group == 'Haddock', Biomass := Biomass / 3]
 
-# 12 - Witch Flounder -----
-# 12.A - Increase biomass
-oldval <- GB.params$model[Group == 'WitchFlounder', Biomass]
-GB.params$model[Group == 'WitchFlounder', Biomass := Biomass * 4]
 
 # 13 - Pollock -----
 # 13.A - Increase biomass
 oldval <- GB.params$model[Group == 'Pollock', Biomass]
 GB.params$model[Group == 'Pollock', Biomass := Biomass * 4]
 
-# 14 - White Hake -----
-# 14.A - Increase biomass
-oldval <- GB.params$model[Group == 'WhiteHake', Biomass]
-GB.params$model[Group == 'WhiteHake', Biomass := Biomass * 4]
 
 # 15 - Offshore Hake -----
 # 15.A - Increase biomass
