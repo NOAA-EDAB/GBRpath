@@ -275,9 +275,32 @@ GB.params$model[Group == 'OtherShrimps', Biomass := Biomass * 2]
 
 # 7 - OtherPelagics -----
 # 7.A - Fix diet - done in GBRpath_diet_pull
-# 7.A - Increase biomass
+# 7.B - Increase biomass
 orig.opelbio <- GB.params$model[Group == 'OtherPelagics', Biomass]
 GB.params$model[Group == 'OtherPelagics', Biomass := Biomass * 4]
+
+# 7.C - Decrease predator biomass
+orig.shbio <- GB.params$model[Group == 'SilverHake', Biomass]
+GB.params$model[Group == 'SilverHake', Biomass := Biomass * 0.6]
+orig.bfbio <- GB.params$model[Group == 'Bluefish', Biomass]
+GB.params$model[Group == 'Bluefish', Biomass := Biomass / 2]
+
+# 7.D - Move 1/2 of DC to SmPelagics
+tospel <- GB.params$diet[Group == 'OtherPelagics', SilverHake] / 2
+GB.params$diet[Group == 'OtherPelagics', SilverHake := SilverHake - tospel] 
+GB.params$diet[Group == 'SmPelagics',    SilverHake := SilverHake + tospel] 
+
+tospel <- GB.params$diet[Group == 'OtherPelagics', Goosefish] / 2
+GB.params$diet[Group == 'OtherPelagics', Goosefish := Goosefish - tospel] 
+GB.params$diet[Group == 'SmPelagics',    Goosefish := Goosefish + tospel] 
+
+tospel <- GB.params$diet[Group == 'OtherPelagics', SpinyDogfish] / 2
+GB.params$diet[Group == 'OtherPelagics', SpinyDogfish := SpinyDogfish - tospel] 
+GB.params$diet[Group == 'SmPelagics',    SpinyDogfish := SpinyDogfish + tospel] 
+
+tospel <- GB.params$diet[Group == 'OtherPelagics', WinterSkate] / 2
+GB.params$diet[Group == 'OtherPelagics', WinterSkate := WinterSkate - tospel] 
+GB.params$diet[Group == 'SmPelagics',    WinterSkate := WinterSkate + tospel] 
 
 # 8 - Micronekton ----
 # 8.A - Increase Biomass
@@ -458,7 +481,7 @@ GB.params$model[Group == 'Pollock', PB := 0.15]
 orig.polqb <- GB.params$model[Group == 'Pollock', QB]
 GB.params$model[Group == 'Pollock', QB := 2.3]
 
-# 17.C - cut landings in quarter (more of a GoM fishery)
+# 18.C - cut landings in quarter (more of a GoM fishery)
 GB.params$model[Group == 'Pollock', Gillnet        := Gillnet        / 4]
 GB.params$model[Group == 'Pollock', Longline       := Longline       / 4]
 GB.params$model[Group == 'Pollock', OtherFisheries := OtherFisheries / 4]
@@ -471,9 +494,25 @@ GB.params$model[Group == 'Pollock', Midwater.disc       := Midwater.disc       /
 GB.params$model[Group == 'Pollock', OtterTrawlSm.disc   := OtterTrawlSm.disc   / 4]
 GB.params$model[Group == 'Pollock', OtterTrawlLg.disc   := OtterTrawlLg.disc   / 4]
 
+# 19 - Mesozooplankton
+# 19.A Increase Biomass
+orig.mesobio <- GB.params$model[Group == 'Mesozooplankton', Biomass]
+GB.params$model[Group == 'Mesozooplankton', Biomass := Biomass * 4]
 
+# 19.B - Decrease predator consumption
+orig.mnkqb <- GB.params$model[Group == 'Micronekton', QB]
+orig.gelqb <- GB.params$model[Group == 'GelZooplankton', QB]
+orig.mzpqb <- GB.params$model[Group == 'Mesozooplankton', QB]
+orig.krilqb <- GB.params$model[Group == 'Krill', QB]
+GB.params$model[Group == 'Micronekton',     QB := 80]
+GB.params$model[Group == 'Krill',           QB := 80]
+GB.params$model[Group == 'GelZooplankton',  QB := 100]
+GB.params$model[Group == 'Mesozooplankton', QB := 100]
 
-diagnose(GB.params, 'Micronekton')
+# 19.C - Increase production
+orig.mzppb <- GB.params$model[Group == 'Mesozooplankton', PB]
+GB.params$model[Group == 'Mesozooplankton', PB := PB * 2]
+diagnose(GB.params, 'Mesozooplankton')
 #Pick up here---------------
 
 
@@ -481,10 +520,7 @@ diagnose(GB.params, 'Micronekton')
 
 
 
-# 11 - AtlMackerel ----
-# 11.A - reduce predators
-oldval <- GB.params$model[Group == 'Haddock', Biomass]
-GB.params$model[Group == 'Haddock', Biomass := Biomass / 3]
+
 
 
 
