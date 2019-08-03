@@ -320,8 +320,9 @@ GB.params$model[Group == 'Loligo', Biomass := Biomass / 2]
 # 9 - OtherSkates----
 # 9.A - increase production
 orig.oskpb <- GB.params$model[Group == 'OtherSkates', PB]
-GB.params$model[Group == 'OtherSkates', PB := 0.5]
+GB.params$model[Group == 'OtherSkates', PB := 0.9]
 
+diagnose(GB.params, 'OtherSkates')
 # 10 - Discards ----
 # EE is ratio of DetOut to DetIN - need to lower out unless jacking up landings
 # This makes sense as discards should be a low portion of diets
@@ -554,17 +555,31 @@ GB.params$model[Group == 'Mesopelagics', PB := PB * 1.5]
 orig.gfpb <- GB.params$model[Group == 'Goosefish', PB]
 GB.params$model[Group == 'Goosefish', PB := PB * 3]
 
-# 25 - Microzooplankton
+# 25 - Microzooplankton ----
 # 25.A - Increase biomass
 orig.microzbio <- GB.params$model[Group == 'Microzooplankton', Biomass]
 GB.params$model[Group == 'Microzooplankton', Biomass := Biomass * 3]
 
-# 26 - Winter Skate
+# 26 - Winter Skate ----
 # 26.A - Increase production
 orig.winskpb <- GB.params$model[Group == 'WinterSkate', PB]
 GB.params$model[Group == 'WinterSkate', PB := PB * 3]
 
-diagnose(GB.params, 'WinterSkate')
+# 27 - OtherDemersals ----
+# 27.A move DC to macrobenthos - too heavy on piscivory
+sp.tomacro <- c('OceanPout', 'OtherDemersals', 'Cod', 'Haddock', 'SilverHake', 'RedHake',
+                'YTFlounder')
+for(iprey in 1:length(sp.tomacro)){
+  tomacro <- GB.params$diet[Group == sp.tomacro[iprey], OtherDemersals] / 2
+  GB.params$diet[Group == 'Macrobenthos',    OtherDemersals := OtherDemersals + tomacro]
+  GB.params$diet[Group == sp.tomacro[iprey], OtherDemersals := OtherDemersals - tomacro]
+}
+
+# 27.B - Increase production
+orig.otdpb <- GB.params$model[Group == 'OtherDemersals', PB]
+GB.params$model[Group == 'OtherDemersals', PB := 0.71]
+
+diagnose(GB.params, 'OtherDemersals')
 #Pick up here---------------
 
 
