@@ -325,7 +325,33 @@ GB.params$model[Group == 'Krill', Biomass := Biomass * 4]
 orig.krillpb <- GB.params$model[Group == 'Krill', PB]
 GB.params$model[Group == 'Krill', PB := PB * 2]
 
-diagnose(GB.params, 'Krill')
+# 12 Detritus ----
+#Increase unassim to 0.4 for zooplankton
+GB.params$model[Group %in% c('Microzooplankton', 'Mesozooplankton'), Unassim := 0.4]
+
+# 13 - SilverHake ----
+# 13.A Increase production
+orig.shpb <- GB.params$model[Group == 'SilverHake', PB]
+GB.params$model[Group == 'SilverHake', PB := 0.4]
+
+# 13.A - probably cause by too much cannibalism - move most of silver hake to red hake
+tored <- GB.params$diet[Group == 'SilverHake', SilverHake] / 1.1
+GB.params$diet[Group == 'RedHake', SilverHake    := SilverHake + tored]
+GB.params$diet[Group == 'SilverHake', SilverHake := SilverHake - tored]
+
+#Pick up here---------------
+#Look into trophic position, can lower biomass a bit to help out prey
+# 13.B - Moving 1/2 of fish biomass to micronekton as they are juveniles
+fish.taxa <- c('Cod', 'Haddock', 'WhiteHake', 'OceanPout', 'OtherDemersals', 
+               'Fourspot', 'SummerFlounder', 'OtherFlatfish')
+for(ifish in 1:length(fish.taxa)){
+  tonekton <- GB.params$diet[Group == fish.taxa[ifish], SilverHake] / 2
+  GB.params$diet[Group == 'Micronekton', SilverHake    := SilverHake + tonekton]
+  GB.params$diet[Group == fish.taxa[ifish], SilverHake := SilverHake - tonekton]
+}
+
+
+diagnose(GB.params, 'SilverHake')
 #Pick up here---------------
 
 # 7 - Megabenthos ----
@@ -335,20 +361,6 @@ GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 6]
 
 
 
-# 10 - SilverHake ----
-# 10.A - probably cause by too much cannibalism - move most of silver hake to red hake
-tored <- GB.params$diet[Group == 'SilverHake', SilverHake] / 1.1
-GB.params$diet[Group == 'RedHake', SilverHake    := SilverHake + tored]
-GB.params$diet[Group == 'SilverHake', SilverHake := SilverHake - tored]
-
-# 10.B - Moving 1/2 of fish biomass to micronekton as they are juveniles
-fish.taxa <- c('Cod', 'Haddock', 'WhiteHake', 'OceanPout', 'OtherDemersals', 
-               'Fourspot', 'SummerFlounder', 'OtherFlatfish')
-for(ifish in 1:length(fish.taxa)){
-  tonekton <- GB.params$diet[Group == fish.taxa[ifish], SilverHake] / 2
-  GB.params$diet[Group == 'Micronekton', SilverHake    := SilverHake + tonekton]
-  GB.params$diet[Group == fish.taxa[ifish], SilverHake := SilverHake - tonekton]
-}
 
 # 11 - AtlMackerel ----
 # 11.A - reduce predators
