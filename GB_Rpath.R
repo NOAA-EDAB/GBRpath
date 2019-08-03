@@ -282,11 +282,14 @@ GB.params$model[Group == 'OtherPelagics', Biomass := Biomass * 4]
 # 8 - Micronekton ----
 # 8.A - Increase Biomass
 orig.mnkbio <- GB.params$model[Group == 'Micronekton', Biomass]
-GB.params$model[Group == 'Micronekton', Biomass := Biomass * 2]
-
+GB.params$model[Group == 'Micronekton', Biomass := Biomass * 8]
+diagnose(GB.params, 'Loligo')
 # 8.B - Increase production
 orig.mnkpb <- GB.params$model[Group == 'Micronekton', PB]
 GB.params$model[Group == 'Micronekton', PB := PB * 2]
+# 8.C - Decrease Predator biomass
+orig.lolbio <- GB.params$model[Group == 'Loligo', Biomass]
+GB.params$model[Group == 'Loligo', Biomass := Biomass / 2]
 
 # 9 - OtherSkates----
 # 9.A - increase production
@@ -446,7 +449,31 @@ tomega <- GB.params$diet[Group == 'WhiteHake', WhiteHake] / 2
 GB.params$diet[Group == 'WhiteHake', WhiteHake := WhiteHake - tomega]
 GB.params$diet[Group == 'Megabenthos', WhiteHake := WhiteHake + tomega]
 
-diagnose(GB.params, 'WhiteHake')
+# 18 - Pollock -----
+# 18.A - Increase production
+orig.polpb <- GB.params$model[Group == 'Pollock', PB]
+GB.params$model[Group == 'Pollock', PB := 0.15]
+
+# 18.B - Decrease consumption
+orig.polqb <- GB.params$model[Group == 'Pollock', QB]
+GB.params$model[Group == 'Pollock', QB := 2.3]
+
+# 17.C - cut landings in quarter (more of a GoM fishery)
+GB.params$model[Group == 'Pollock', Gillnet        := Gillnet        / 4]
+GB.params$model[Group == 'Pollock', Longline       := Longline       / 4]
+GB.params$model[Group == 'Pollock', OtherFisheries := OtherFisheries / 4]
+GB.params$model[Group == 'Pollock', OtterTrawlSm   := OtterTrawlSm   / 4]
+GB.params$model[Group == 'Pollock', OtterTrawlLg   := OtterTrawlLg   / 4]
+GB.params$model[Group == 'Pollock', DredgeScallop.disc  := DredgeScallop.disc  / 4]
+GB.params$model[Group == 'Pollock', Gillnet.disc        := Gillnet.disc        / 4]
+GB.params$model[Group == 'Pollock', PotTrap.disc        := PotTrap.disc        / 4]
+GB.params$model[Group == 'Pollock', Midwater.disc       := Midwater.disc       / 4]
+GB.params$model[Group == 'Pollock', OtterTrawlSm.disc   := OtterTrawlSm.disc   / 4]
+GB.params$model[Group == 'Pollock', OtterTrawlLg.disc   := OtterTrawlLg.disc   / 4]
+
+
+
+diagnose(GB.params, 'Micronekton')
 #Pick up here---------------
 
 
@@ -460,10 +487,6 @@ oldval <- GB.params$model[Group == 'Haddock', Biomass]
 GB.params$model[Group == 'Haddock', Biomass := Biomass / 3]
 
 
-# 13 - Pollock -----
-# 13.A - Increase biomass
-oldval <- GB.params$model[Group == 'Pollock', Biomass]
-GB.params$model[Group == 'Pollock', Biomass := Biomass * 4]
 
 
 # 15 - Offshore Hake -----
