@@ -633,41 +633,5 @@ GB.params$model[Group == 'Windowpane', Biomass := 1.26]
 otpbio2 <- GB.params$model[Group == 'OtherPelagics', Biomass]
 GB.params$model[Group == 'OtherPelagics', Biomass := 0.28]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-barplot(output.GB[type < 2, EE], names.arg = output.GB[type < 2, Group],
-        cex.names = 0.5, las = T)
-abline(h=1, col = 'red')
-
-unbal.GB <- as.data.table(write.Rpath(GB))
-living.GB <- unbal.GB[type < 2, list(Group, Biomass, Removals, TL, PB, QB)]
-bio.mod <- lm(log(living.GB[!Group %in% c('SouthernDemersals', 'OtherFlatfish'), Biomass], base = 10) 
-              ~ living.GB[!Group %in% c('SouthernDemersals', 'OtherFlatfish'), TL])
-
-plot(living.GB[, list(TL, Biomass)], log = "y", typ = 'n')
-text(living.GB[, TL], living.GB[, Biomass], living.GB[, Group], cex = .8)
-abline(bio.mod)
-#+- 1 Standard Error
-std <- coef(summary(bio.mod))[, 2]
-abline(a = coef(bio.mod)[1] + std[1], b = coef(bio.mod)[2] + std[2], lty = 2)
-abline(a = coef(bio.mod)[1] - std[1], b = coef(bio.mod)[2] - std[2], lty = 2)
-abline(a = coef(bio.mod)[1], b = -.1, lty = 3, col = 'red')
-
-bio.slope <- coef(bio.mod)[2]
-bio.slope
-
-#Save initial balance for PreBal
-#save(GB.2, file = file.path(data.dir, 'Unbalanced_GB.RData'))
-#save(GB.params.2, file = file.path(data.dir, 'Input_GB_params.RData'))
+#Save balanced model
+save(GB.params, file = file.path(data.dir, 'GB_balanced_params.RData'))
