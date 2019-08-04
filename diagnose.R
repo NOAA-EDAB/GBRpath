@@ -77,6 +77,6 @@ diagnose <- function(rpath.params, group){
   
   out <- list(Mortalities = mort.table,
               AsPred = rpath.params$diet[, .(Group, get(group))], 
-              AsPrey = prey.table, Balance = output[Group == group, ])
+              AsPrey = prey.table, TopPred = top.preds, Balance = output[Group == group, ])
   return(out)
 }
