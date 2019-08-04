@@ -339,7 +339,7 @@ for(isp in 1:length(sp.todet)){
 # 11 - Krill ----
 # 11.A Increase biomass
 orig.krillbio <- GB.params$model[Group == 'Krill', Biomass]
-GB.params$model[Group == 'Krill', Biomass := Biomass * 4]
+GB.params$model[Group == 'Krill', Biomass := Biomass * 6]
 
 # 11.B Increase productivity
 orig.krillpb <- GB.params$model[Group == 'Krill', PB]
@@ -606,7 +606,14 @@ GB.params$model[Group == 'LittleSkate', Biomass := Biomass / 2]
 #Need to nudge SilverHake biomass down but don't want to mess up things below #7
 sh.bio2 <- GB.params$model[Group == 'SilverHake', Biomass]
 GB.params$model[Group == 'SilverHake', Biomass := 9.25]
-diagnose(GB.params, 'OtherPelagics')
+
+# 30 - Gelatinous Zooplankton ----
+# 30.A Increase biomass
+orig.gelbio <- GB.params$model[Group == 'GelZooplankton', Biomass]
+GB.params$model[Group == 'GelZooplankton', Biomass := Biomass * 2]
+
+
+diagnose(GB.params, 'Krill')
 #Pick up here---------------
 
 
