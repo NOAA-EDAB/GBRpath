@@ -524,7 +524,7 @@ GB.params$model[Group == 'ToothWhale', QB := 8]
 
 #20.B - Increase productivity
 orig.spdpb <- GB.params$model[Group == 'SpinyDogfish', PB]
-GB.params$model[Group == 'SpinyDogfish', PB := PB * 2]
+GB.params$model[Group == 'SpinyDogfish', PB := 0.7]
 
 # 21 - Offshore Hake -----
 # 21.A - Increase biomass
@@ -612,9 +612,26 @@ GB.params$model[Group == 'SilverHake', Biomass := 9.25]
 orig.gelbio <- GB.params$model[Group == 'GelZooplankton', Biomass]
 GB.params$model[Group == 'GelZooplankton', Biomass := Biomass * 2]
 
+# 31 - Small Flatfishes ----
+# 31.A Increase biomass
+orig.sffbio <- GB.params$model[Group == 'SmFlatfishes', Biomass]
+GB.params$model[Group == 'SmFlatfishes', Biomass := Biomass * 2]
 
-diagnose(GB.params, 'Krill')
-#Pick up here---------------
+# 20.2 - SpinyDogfish ----
+# 20.C - Nudge Biomass back up
+spdbio2 <- GB.params$model[Group == 'SpinyDogfish', Biomass]
+GB.params$model[Group == 'SpinyDogfish', Biomass := 2.65]
+
+# 20.D - Nudge down QB
+spdqb2 <- GB.params$model[Group == 'SpinyDogfish', QB]
+GB.params$model[Group == 'SpinyDogfish', QB := 1.6]
+
+# 20.E - Nudge Windowpane and Other Pelagics biomass up
+wpfbio2 <- GB.params$model[Group == 'Windowpane', Biomass]
+GB.params$model[Group == 'Windowpane', Biomass := 1.26]
+
+otpbio2 <- GB.params$model[Group == 'OtherPelagics', Biomass]
+GB.params$model[Group == 'OtherPelagics', Biomass := 0.28]
 
 
 
@@ -629,15 +646,8 @@ diagnose(GB.params, 'Krill')
 
 
 
-#Check progress ----
-GB <- rpath(GB.params, 'Georges Bank', 1)
-output.GB <- as.data.table(write.Rpath(GB))
-setkey(output.GB, EE)
-output.GB
 
-morts <- as.data.table(write.Rpath(GB, morts = T))
-
-barplot(output.GB[type < 2, EE], log = 'y', names.arg = output.GB[type < 2, Group],
+barplot(output.GB[type < 2, EE], names.arg = output.GB[type < 2, Group],
         cex.names = 0.5, las = T)
 abline(h=1, col = 'red')
 
