@@ -293,7 +293,7 @@ GB.params$model[Group == 'OtherPelagics', Biomass := Biomass * 4]
 orig.shbio <- GB.params$model[Group == 'SilverHake', Biomass]
 GB.params$model[Group == 'SilverHake', Biomass := Biomass * 0.6]
 orig.bfbio <- GB.params$model[Group == 'Bluefish', Biomass]
-GB.params$model[Group == 'Bluefish', Biomass := Biomass / 2]
+GB.params$model[Group == 'Bluefish', Biomass := Biomass / 8]
 
 # 7.D - Move 2/3 of DC to SmPelagics
 preds <- c('SilverHake', 'Goosefish', 'SpinyDogfish', 'WinterSkate')
@@ -415,7 +415,6 @@ GB.params$diet[Group == 'SilverHake',   OffHake := OffHake - toothers]
 orig.megbbio <- GB.params$model[Group == 'Megabenthos', Biomass]
 GB.params$model[Group == 'Megabenthos', Biomass := Biomass * 3]
 
-diagnose(GB.params, 'Megabenthos')
 # 14.B Increase PB
 orig.megbpb <- GB.params$model[Group == 'Megabenthos', PB]
 GB.params$model[Group == 'Megabenthos', PB := PB * 2]
@@ -594,8 +593,20 @@ tospel <- GB.params$diet[Group == 'AtlHerring', Loligo] / 2
 GB.params$diet[Group == 'SmPelagics', Loligo := Loligo + tospel]
 GB.params$diet[Group == 'AtlHerring', Loligo := Loligo - tospel]
 
+# 29 - Little Skates ----
+# 29.A Increase production
+orig.lskpb <- GB.params$model[Group == 'LittleSkate', PB]
+GB.params$model[Group == 'LittleSkate', PB := 0.3]
 
-diagnose(GB.params, 'AtlHerring')
+#Going to drop B some due to new PB
+orig.lskbio <- GB.params$model[Group == 'LittleSkate', Biomass]
+GB.params$model[Group == 'LittleSkate', Biomass := Biomass / 2]
+
+# 7.2 - OtherPelagics
+#Need to nudge SilverHake biomass down but don't want to mess up things below #7
+sh.bio2 <- GB.params$model[Group == 'SilverHake', Biomass]
+GB.params$model[Group == 'SilverHake', Biomass := 9.25]
+diagnose(GB.params, 'OtherPelagics')
 #Pick up here---------------
 
 
