@@ -642,7 +642,7 @@ GB.params$model[Group == 'Phytoplankton', EE := NA]
 GB.params$model[Group == 'Phytoplankton', Biomass := 15]
 diagnose(GB.params, 'Phytoplankton')
 
-#Fix GE < .1 ----
+#Fix GE > .3 ----
 #Increase QB
 orig.mzpqb <- GB.params$model[Group == 'Microzooplankton', QB]
 GB.params$model[Group == 'Microzooplankton', QB := 300]
@@ -656,6 +656,7 @@ GB.params$model[Group == 'AtlMackerel', QB := 2.8]
 orig.mesoqb <- GB.params$model[Group == 'Mesopelagics', QB]
 GB.params$model[Group == 'Mesopelagics', QB := 4.4]
 
+#Fix GE < .1 ----
 #Increase PB
 orig.goospb <- GB.params$model[Group == 'Goosefish', PB]
 GB.params$model[Group == 'Goosefish', PB := 0.4]
@@ -685,7 +686,7 @@ GB.params$model[Group == 'Microzooplankton', PB := 130]
 #Decided against top down balancingof SmPelagics
 GB.params$model[Group == 'SmPelagics', EE := NA]
 GB.params$model[Group == 'SmPelagics', Biomass := 9.8]
-GB.params$model[Group == 'SmPelagics', PB := 1.8]
+GB.params$model[Group == 'SmPelagics', PB := 2.0]
 
 #Flip flop DC of meso and micro zoop in Mesozoop
 tomeso  <- GB.params$diet[Group == 'Microzooplankton', Mesozooplankton]
@@ -695,8 +696,45 @@ GB.params$diet[Group == 'Microzooplankton', Mesozooplankton := tomicro]
 
 GB.params$model[Group == 'Microzooplankton', Biomass := 2.3]
 
-diagnose(GB.params, 'Microzooplankton')
-GB <- rpath(GB.params)
+#Fix GE > 1----
+orig.otskqb <- GB.params$model[Group == 'OtherSkates', QB]
+GB.params$model[Group == 'OtherSkates', QB := 3]
+
+orig.macroqb <- GB.params$model[Group == 'Macrobenthos', QB]
+GB.params$model[Group == 'Macrobenthos', QB := 18]
+
+orig.macropb <- GB.params$model[Group == 'Macrobenthos', PB]
+GB.params$model[Group == 'Macrobenthos', PB := 10]
+
+orig.opqb <- GB.params$model[Group == 'OceanPout', QB]
+GB.params$model[Group == 'OceanPout', QB := 7]
+
+orig.opbio <- GB.params$model[Group == 'OceanPout', Biomass]
+GB.params$model[Group == 'OceanPout', Biomass := 0.4]
+
+#Rebalance
+GB.params$model[Group == 'OtherCephalopods', Biomass := 0.09]
+
+todisc <- GB.params$diet[Group == 'Macrobenthos', Macrobenthos] / 2
+GB.params$diet[Group == 'Discards',     Macrobenthos := Macrobenthos + todisc]
+GB.params$diet[Group == 'Macrobenthos', Macrobenthos := Macrobenthos - todisc]
+
+todisc <- GB.params$diet[Group == 'Macrobenthos', Megabenthos] * 0.25
+GB.params$diet[Group == 'Discards',     Megabenthos := Megabenthos + todisc]
+GB.params$diet[Group == 'Macrobenthos', Megabenthos := Megabenthos - todisc]
+
+todisc <- GB.params$diet[Group == 'Macrobenthos', AmLobster] * 0.33
+GB.params$diet[Group == 'Discards',     AmLobster := AmLobster + todisc]
+GB.params$diet[Group == 'Macrobenthos', AmLobster := AmLobster - todisc]
+
+todetr <- GB.params$diet[Group == 'Macrobenthos', Haddock] * 0.25
+GB.params$diet[Group == 'Detritus',     Haddock := Haddock + todetr]
+GB.params$diet[Group == 'Macrobenthos', Haddock := Haddock - todetr]
+
+GB.params$model[Group == 'AmLobster', Biomass := 4.3]
+
+diagnose(GB.params, 'Macrobenthos')
+
 
 #Save balanced parameter set
 save(GB.params, file = file.path(data.dir, 'GB_balanced_params.RData'))
