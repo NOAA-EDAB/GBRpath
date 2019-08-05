@@ -204,7 +204,7 @@ for(i in 2:ncol(GB.params$diet)){
   off.diet <- GB.params$diet[Group == 'OtherFlatfish', switch]
   to.oth <- off.diet * ofrac
   to.sm  <- off.diet - to.oth
-  GB.params$diet[Group == 'SmFlatfishes', switch := switch + to.sm]
+  GB.params$diet[Group == 'SmFlatfishes', switch := sum(switch, to.sm, na.rm = T)]
   GB.params$diet[Group == 'OtherFlatfish', switch := to.oth]
   setnames(GB.params$diet, 'switch', old.name)
 }
@@ -322,7 +322,6 @@ GB.params$model[Group == 'Loligo', Biomass := Biomass / 2]
 orig.oskpb <- GB.params$model[Group == 'OtherSkates', PB]
 GB.params$model[Group == 'OtherSkates', PB := 0.9]
 
-diagnose(GB.params, 'OtherSkates')
 # 10 - Discards ----
 # EE is ratio of DetOut to DetIN - need to lower out unless jacking up landings
 # This makes sense as discards should be a low portion of diets
@@ -454,7 +453,7 @@ GB.params$model[Group == 'WhiteHake', PB := 0.18]
 # from Silver Hake
 toother <- .30
 GB.params$diet[Group == 'SilverHake',   WhiteHake := WhiteHake - 0.30]
-GB.params$diet[Group == 'Loligo',       WhiteHake := WhiteHake + 0.10]
+GB.params$diet[Group == 'Loligo',       WhiteHake := 0.10]
 GB.params$diet[Group == 'Macrobenthos', WhiteHake := WhiteHake + 0.20]
 
 # 17.C - cut landings in half (more of a GoM fishery)
@@ -640,7 +639,6 @@ GB.params$model[Group == 'OtherPelagics', Biomass := 0.28]
 
 GB.params$model[Group == 'Phytoplankton', EE := NA]
 GB.params$model[Group == 'Phytoplankton', Biomass := 15]
-diagnose(GB.params, 'Phytoplankton')
 
 #Fix GE > .3 ----
 #Increase QB
@@ -700,6 +698,12 @@ GB.params$model[Group == 'Microzooplankton', Biomass := 2.3]
 orig.otskqb <- GB.params$model[Group == 'OtherSkates', QB]
 GB.params$model[Group == 'OtherSkates', QB := 3]
 
+orig.shrimpqb <- GB.params$model[Group == 'OtherShrimps', QB]
+GB.params$model[Group == 'OtherShrimps', QB := 15]
+
+orig.shrimppb <- GB.params$model[Group == 'OtherShrimps', PB]
+GB.params$model[Group == 'OtherShrimps', PB := 4.5]
+
 orig.macroqb <- GB.params$model[Group == 'Macrobenthos', QB]
 GB.params$model[Group == 'Macrobenthos', QB := 18]
 
@@ -714,28 +718,38 @@ GB.params$model[Group == 'OceanPout', Biomass := 0.4]
 
 #Rebalance
 GB.params$model[Group == 'OtherCephalopods', Biomass := 0.09]
+GB.params$model[Group == 'OtherShrimps', Biomass := Biomass * 4]
 
-todisc <- GB.params$diet[Group == 'Macrobenthos', Macrobenthos] / 2
-GB.params$diet[Group == 'Discards',     Macrobenthos := Macrobenthos + todisc]
-GB.params$diet[Group == 'Macrobenthos', Macrobenthos := Macrobenthos - todisc]
+remove <- GB.params$diet[Group == 'Macrobenthos', Macrobenthos] / 2
+todisc <- remove * 0.01
+todetr <- remove - todisc
+GB.params$diet[Group == 'Discards',     Macrobenthos := todisc]
+GB.params$diet[Group == 'Detritus',     Macrobenthos := Macrobenthos + todetr]
+GB.params$diet[Group == 'Macrobenthos', Macrobenthos := Macrobenthos - remove]
 
-todisc <- GB.params$diet[Group == 'Macrobenthos', Megabenthos] * 0.25
-GB.params$diet[Group == 'Discards',     Megabenthos := Megabenthos + todisc]
-GB.params$diet[Group == 'Macrobenthos', Megabenthos := Megabenthos - todisc]
+remove <- GB.params$diet[Group == 'Macrobenthos', Megabenthos] * 0.25
+todisc <- remove * 0.01
+todetr <- remove - todisc
+GB.params$diet[Group == 'Discards',     Megabenthos := todisc]
+GB.params$diet[Group == 'Detritus',     Megabenthos := Megabenthos + todetr]
+GB.params$diet[Group == 'Macrobenthos', Megabenthos := Megabenthos - remove]
 
-todisc <- GB.params$diet[Group == 'Macrobenthos', AmLobster] * 0.33
-GB.params$diet[Group == 'Discards',     AmLobster := AmLobster + todisc]
-GB.params$diet[Group == 'Macrobenthos', AmLobster := AmLobster - todisc]
+remove <- GB.params$diet[Group == 'Macrobenthos', AmLobster] * 0.33
+todisc <- remove * 0.01
+todetr <- remove - todisc
+GB.params$diet[Group == 'Discards',     AmLobster := todisc]
+GB.params$diet[Group == 'Detritus',     AmLobster := AmLobster + todetr]
+GB.params$diet[Group == 'Macrobenthos', AmLobster := AmLobster - remove]
 
 todetr <- GB.params$diet[Group == 'Macrobenthos', Haddock] * 0.25
-GB.params$diet[Group == 'Detritus',     Haddock := Haddock + todetr]
+GB.params$diet[Group == 'Detritus',     Haddock := todetr]
 GB.params$diet[Group == 'Macrobenthos', Haddock := Haddock - todetr]
 
 GB.params$model[Group == 'AmLobster', Biomass := 4.3]
 
 diagnose(GB.params, 'Macrobenthos')
 
-
+check.rpath.params(GB.params)
 #Save balanced parameter set
 save(GB.params, file = file.path(data.dir, 'GB_balanced_params.RData'))
 
