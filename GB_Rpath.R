@@ -633,8 +633,20 @@ GB.params$model[Group == 'Windowpane', Biomass := 1.26]
 otpbio2 <- GB.params$model[Group == 'OtherPelagics', Biomass]
 GB.params$model[Group == 'OtherPelagics', Biomass := 0.28]
 
+# 21 - Phytoplankton ----
+#After runnig PreBal and realizing that biomasses should be summed over trophic 
+#levels, the actual decomposition line is -9.5%.  Phytoplankton are way below 
+#that line.
+
+GB.params$model[Group == 'Phytoplankton', EE := NA]
+GB.params$model[Group == 'Phytoplankton', Biomass := 15]
+diagnose(GB.params, 'Phytoplankton')
 
 
+GB <- rpath(GB.params)
+
+#Save balanced parameter set
+save(GB.params, file = file.path(data.dir, 'GB_balanced_params.RData'))
 
 
 
@@ -668,6 +680,29 @@ abline(a = coef(bio.mod)[1], b = -.1, lty = 3, col = 'red')
 bio.slope <- coef(bio.mod)[2]
 bio.slope
 
-#Save initial balance for PreBal
-#save(GB.2, file = file.path(data.dir, 'Unbalanced_GB.RData'))
-#save(GB.params.2, file = file.path(data.dir, 'Input_GB_params.RData'))
+#Trophic Level
+TL.level <- c(1, seq(2, 5.5, .25))
+for(iTL in 1:(length(TL.level) - 1)){
+  living.GB[TL >= TL.level[iTL] & TL < TL.level[iTL + 1], TL.group := TL.level[iTL]]
+  living.GB[TL >= TL.level[iTL] & TL < TL.level[iTL + 1], TL.bio := sum(Biomass)][]
+}
+TL.model <- unique(living.GB[, .(TL.group, TL.bio)])
+plot(TL.model[, TL.group], TL.model[, TL.bio])
+
+TL.mod <- lm(log(TL.model[, TL.bio], base = 10) ~ TL.model[, TL.group])
+
+opar <- par(mar = c(4, 6, 2, 2))
+plot(TL.model[, .(TL.group, TL.bio)], log = "y", pch = 19, axes = F, xlab = '',
+     ylab = '')
+abline(TL.mod)
+#+- 1 Standard Error
+std <- coef(summary(TL.mod))[, 2]
+abline(a = coef(TL.mod)[1] + std[1], b = coef(TL.mod)[2] + std[2], lty = 2)
+abline(a = coef(TL.mod)[1] - std[1], b = coef(TL.mod)[2] - std[2], lty = 2)
+
+axis(1)
+axis(2, at = axTicks(2), labels = c(0.5, 1.00, 2.0, 5.0, 10.0, 20.0), las = T)
+box(lwd = 2)
+mtext(1, text = 'Trophic Level', line = 2)
+mtext(2, text = expression('Biomass, kg km'^-2 * '(log scale)'), line = 3)
+par(opar)
