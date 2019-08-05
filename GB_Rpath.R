@@ -355,7 +355,7 @@ GB.params$model[Group %in% c('AmLobster', 'Macrobenthos', 'Megabenthos', 'AtlSca
 
 #Decrease consumption of Bacteria
 orig.bacqb <- GB.params$model[Group == 'Bacteria', QB]
-GB.params$model[Group == 'Bacteria', QB := 300]
+GB.params$model[Group == 'Bacteria', QB := orig.bacqb]
 
 # 13 - SilverHake ----
 # 13.A Increase production
@@ -642,7 +642,60 @@ GB.params$model[Group == 'Phytoplankton', EE := NA]
 GB.params$model[Group == 'Phytoplankton', Biomass := 15]
 diagnose(GB.params, 'Phytoplankton')
 
+#Fix GE < .1 ----
+#Increase QB
+orig.mzpqb <- GB.params$model[Group == 'Microzooplankton', QB]
+GB.params$model[Group == 'Microzooplankton', QB := 300]
 
+orig.mszpqb <- GB.params$model[Group == 'Mesozooplankton', QB]
+GB.params$model[Group == 'Mesozooplankton', QB := 200]
+
+orig.mackqb <- GB.params$model[Group == 'AtlMackerel', QB]
+GB.params$model[Group == 'AtlMackerel', QB := 2.8]
+
+orig.mesoqb <- GB.params$model[Group == 'Mesopelagics', QB]
+GB.params$model[Group == 'Mesopelagics', QB := 4.4]
+
+#Increase PB
+orig.goospb <- GB.params$model[Group == 'Goosefish', PB]
+GB.params$model[Group == 'Goosefish', PB := 0.4]
+
+orig.whitepb <- GB.params$model[Group == 'WhiteHake', PB]
+GB.params$model[Group == 'WhiteHake', PB := 0.38]
+
+orig.polpb <- GB.params$model[Group == 'Pollock', PB]
+GB.params$model[Group == 'Pollock', PB := 0.41]
+
+orig.bsbpb <- GB.params$model[Group == 'BlackSeaBass', PB]
+GB.params$model[Group == 'BlackSeaBass', PB := 0.15]
+
+orig.winfpb <- GB.params$model[Group == 'WinterFlounder', PB]
+GB.params$model[Group == 'WinterFlounder', PB := 0.17]
+
+#Rebalance a few groups from increase consumption
+orig.herpb <- GB.params$model[Group == 'AtlHerring', PB]
+GB.params$model[Group == 'AtlHerring', PB := 1.5]
+
+orig.redbio <- GB.params$model[Group == 'Redfish', Biomass]
+GB.params$model[Group == 'Redfish', Biomass := 0.015]
+
+orig.mzppb <- GB.params$model[Group == 'Microzooplankton', PB]
+GB.params$model[Group == 'Microzooplankton', PB := 130]
+
+#Decided against top down balancingof SmPelagics
+GB.params$model[Group == 'SmPelagics', EE := NA]
+GB.params$model[Group == 'SmPelagics', Biomass := 9.8]
+GB.params$model[Group == 'SmPelagics', PB := 1.8]
+
+#Flip flop DC of meso and micro zoop in Mesozoop
+tomeso  <- GB.params$diet[Group == 'Microzooplankton', Mesozooplankton]
+tomicro <- GB.params$diet[Group == 'Mesozooplankton',  Mesozooplankton]
+GB.params$diet[Group == 'Mesozooplankton',  Mesozooplankton := tomeso]
+GB.params$diet[Group == 'Microzooplankton', Mesozooplankton := tomicro]
+
+GB.params$model[Group == 'Microzooplankton', Biomass := 2.3]
+
+diagnose(GB.params, 'Microzooplankton')
 GB <- rpath(GB.params)
 
 #Save balanced parameter set
