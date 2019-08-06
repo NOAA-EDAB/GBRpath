@@ -204,7 +204,7 @@ for(i in 2:ncol(GB.params$diet)){
   off.diet <- GB.params$diet[Group == 'OtherFlatfish', switch]
   to.oth <- off.diet * ofrac
   to.sm  <- off.diet - to.oth
-  GB.params$diet[Group == 'SmFlatfishes', switch := switch + to.sm]
+  GB.params$diet[Group == 'SmFlatfishes', switch := sum(switch, to.sm, na.rm = T)]
   GB.params$diet[Group == 'OtherFlatfish', switch := to.oth]
   setnames(GB.params$diet, 'switch', old.name)
 }
@@ -322,7 +322,6 @@ GB.params$model[Group == 'Loligo', Biomass := Biomass / 2]
 orig.oskpb <- GB.params$model[Group == 'OtherSkates', PB]
 GB.params$model[Group == 'OtherSkates', PB := 0.9]
 
-diagnose(GB.params, 'OtherSkates')
 # 10 - Discards ----
 # EE is ratio of DetOut to DetIN - need to lower out unless jacking up landings
 # This makes sense as discards should be a low portion of diets
@@ -355,7 +354,7 @@ GB.params$model[Group %in% c('AmLobster', 'Macrobenthos', 'Megabenthos', 'AtlSca
 
 #Decrease consumption of Bacteria
 orig.bacqb <- GB.params$model[Group == 'Bacteria', QB]
-GB.params$model[Group == 'Bacteria', QB := 300]
+GB.params$model[Group == 'Bacteria', QB := orig.bacqb]
 
 # 13 - SilverHake ----
 # 13.A Increase production
@@ -454,7 +453,7 @@ GB.params$model[Group == 'WhiteHake', PB := 0.18]
 # from Silver Hake
 toother <- .30
 GB.params$diet[Group == 'SilverHake',   WhiteHake := WhiteHake - 0.30]
-GB.params$diet[Group == 'Loligo',       WhiteHake := WhiteHake + 0.10]
+GB.params$diet[Group == 'Loligo',       WhiteHake := 0.10]
 GB.params$diet[Group == 'Macrobenthos', WhiteHake := WhiteHake + 0.20]
 
 # 17.C - cut landings in half (more of a GoM fishery)
@@ -633,5 +632,183 @@ GB.params$model[Group == 'Windowpane', Biomass := 1.26]
 otpbio2 <- GB.params$model[Group == 'OtherPelagics', Biomass]
 GB.params$model[Group == 'OtherPelagics', Biomass := 0.28]
 
-#Save balanced model
+# 21 - Phytoplankton ----
+#After runnig PreBal and realizing that biomasses should be summed over trophic 
+#levels, the actual decomposition line is -9.5%.  Phytoplankton are way below 
+#that line.
+
+GB.params$model[Group == 'Phytoplankton', EE := NA]
+GB.params$model[Group == 'Phytoplankton', Biomass := 15]
+
+#Fix GE > .3 ----
+#Increase QB
+orig.mzpqb <- GB.params$model[Group == 'Microzooplankton', QB]
+GB.params$model[Group == 'Microzooplankton', QB := 300]
+
+orig.mszpqb <- GB.params$model[Group == 'Mesozooplankton', QB]
+GB.params$model[Group == 'Mesozooplankton', QB := 200]
+
+orig.mackqb <- GB.params$model[Group == 'AtlMackerel', QB]
+GB.params$model[Group == 'AtlMackerel', QB := 2.8]
+
+orig.mesoqb <- GB.params$model[Group == 'Mesopelagics', QB]
+GB.params$model[Group == 'Mesopelagics', QB := 4.4]
+
+#Fix GE < .1 ----
+#Increase PB
+orig.goospb <- GB.params$model[Group == 'Goosefish', PB]
+GB.params$model[Group == 'Goosefish', PB := 0.4]
+
+orig.whitepb <- GB.params$model[Group == 'WhiteHake', PB]
+GB.params$model[Group == 'WhiteHake', PB := 0.38]
+
+orig.polpb <- GB.params$model[Group == 'Pollock', PB]
+GB.params$model[Group == 'Pollock', PB := 0.41]
+
+orig.bsbpb <- GB.params$model[Group == 'BlackSeaBass', PB]
+GB.params$model[Group == 'BlackSeaBass', PB := 0.15]
+
+orig.winfpb <- GB.params$model[Group == 'WinterFlounder', PB]
+GB.params$model[Group == 'WinterFlounder', PB := 0.17]
+
+#Rebalance a few groups from increase consumption
+orig.herpb <- GB.params$model[Group == 'AtlHerring', PB]
+GB.params$model[Group == 'AtlHerring', PB := 1.5]
+
+orig.redbio <- GB.params$model[Group == 'Redfish', Biomass]
+GB.params$model[Group == 'Redfish', Biomass := 0.015]
+
+orig.mzppb <- GB.params$model[Group == 'Microzooplankton', PB]
+GB.params$model[Group == 'Microzooplankton', PB := 130]
+
+#Decided against top down balancingof SmPelagics
+GB.params$model[Group == 'SmPelagics', EE := NA]
+GB.params$model[Group == 'SmPelagics', Biomass := 9.8]
+GB.params$model[Group == 'SmPelagics', PB := 2.0]
+
+#Flip flop DC of meso and micro zoop in Mesozoop
+tomeso  <- GB.params$diet[Group == 'Microzooplankton', Mesozooplankton]
+tomicro <- GB.params$diet[Group == 'Mesozooplankton',  Mesozooplankton]
+GB.params$diet[Group == 'Mesozooplankton',  Mesozooplankton := tomeso]
+GB.params$diet[Group == 'Microzooplankton', Mesozooplankton := tomicro]
+
+GB.params$model[Group == 'Microzooplankton', Biomass := 2.3]
+
+#Fix GE > 1----
+orig.otskqb <- GB.params$model[Group == 'OtherSkates', QB]
+GB.params$model[Group == 'OtherSkates', QB := 3]
+
+orig.shrimpqb <- GB.params$model[Group == 'OtherShrimps', QB]
+GB.params$model[Group == 'OtherShrimps', QB := 15]
+
+orig.shrimppb <- GB.params$model[Group == 'OtherShrimps', PB]
+GB.params$model[Group == 'OtherShrimps', PB := 4.5]
+
+orig.macroqb <- GB.params$model[Group == 'Macrobenthos', QB]
+GB.params$model[Group == 'Macrobenthos', QB := 18]
+
+orig.macropb <- GB.params$model[Group == 'Macrobenthos', PB]
+GB.params$model[Group == 'Macrobenthos', PB := 10]
+
+orig.opqb <- GB.params$model[Group == 'OceanPout', QB]
+GB.params$model[Group == 'OceanPout', QB := 7]
+
+orig.opbio <- GB.params$model[Group == 'OceanPout', Biomass]
+GB.params$model[Group == 'OceanPout', Biomass := 0.4]
+
+#Rebalance
+GB.params$model[Group == 'OtherCephalopods', Biomass := 0.09]
+GB.params$model[Group == 'OtherShrimps', Biomass := Biomass * 4]
+
+remove <- GB.params$diet[Group == 'Macrobenthos', Macrobenthos] / 2
+todisc <- remove * 0.01
+todetr <- remove - todisc
+GB.params$diet[Group == 'Discards',     Macrobenthos := todisc]
+GB.params$diet[Group == 'Detritus',     Macrobenthos := Macrobenthos + todetr]
+GB.params$diet[Group == 'Macrobenthos', Macrobenthos := Macrobenthos - remove]
+
+remove <- GB.params$diet[Group == 'Macrobenthos', Megabenthos] * 0.25
+todisc <- remove * 0.01
+todetr <- remove - todisc
+GB.params$diet[Group == 'Discards',     Megabenthos := todisc]
+GB.params$diet[Group == 'Detritus',     Megabenthos := Megabenthos + todetr]
+GB.params$diet[Group == 'Macrobenthos', Megabenthos := Megabenthos - remove]
+
+remove <- GB.params$diet[Group == 'Macrobenthos', AmLobster] * 0.33
+todisc <- remove * 0.01
+todetr <- remove - todisc
+GB.params$diet[Group == 'Discards',     AmLobster := todisc]
+GB.params$diet[Group == 'Detritus',     AmLobster := AmLobster + todetr]
+GB.params$diet[Group == 'Macrobenthos', AmLobster := AmLobster - remove]
+
+todetr <- GB.params$diet[Group == 'Macrobenthos', Haddock] * 0.25
+GB.params$diet[Group == 'Detritus',     Haddock := todetr]
+GB.params$diet[Group == 'Macrobenthos', Haddock := Haddock - todetr]
+
+GB.params$model[Group == 'AmLobster', Biomass := 4.3]
+
+diagnose(GB.params, 'Macrobenthos')
+
+check.rpath.params(GB.params)
+#Save balanced parameter set
 save(GB.params, file = file.path(data.dir, 'GB_balanced_params.RData'))
+
+
+
+
+
+
+
+
+
+
+
+
+barplot(output.GB[type < 2, EE], names.arg = output.GB[type < 2, Group],
+        cex.names = 0.5, las = T)
+abline(h=1, col = 'red')
+
+unbal.GB <- as.data.table(write.Rpath(GB))
+living.GB <- unbal.GB[type < 2, list(Group, Biomass, Removals, TL, PB, QB)]
+bio.mod <- lm(log(living.GB[!Group %in% c('SouthernDemersals', 'OtherFlatfish'), Biomass], base = 10) 
+              ~ living.GB[!Group %in% c('SouthernDemersals', 'OtherFlatfish'), TL])
+
+plot(living.GB[, list(TL, Biomass)], log = "y", typ = 'n')
+text(living.GB[, TL], living.GB[, Biomass], living.GB[, Group], cex = .8)
+abline(bio.mod)
+#+- 1 Standard Error
+std <- coef(summary(bio.mod))[, 2]
+abline(a = coef(bio.mod)[1] + std[1], b = coef(bio.mod)[2] + std[2], lty = 2)
+abline(a = coef(bio.mod)[1] - std[1], b = coef(bio.mod)[2] - std[2], lty = 2)
+abline(a = coef(bio.mod)[1], b = -.1, lty = 3, col = 'red')
+
+bio.slope <- coef(bio.mod)[2]
+bio.slope
+
+#Trophic Level
+TL.level <- c(1, seq(2, 5.5, .25))
+for(iTL in 1:(length(TL.level) - 1)){
+  living.GB[TL >= TL.level[iTL] & TL < TL.level[iTL + 1], TL.group := TL.level[iTL]]
+  living.GB[TL >= TL.level[iTL] & TL < TL.level[iTL + 1], TL.bio := sum(Biomass)][]
+}
+TL.model <- unique(living.GB[, .(TL.group, TL.bio)])
+plot(TL.model[, TL.group], TL.model[, TL.bio])
+
+TL.mod <- lm(log(TL.model[, TL.bio], base = 10) ~ TL.model[, TL.group])
+
+opar <- par(mar = c(4, 6, 2, 2))
+plot(TL.model[, .(TL.group, TL.bio)], log = "y", pch = 19, axes = F, xlab = '',
+     ylab = '')
+abline(TL.mod)
+#+- 1 Standard Error
+std <- coef(summary(TL.mod))[, 2]
+abline(a = coef(TL.mod)[1] + std[1], b = coef(TL.mod)[2] + std[2], lty = 2)
+abline(a = coef(TL.mod)[1] - std[1], b = coef(TL.mod)[2] - std[2], lty = 2)
+
+axis(1)
+axis(2, at = axTicks(2), labels = c(0.5, 1.00, 2.0, 5.0, 10.0, 20.0), las = T)
+box(lwd = 2)
+mtext(1, text = 'Trophic Level', line = 2)
+mtext(2, text = expression('Biomass, kg km'^-2 * '(log scale)'), line = 3)
+par(opar)
+
