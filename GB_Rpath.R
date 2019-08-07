@@ -814,3 +814,4 @@ box(lwd = 2)
 mtext(1, text = 'Trophic Level', line = 2)
 mtext(2, text = expression('Biomass, kg km'^-2 * '(log scale)'), line = 3)
 par(opar)
+
