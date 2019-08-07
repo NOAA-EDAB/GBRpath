@@ -142,6 +142,9 @@ GB.params$model[Group %in% c('Phytoplankton', 'Clams', 'Macrobenthos', 'Mesozoop
 GB.params$model[!Group %in% c('Phytoplankton', 'Clams', 'Macrobenthos', 'Mesozooplankton',
                               'Microzooplankton', 'AtlScallop', 'Bacteria', 'Micronekton',
                               'GelZooplankton', 'Krill'), Biomass := Biomass * 4]
+#Save original unbalance parameter set
+save(GB.params, file = file.path(data.dir, 'GB_unbalanced_params.RData'))
+
 #That got it to -14% which is good enough to start
 unbal.GB <- as.data.table(write.Rpath(GB))
 living.GB <- unbal.GB[type < 2, list(Group, Biomass, Removals, TL, PB, QB)]
