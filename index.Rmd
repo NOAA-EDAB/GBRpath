@@ -308,6 +308,63 @@ kable(ecobase, caption = "Mean production to biomass ratios by trophic level fro
 Moving forward dynamically
 ===
 
+Using Ecosense to generate a plausible set of model.  Pulling data from 2016 - 2018 (landings and biomass) to calculate a changein effort and projecting forward.  Will use ABC to see what sets are within 2 fold of current levels (Thorpe and De Olivera ICES 2019).  Set different sets, one for pelagics, one for suite of groundfish (Cod, Haddock, and yellowtail).
+
+## Pedigrees
+### Biomass
+Rank  | Value | Description
+----- | ----- | ------
+1     |  0.1  | Well known/studied
+2     |  0.2  | Direct estimate or established regional estimate
+3     |  0.3  | Data is a proxy
+4     |  0.4  | Direct estimate or proxy with high variation, incomplete coverage
+5     |  0.5  | Estimate includes highly uncertain scaling factors (EMAX)
+6     |  0.6  | Historical or not overlapping in area or time (borrowing from another speices)
+7     |  0.7  | General literature review from wide range (species/regions)
+8     |  0.8  | Unknown/Top down balance
+
+Species not centered in Georges Bank - RedFish, AmPlaice, SouthernDemersals, Pollock,
+Ocean Pout, OffHake, witch flounder, Mesopelagics, Goosefish, BlackSeaBass
+
+Top down balanced - Seals, SmPelagics
+
+### Other Parameters
+Rank  | Value | Description
+----- | ----- | ------
+1     |  0.1  | Well known/studied
+2     |  0.2  | Direct estimate or established regional estimate
+3     |  0.3  | Data is a proxy
+4     |  0.4  | Direct estimate or proxy with high variation, incomplete coverage
+5     |  0.5  | Estimate based on same species but in different time period/ general model specific to area (EMAX)
+6     |  0.6  | General life-history proxies, diets from similar species in region
+7     |  0.7  | General literature review from wide range (species/regions)
+8     |  0.8  | Functional group represents multiple species with diverse life history traits
+
+Used EMAX - Phytoplankton, Bacteria, Microzooplankton, Mesozooplankton, GelZooplankton,
+Micronekton, Macrobenthos, OtherShrimps, Mesopelagics, SmPelagics,
+OtherPelagics, Illex, SouthernDemersals, OtherDemersals, Sharks, HMS, Seals, BalWhale, 
+ToothWhale, Seabirds
+
+Used stock assessments - AtlHerring, AtlMackerel, Butterfish, Bluefish, SpinyDogfish, 
+Cod, Haddock, YTFlounder, SummerFlounder
+
+Fishbase - Goosefish (PB),  SilverHake,  WhiteHake,  Pollock, 
+OceanPout (PB), BlackSeaBass (PB), AmPlaice (PB), Windowpane (PB), WinterFlounder (PB), 
+WitchFlounder (PB),  WinterSkate (PB), LittleSkate (PB)
+
+Similar species - Krill, Clams, AtlScallop, AmLobster, Megabenthos, Illex, Loligo, OtherCephalopods
+Barndoor, Fourspot, OffHake,  RedHake, Redfish, Scup, SmoothDogfish, 
+
+multispecies - OtherFlatfish, SmFlatfish
+
+## Scenarios
+using 2016 - 2018 to calculate new effort as 
+
+$$ E_{new} = \frac{C_{t2}}{q_{land}B_{i, t2}} $$
+where
+
+$$ q_{land} = \frac{C_{t1}}{B_{i, t1}} $$
+
 ## Notes on ABC (wikipedia)
 
 ABC is approximate Bayesian computation - originally developed in genetics to estimate the posterior distribution when calculating the likelihood is impractical.
