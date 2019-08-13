@@ -41,7 +41,6 @@ cruise.qry <- "select unique year, cruise6, season
               from mstr_cruise
               where purpose_code = 10
               and year >= 2012
-              and year <= 2016
               and season = 'FALL'
               order by year, cruise6"
 
@@ -151,13 +150,16 @@ GB.mean[, expand.bio.mt := expand.bio * 10^-3]
 GB.biomass <- GB.mean[YEAR %in% 2013:2015, mean(expand.bio.mt) / A, by = RPATH]
 setnames(GB.biomass, 'V1', 'Biomass')
 
+#Current biomass
+GB.current <- GB.mean[YEAR %in% 2016:2018, mean(expand.bio.mt) / A, by = RPATH]
+setnames(GB.current, 'V1', 'Biomass')
+
 #Shellfish surveys--------------------------------------------------------------
 #Scallops
 cruise.qry <- "select unique year, cruise6, svvessel
                from mstr_cruise
                where purpose_code = 60
                and year >= 2012
-               and year <= 2016
                order by year, cruise6"
 
 cruise <- as.data.table(sqlQuery(channel, cruise.qry))
@@ -224,8 +226,13 @@ GB.scall.mean[, swept.bio.mt := swept.bio * 10^-3]
 GB.scall.biomass <- GB.scall.mean[YEAR %in% 2013:2015, mean(swept.bio.mt) / A, by = RPATH]
 setnames(GB.scall.biomass, 'V1', 'Biomass')
 
+#Current biomass
+GB.scall.current <- GB.scall.mean[YEAR %in% 2016:2018, mean(swept.bio.mt) / A, by = RPATH]
+setnames(GB.scall.current, 'V1', 'Biomass')
+
 #Replace scallop biomass from bottomtrawl survey
 GB.biomass[RPATH == 'AtlScallop', Biomass := GB.scall.biomass[, Biomass]]
+GB.current[RPATH == 'AtlScallop', Biomass := GB.scall.current[, Biomass]]
 
 #Clam survey--------------------------------------------------------------------
 #Generate cruise list
@@ -233,7 +240,6 @@ cruise.qry <- "select unique year, cruise6, svvessel
                from mstr_cruise
                where purpose_code = 50
                and year >= 2012
-               and year <= 2016
                order by year, cruise6"
 
 cruise <- as.data.table(sqlQuery(channel, cruise.qry))
@@ -314,6 +320,9 @@ GB.clam.biomass <- GB.clam.biomass[, sum(Biomass), by = RPATH]
 #Add clam biomass from bottomtrawl survey
 GB.biomass <- rbindlist(list(GB.biomass, data.table(RPATH = 'Clams', 
                                                     Biomass = GB.clam.biomass[, V1])))
+#Current is not different
+GB.current <- rbindlist(list(GB.current, data.table(RPATH = 'Clams', 
+                                                    Biomass = GB.clam.biomass[, V1])))
 
 #Non Survey groups--------------------------------------------------------------
 #Add groups not available in database using EMAX
@@ -332,3 +341,4 @@ GB.raw <- rbindlist(list(GB.mean, GB.scall.mean), fill = T)
 
 save(GB.biomass, file = file.path(data.dir, 'GB_biomass.RData'))
 save(GB.raw,     file = file.path(data.dir, 'GB_Biomass_raw.RData'))
+save(GB.current, file = file.path(data.dir, 'GB_biomass_current.RData'))
