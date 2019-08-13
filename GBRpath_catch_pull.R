@@ -38,7 +38,7 @@ sqltext <- function(x){
 #Landings-----------------------------------------------------------------------
 landings.qry <- paste0("select year, month, NEGEAR, mesh, nespp3, nespp4, area, spplivlb, utilcd
                      from stockeff.MV_CF_Landings
-                     where YEAR in (2013, 2014, 2015)")
+                     where YEAR in (2013, 2014, 2015, 2016, 2017, 2018)")
 
 landings <- as.data.table(sqlQuery(channel, landings.qry))
 
@@ -155,9 +155,12 @@ GB.landings[is.na(RGear), RGear := 'other']
 GB.sums <- GB.landings[, sum(SPPLIVMT), by = c('YEAR', 'RPATH', 'RGear')]
 setnames(GB.sums, 'V1', 'SPPLIVMT')
 
-#Get three year mean
-GB.mean <- GB.sums[, mean(SPPLIVMT), by = c('RPATH', 'RGear')]
+#Get three year means
+GB.mean <- GB.sums[YEAR %in% 2013:2015, mean(SPPLIVMT), by = c('RPATH', 'RGear')]
 setnames(GB.mean, 'V1', 'SPPLIVMT')
+
+GB.current <- GB.sums[YEAR %in% 2016:2018, mean(SPPLIVMT), by = c('RPATH', 'RGear')]
+setnames(GB.current, 'V1', 'SPPLIVMT')
 
 #Need to divide landings by area of stat areas not GB
 stat.areas <- readOGR(gis.dir, 'Statistical_Areas_2010')
@@ -168,6 +171,9 @@ GB.com.area <- stat.areas.area[Id %in% c(521:526, 551, 552, 561, 562), sum(Area)
 
 GB.landings <- GB.mean[, SPPLIVMT := SPPLIVMT / GB.com.area][]
 save(GB.landings, file = file.path(data.dir, 'GB_landings.RData'))
+
+GB.cur.land <- GB.current[, SPPLIVMT := SPPLIVMT / GB.com.area][]
+save(GB.cur.land, file = file.path(data.dir, 'GB_landings_current.RData'))
 
 #Discards-----------------------------------------------------------------------
 #Observer data base is on nova not sole
