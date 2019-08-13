@@ -50,14 +50,14 @@ rsim.sense.orig <- function(Rpath.scenario, Rpath, Rpath.params, mscramble = 2,
   ndead   <- Rpath$NUM_DEAD
   
   # Set-up pedigree vectors, including zeroes for gear groups.
-  BBVAR	<- c(as.numeric(unlist(Rpath.params$pedigree[,2])),rep(0,Rpath$NUM_GEARS))
-  PBVAR	<- c(as.numeric(unlist(Rpath.params$pedigree[,3])),rep(0,Rpath$NUM_GEARS))
-  QBVAR	<- c(as.numeric(unlist(Rpath.params$pedigree[,4])),rep(0,Rpath$NUM_GEARS))
-  DCVAR	<- c(as.numeric(unlist(Rpath.params$pedigree[,5])),rep(0,Rpath$NUM_GEARS))
+  BBVAR	<- c(as.numeric(unlist(Rpath.params$pedigree[,2])))
+  PBVAR	<- c(as.numeric(unlist(Rpath.params$pedigree[,3])))
+  QBVAR	<- c(as.numeric(unlist(Rpath.params$pedigree[,4])))
+  DCVAR	<- c(as.numeric(unlist(Rpath.params$pedigree[,5])))
   
 
   # Biomass
-  ranBB <- Rpath$BB * (1 + BBVAR * runif(Rpath$NUM_GROUPS,-1.0,1.0))
+  ranBB <- Rpath$Biomass * (1 + BBVAR * runif(Rpath$NUM_GROUPS,-1.0,1.0))
   sense.params$B_BaseRef <- c(1.0, ranBB)
   # PB
   ranPB <- Rpath$PB * (1 + PBVAR * runif(Rpath$NUM_GROUPS,-1.0,1.0))
@@ -126,6 +126,8 @@ rsim.sense.orig <- function(Rpath.scenario, Rpath, Rpath.params, mscramble = 2,
   DCbeta <- betascale * DCpedigree * DCpedigree
   alpha <- DCvector/DCbeta
   DClinks <- rgamma(length(DCvector), shape=alpha, rate=DCbeta)
+  #For testing - SML
+  #DClinks <- DCvector
   DClinks2 <- ifelse(DClinks < EPSILON, 2 * EPSILON, DClinks)
   # DClinks2 prevents random diet comps from becoming too low, effectively
   # equal to zero. Zeros in DClinks will produce NaN's in sense.params$QQ, and
@@ -146,6 +148,10 @@ rsim.sense.orig <- function(Rpath.scenario, Rpath, Rpath.params, mscramble = 2,
   sense.params$VV	<-	1 + exp(9 * (runif(length(sense.params$QQ))-0.5))
   sense.params$DD	<-	1000 + exp(0 * (runif(length(sense.params$QQ))-0.5))
 
+  # Test - SML
+  #sense.params$VV <- sense.params$VV[which(sense.params$VV > 0)]
+  #sense.params$DD <- sense.params$DD[which(sense.params$DD > 0)]
+  
   # Scramble combined prey pools
   Btmp <- sense.params$B_BaseRef
   py   <- sense.params$PreyFrom + 1.0
