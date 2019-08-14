@@ -297,25 +297,20 @@ setnames(manage.set.bio, 'agg.bio', 'Biomass')
 manage.set.catch <- catch.output.2[agg.catch >= low.c.agg & agg.catch <= high.c.agg, .(run, agg.catch)]
 setnames(manage.set.catch, 'agg.catch', 'Catch')
 manage.set <- merge(manage.set.bio, manage.set.catch, by = 'run')
-#354 of 1104 ~32%
+#only 3 out of 1104 ~0.27% if setting limit per species
+#354 of 1104 ~32% when done in aggregate
 
-
-manage.set.bio <- bio.output.2[(Cod >= low.cod & Cod <= high.cod) &
-                                 (Haddock >= low.had & Haddock <= high.had) &
-                                 (YTFlounder >= low.ytf & YTFlounder <= high.ytf), 
-                               .(run, Cod, Haddock, YTFlounder)]
-setnames(manage.set.bio, c('Cod', 'Haddock', 'YTFlounder'), 
+set.runs <- manage.set[, run]
+set.ind.bio <- bio.output.2[run %in% set.runs, .(run, Cod, Haddock, YTFlounder)]
+setnames(set.ind.bio, c('Cod', 'Haddock', 'YTFlounder'), 
          c('Cod.Biomass', 'Haddock.Biomass', 'YTFlounder.Biomass'))
-manage.set.catch <- catch.output.2[(Cod >= low.c.cod & Cod <= high.c.cod) &
-                                     (Haddock >= low.c.had & Haddock <= high.c.had) &
-                                     (YTFlounder >= low.c.ytf & YTFlounder <= high.c.ytf), 
-                                   .(run, Cod, Haddock, YTFlounder)]
-setnames(manage.set.catch, c('Cod', 'Haddock', 'YTFlounder'), 
+set.ind.catch <- catch.output.2[run %in% set.runs, .(run, Cod, Haddock, YTFlounder)]
+setnames(set.ind.catch, c('Cod', 'Haddock', 'YTFlounder'), 
          c('Cod.Catch', 'Haddock.Catch', 'YTFlounder.Catch'))
-manage.set <- merge(manage.set.bio, manage.set.catch, by = 'run')
-#3 out of 1104 ~0.27%
+set.ind <- merge(set.ind.bio, set.ind.catch, by = 'run')
 
-boxplot(manage.set[, .(Cod.Biomass, Haddock.Biomass, YTFlounder.Biomass)])
+
+boxplot(set.ind[, .(Cod.Biomass, Haddock.Biomass, YTFlounder.Biomass)])
 abline(h = target.cod, col = 'red')
 abline(h = high.cod, col = 'red', lty = 2)
 abline(h = low.cod, col = 'red', lty = 2)
@@ -328,11 +323,29 @@ abline(h = target.ytf, col = 'orange')
 abline(h = high.ytf, col = 'orange', lty = 2)
 abline(h = low.ytf, col = 'orange', lty = 2)
 
-boxplot(manage.set[, Catch], log = 'y')
-abline(h = target.c, col = 'red')
-abline(h = high.c, col = 'red', lty = 2)
-abline(h = low.c, col = 'red', lty = 2)
+abline(h = target.agg, col = 'grey')
+abline(h = high.agg, col = 'grey', lty = 2)
+abline(h = low.agg, col = 'grey', lty = 2)
 
 
+boxplot(set.ind[, .(Cod.Catch, Haddock.Catch, YTFlounder.Catch)])
+abline(h = target.c.cod, col = 'red')
+abline(h = high.c.cod, col = 'red', lty = 2)
+abline(h = low.c.cod, col = 'red', lty = 2)
+
+abline(h = target.c.had, col = 'green')
+abline(h = high.c.had, col = 'green', lty = 2)
+abline(h = low.c.had, col = 'green', lty = 2)
+
+abline(h = target.c.ytf, col = 'orange')
+abline(h = high.c.ytf, col = 'orange', lty = 2)
+abline(h = low.c.ytf, col = 'orange', lty = 2)
+
+abline(h = target.c.agg, col = 'grey')
+abline(h = high.c.agg, col = 'grey', lty = 2)
+abline(h = low.c.agg, col = 'grey', lty = 2)
+
+#Haddock catch low/ Cod and YT high
+#Fleet structure doesn't catch the nuaices of actually fishing - different efforts required between the 3 species
 
 
