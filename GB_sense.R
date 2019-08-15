@@ -149,16 +149,42 @@ manage.set.catch <- catch.output.1[AtlHerring >= low.c & AtlHerring <= high.c, .
 setnames(manage.set.catch, 'AtlHerring', 'Catch')
 manage.set <- merge(manage.set.bio, manage.set.catch, by = 'run')
 #388 out of 1104 ~35.1%
+run.set1 <- manage.set[, run]
 
-boxplot(manage.set[, Biomass])
-abline(h = target, col = 'red')
-abline(h = high, col = 'red', lty = 2)
-abline(h = low, col = 'red', lty = 2)
+#MS plots set 1----
+#All species
+opar <- par(mfrow = c(2, 1), mar = c(0, 0, 1, 1), oma = c(7, 6, 0, 0))
+plot.all <- names(bio.output.1)[which(!names(bio.output.1) %in% c('Outside', 'Detritus', 'Discards', 'run'))]
+boxplot(bio.output.1[, 2:59], log = 'y', range = 0, axes = F)
+axis(1, at = 1:58, labels = F, las = 2, cex.axis = .8)
+axis(2, cex.axis = 0.8, las = T)
+box(lwd = 2)
+legend('topleft', legend = 'A', bty = 'n')
 
-boxplot(manage.set[, Catch])
-abline(h = target.c, col = 'red')
-abline(h = high.c, col = 'red', lty = 2)
-abline(h = low.c, col = 'red', lty = 2)
+boxplot(bio.output.1[run.set1, 2:59], log = 'y', range = 0, axes = F, ylim = c(1e-10, 1e10))
+axis(1, at = 1:58, labels = names(bio.output.1)[2:59], las = 2, cex.axis = .8)
+axis(2, cex.axis = 0.8, las = T)
+box(lwd = 2)
+mtext(2, text = expression('Biomass, t km'^-2 * '(log)'), line = 2.8, outer = T)
+legend('topleft', legend = 'B', bty = 'n')
+par(opar)
+
+#Herring
+opar <- par(mfcol = c(1, 2), mar = c(4, 0, 4, 2), oma = c(2, 5, 2, 5))
+boxplot(manage.set[, Biomass], axes = F)
+lines(c(0.7, 1.3), c(target, target), col = 'blue', lty = 2)
+axis(2, las = T)
+box(lwd = 2)
+mtext(2, text = expression('Biomass, t km'^-2), line = 2.5, cex = 1.4)
+legend('topleft', legend = 'A', bty = 'n')
+
+boxplot(manage.set[, Catch], axes = F)
+lines(c(0.7, 1.3), c(target.c, target.c), col = 'blue', lty = 2)
+axis(4, las = T)
+box(lwd = 2)
+mtext(4, text = expression('Landings, t km'^-2), line = 3.2, cex = 1.4)
+legend('topleft', legend = 'B', bty = 'n')
+par(opar)
 
 #Set 2------
 #Cod, Haddock, and Yellowtail
@@ -300,11 +326,11 @@ manage.set <- merge(manage.set.bio, manage.set.catch, by = 'run')
 #only 3 out of 1104 ~0.27% if setting limit per species
 #354 of 1104 ~32% when done in aggregate
 
-set.runs <- manage.set[, run]
-set.ind.bio <- bio.output.2[run %in% set.runs, .(run, Cod, Haddock, YTFlounder)]
+run.set2 <- manage.set[, run]
+set.ind.bio <- bio.output.2[run %in% run.set2, .(run, Cod, Haddock, YTFlounder, agg.bio)]
 setnames(set.ind.bio, c('Cod', 'Haddock', 'YTFlounder'), 
          c('Cod.Biomass', 'Haddock.Biomass', 'YTFlounder.Biomass'))
-set.ind.catch <- catch.output.2[run %in% set.runs, .(run, Cod, Haddock, YTFlounder)]
+set.ind.catch <- catch.output.2[run %in% run.set2, .(run, Cod, Haddock, YTFlounder, agg.catch)]
 setnames(set.ind.catch, c('Cod', 'Haddock', 'YTFlounder'), 
          c('Cod.Catch', 'Haddock.Catch', 'YTFlounder.Catch'))
 set.ind <- merge(set.ind.bio, set.ind.catch, by = 'run')
@@ -344,6 +370,51 @@ abline(h = low.c.ytf, col = 'orange', lty = 2)
 abline(h = target.c.agg, col = 'grey')
 abline(h = high.c.agg, col = 'grey', lty = 2)
 abline(h = low.c.agg, col = 'grey', lty = 2)
+
+#MS plots set 2----
+#All species
+opar <- par(mfrow = c(2, 1), mar = c(0, 0, 1, 1), oma = c(7, 6, 0, 0))
+plot.all <- names(bio.output.2)[which(!names(bio.output.1) %in% c('Outside', 'Detritus', 'Discards', 'run'))]
+boxplot(bio.output.2[, 2:59], log = 'y', range = 0, axes = F)
+axis(1, at = 1:58, labels = F, las = 2, cex.axis = .8)
+axis(2, cex.axis = 0.8, las = T)
+box(lwd = 2)
+legend('topleft', legend = 'A', bty = 'n')
+
+boxplot(bio.output.2[run.set2, 2:59], log = 'y', range = 0, axes = F, ylim = c(1e-10, 1e10))
+axis(1, at = 1:58, labels = names(bio.output.2)[2:59], las = 2, cex.axis = .8)
+axis(2, cex.axis = 0.8, las = T)
+box(lwd = 2)
+mtext(2, text = expression('Biomass, t km'^-2 * '(log)'), line = 2.8, outer = T)
+legend('topleft', legend = 'B', bty = 'n')
+par(opar)
+
+#Cod, Haddock, YT
+opar <- par(mfcol = c(2, 1), mar = c(0, 0, 2, 0), oma = c(4, 5, 2, 5))
+boxplot(set.ind[, .(Cod.Biomass, Haddock.Biomass, YTFlounder.Biomass, agg.bio)], axes = F)
+lines(c(0.5, 1.5), c(target.cod, target.cod), col = 'blue', lty = 2)
+lines(c(1.5, 2.5), c(target.had, target.had), col = 'blue', lty = 2)
+lines(c(2.5, 3.5), c(target.ytf, target.ytf), col = 'blue', lty = 2)
+lines(c(3.5, 4.5), c(target.agg, target.agg), col = 'blue', lty = 2)
+axis(2, las = T)
+box(lwd = 2)
+mtext(2, text = expression('Biomass, t km'^-2), line = 2.8, cex = 1.4)
+legend('topleft', legend = 'A', bty = 'n', cex = 2, adj = c(2, -2))
+
+boxplot(set.ind[, .(Cod.Catch, Haddock.Catch, YTFlounder.Catch, agg.catch)], axes = F)
+lines(c(0.5, 1.5), c(target.c.cod, target.c.cod), col = 'blue', lty = 2)
+lines(c(1.5, 2.5), c(target.c.had, target.c.had), col = 'blue', lty = 2)
+lines(c(2.5, 3.5), c(target.c.ytf, target.c.ytf), col = 'blue', lty = 2)
+lines(c(3.5, 4.5), c(target.c.agg, target.c.agg), col = 'blue', lty = 2)
+axis(1, at = 1:4, labels = c('Cod', 'Haddock', 'YTFlounder', 'Aggregate'), cex.axis = 1.4)
+axis(2, las = T)
+box(lwd = 2)
+mtext(2, text = expression('Landings, t km'^-2), line = 2.8, cex = 1.4)
+legend('topleft', legend = 'B', bty = 'n', cex = 2, adj = c(2, -2))
+par(opar)
+
+
+
 
 #Haddock catch low/ Cod and YT high
 #Fleet structure doesn't catch the nuaices of actually fishing - different efforts required between the 3 species
