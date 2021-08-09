@@ -1,33 +1,26 @@
 #Georges Bank Rpath Ecosense
 #SML
 
-#User parameters----------------------------------------------------------------
-if(Sys.info()['sysname']=="Windows"){
-  main.dir <- "C:/Users/Sean.Lucey/Desktop/GBRpath"
-}
-
-if(Sys.info()['sysname']=="Linux"){
-  main.dir  <- "/home/slucey/slucey/GBRpath"
-}
-
-data.dir <- file.path(main.dir, 'data')
-
 #Required packages--------------------------------------------------------------
-library(data.table); library(Rpath)
+library(here); library(data.table); library(Rpath)
 
-#-------------------------------------------------------------------------------
-#User created functions
-source(file.path(main.dir, 'rsim_sense_master_Jun2019.r'))
-       
-#-------------------------------------------------------------------------------
 #Load and balance model
-load(file.path(data.dir, 'GB_balanced_params.RData'))
+load(here('data', 'GB_balanced_params.RData'))
+
 #load current biomass/landings
-load(file.path(data.dir, 'GB_biomass_current.RData'))
-load(file.path(data.dir, 'GB_landings_current.RData'))
+load(here('data', 'GB_biomass_current.RData'))
+load(here('data', 'GB_landings_current.RData'))
 
 #Run Rpath
 GB <- rpath(GB.params, 'Georges Bank')
+
+#Need to fix GB pedigree file - bigger issue to fix eventually!
+GB.params$pedigree <- GB.params$pedigree[!Group %in% c('DredgeScallop', 'DredgeClam',
+                                                       'Gillnet', 'Longline', 
+                                                       'PotTrap', 'OtterTrawlSm',
+                                                       'OtterTrawlLg', 'Midwater',
+                                                       'OtherFisheries'), ]
+
 
 #Test dynamic run
 # GB.scene <- rsim.scenario(GB, GB.params, years = 2014:2113)
@@ -39,10 +32,9 @@ GB <- rpath(GB.params, 'Georges Bank')
 all_years <- 2014:2063
 scene <- rsim.scenario(GB, GB.params, years = all_years)
 
-# ----- Set up ecosense generator ----- ########################################
-# load rsim_sense_master.r
+# ----- Set up ecosense generator ----- #######################################
 scene$params$BURN_YEARS <- 50
-NUM_RUNS <- 30000
+NUM_RUNS <- 1000
 parlist <- as.list(rep(NA, NUM_RUNS))
 kept <- rep(NA, NUM_RUNS)
 
@@ -51,7 +43,7 @@ for (irun in 1:NUM_RUNS){
   GBsense <- copy(scene) 
   # INSERT SENSE ROUTINE BELOW
   parlist[[irun]] <- GBsense$params 		# Base ecosim params
-  parlist[[irun]] <- rsim.sense.orig(GBsense, GB, GB.params)	# Replace the base params with Ecosense params  
+  parlist[[irun]] <- rsim.sense(GBsense, GB.params)	# Replace the base params with Ecosense params  
   GBsense$start_state$Biomass <- parlist[[irun]]$B_BaseRef
   parlist[[irun]]$BURN_YEARS <- 50			# Set Burn Years to 50
   GBsense$params <- parlist[[irun]]
@@ -107,7 +99,7 @@ set.seed(123)
 for(irun in 1:length(GB.sense)){
   run.scene <- rsim.scenario(GB, GB.params, years = all_years)
   run.scene$params <- GB.sense[[irun]]
-  run.scene <- adjust.fishing(run.scene, parameter = 'EFFORT', group = 'Midwater',
+  run.scene <- adjust.fishing(run.scene, parameter = 'ForcedEffort', group = 'Midwater',
                               sim.year = 2020:2063, value = 0.156)
   run <- rsim.run(run.scene, years = all_years)
   
