@@ -13,16 +13,28 @@ library(data.table); library(knitr)
 Georges Bank
 ===
 
-Georges Bank is a highly productive sub-marine plateau located directly east of Cape Cod, Massachusetts.  The bank has a long history of commercial fishing and is currently the focus of an example Fisheries Ecosystem Plan (eFEP) for the New England Fisheries Management Council.  This repository will house all of the code that goes into creating a mass balance food web model version of Georges Bank.  The model will be built using [Rpath](http://github.com/NOAA-EDAB/Rpath), the R implementaion of the mass balance algorithms. 
+Georges Bank is a highly productive sub-marine plateau located directly east of Cape Cod, Massachusetts.  The bank has a long history of commercial fishing and is currently the focus of an example Fisheries Ecosystem Plan (eFEP) for the New England Fisheries Management Council.  This repository will house all of the code that goes into creating a mass balance food web model version of Georges Bank.  The model will be built using [Rpath](http://github.com/NOAA-EDAB/Rpath), the R implementation of the mass balance algorithms. 
+
+MS Keyrun
+===
+This model has been developed as part of the Multispecies Keyrun project at the Northeast Fisheries Science Center.  Model "keyruns" are defined as "standardized model runs updated with recent data, producing agreed output." The ICES group WGSAM regularly reviews multispecies model keyruns using criteria found [here](https://ices-eg.github.io/wg_WGSAM/ReviewCriteria.html).
+
+The ms-keyrun repository has [documented](https://noaa-edab.github.io/ms-keyrun/articles/mskeyrun.html) the decisions made regarding datasets and modeling for this project. Data products can be accessed by installing the ms-keyrun R data package. To download the data:
+
+`devtools::install_github('NOAA-EDAB/ms-keyrun')`
+
+Methods of how the data were derived can be found in the  [vignettes](https://noaa-edab.github.io/ms-keyrun/articles/) associated with the data package. 
+
 
 Rpath model structure
 ===
-The geographic extent of the model will be the Georges Bank Ecological Production 
-Unit developed by the Ecosystem Assessment and Dynamics Branch (EDAB) of the Northeast
-Fisheries Science Center (NEFSC).
+The geographic extent of the model will be the Georges Bank Ecological Production Unit developed by the Ecosystem Assessment and Dynamics Branch (EDAB) of the Northeast Fisheries Science Center (NEFSC).  For more details see [mskeyrun](https://noaa-edab.github.io/ms-keyrun/articles/GBSurveySet.html).
 
-The base structure of the model is the EMAX model of @link_EMAX_2006.  However, it
-will be much more disaggregated.  Here are the model nodes:
+The model is based on the EMAX model of @link_EMAX_2006.  However, most biological nodes will be much more disaggregated.  This model was original developed as part of Sean Lucey's PhD dissertation [@lucey_phd_2019] but has been modified to be more comparable to models of the Mid-Atlantic and Gulf of Maine developed by students at Stony Brook University.  Originally the model was parameterize for 2012 - 2016 but has since been updated to 1980 - 1985.
+
+
+
+Here are the model nodes:
 
 ```{r model nodes}
 groups <- data.table(Group = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
