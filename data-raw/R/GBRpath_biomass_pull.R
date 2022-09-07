@@ -1,29 +1,48 @@
 #Biomass pull for GBRpath
-#User parameters----------------------------------------------------------------
-if(Sys.info()['sysname']=="Windows"){
-  main.dir <- "C:/Users/Sean.Lucey/Desktop/GBRpath"
-}
+library(here); library(data.table); library(mskeyrun); library(usethis)
 
-if(Sys.info()['sysname']=="Linux"){
-  main.dir  <- "/home/slucey/slucey/GBRpath"
-}
+#Bottom Trawl Survey-----------------
+#Grab species list
+load(here('data-raw', 'Species_codes.RData'))
 
-data.dir <- file.path(main.dir, 'data')
-gis.dir  <- file.path(main.dir, 'gis')
+#Grab biomass data from ms-keyrun
+bio <- mskeyrun::surveyIndexAll
 
-library(RODBC)
-uid <- 'slucey'
-cat("Oracle Password: ")
-pwd <- scan(stdin(), character(), n = 1)
+#Merge with Rpath groups
+bio <- merge(bio, unique(spp[, list(SVSPP, RPATH)]), by = 'SVSPP')
 
-channel <- odbcConnect('sole', uid, pwd)
+bio.index <- bio[variable == 'strat.biomass' & SEASON == 'FALL', 
+                 .(Biomass = sum(value)), by = c('RPATH', 'YEAR')]
 
-#Required packages--------------------------------------------------------------
-library(Survdat); library(data.table); library(rgdal); library(fitdistrplus)
-load(file.path(data.dir, 'Species_codes.RData'))
+#Need to expand from kg/tow to mt/km^2
+#A tow is standardized to 0.0384 km^2
+#kg to mt is 0.001
+# so conversion is 0.001 / 0.0384 or 0.02604
+bio.index[, B := Biomass * 0.02604]
+bio.index[, Biomass := NULL]
+bio.index[, Units := 'mt km^-2']
 
-#User functions-----------------------------------------------------------------
-#Convert output to text for RODBC query
+#Add q's from EMAX
+emax.q <- spp[, .(q = mean(Fall.q)), by = RPATH]
+bio.index <- merge(bio.index, emax.q, by = 'RPATH', all.x = T)
+bio.index[, B := B / q]
+bio.index[, q := NULL]
+
+#Input biomass
+bio.input <- bio.index[YEAR %in% 1981:1985, .(B = mean(B, na.rm = T)), by = RPATH]
+
+#Move to data-raw folder
+usethis::use_data(bio.input)
+
+#Shellfish surveys--------------------------------------------------------------
+#Scallops and clam survey not included in ms-keyrun data set as they are not 
+#used in the other models
+library(dbutils); library(DBI); library(sf); library(survdat)
+
+#Connect to the database
+channel <- dbutils::connect_to_database('sole', 'slucey')
+
+#user function
 sqltext <- function(x){
   out <- x[1]
   if(length(x) > 1){
@@ -35,134 +54,14 @@ sqltext <- function(x){
   return(out)
 }
 
-#Bottom trawl-------------------------------------------------------------------
-#Generate cruise list
-cruise.qry <- "select unique year, cruise6, season
-              from mstr_cruise
-              where purpose_code = 10
-              and year >= 2012
-              and season = 'FALL'
-              order by year, cruise6"
-
-cruise <- as.data.table(sqlQuery(channel, cruise.qry))
-
-#Use cruise codes to select other data
-cruise6 <- sqltext(cruise$CRUISE6)
-
-#Station data
-station.qry <- paste("select unique cruise6, svvessel, station, stratum,
-                      tow, decdeg_beglat as lat, decdeg_beglon as lon, 
-                      begin_est_towdate as est_towdate
-                      from union_fscs_svsta
-                      where cruise6 in (", cruise6, ")
-                      and TOGA <= 1324
-                      order by cruise6, station", sep='')
-  
-station <- as.data.table(sqlQuery(channel, station.qry))
-
-#Grab swept area
-sweptarea.qry <- paste("select unique cruise6, station, area_swept_wings_mean_km2 as sweptarea
-                     from tow_evaluation
-                     where cruise6 in (", cruise6, ")", sep = '')
-
-sweptarea <- as.data.table(sqlQuery(channel, sweptarea.qry))
-
-station <- merge(station, sweptarea, by = c('CRUISE6', 'STATION'))
-
-#Replace sweptarea NAs with average sweptarea
-station[, mean.swept := mean(SWEPTAREA, na.rm = T), by = c('CRUISE6', 'STRATUM')]
-station[is.na(SWEPTAREA), SWEPTAREA := mean.swept]
-#2013 strata 01250 had no sweptareas so using average for the year
-sweptarea.13 <- mean(station[CRUISE6 == 201304, SWEPTAREA], na.rm = T)
-station[CRUISE6 == 201304 & STRATUM == 1250, SWEPTAREA := sweptarea.13]
-
-#merge cruise and station
-survdat <- merge(cruise, station, by = 'CRUISE6')
-setkey(survdat, CRUISE6, STATION, STRATUM, TOW)
-
-#Catch data
-catch.qry <- paste("select cruise6, station, stratum, tow, svspp, catchsex, 
-                   expcatchnum as abundance, expcatchwt as biomass
-                   from UNION_FSCS_SVCAT
-                   where cruise6 in (", cruise6, ")
-                   and stratum not like 'YT%'
-                   order by cruise6, station, svspp", sep='')
-
-catch <- as.data.table(sqlQuery(channel, catch.qry))
-
-#merge with survdat
-survdat <- merge(survdat, catch, by = key(survdat), all = T)
-#Remove catch from non-rep tows
-survdat <- survdat[!is.na(LON), ]
-
-#Assign Rpath species designations
-svspp.rpath <- unique(spp[!is.na(SVSPP), list(SVSPP, RPATH, Fall.q)])
-
-survdat <- merge(survdat, svspp.rpath, by = 'SVSPP', all.x = T)
-
-#Assign catch to EPUs
-#Grab strata
-epu <- readOGR(gis.dir, 'EPU_extended')
-
-#Generate area table
-epu.area <- getarea(epu, 'EPU')
-
-#use poststrat to assign to EPU
-survdat.epu <- poststrat(survdat, epu)
-setnames(survdat.epu, 'newstrata', 'EPU')
-
-#Subset for Georges Bank
-GB <- survdat.epu[EPU == 'GB', ]
-
-#Using a simple means within strata but can still use survdat functions
-GB.prep <- stratprep(GB, epu.area, strat.col = 'EPU', area.col = 'Area')
-GB.mean <- stratmean(GB.prep, group.col = 'RPATH', strat.col = 'EPU', poststrat = T)
-
-#Calculate minimum swept area biomass estimates (i.e. q = 1)
-#Georges Bank area
-A <- epu.area[EPU == 'GB', Area]
-#Using wings swept area per tow
-mean.swept <- GB[, mean(SWEPTAREA), by = YEAR]
-setnames(mean.swept, 'V1', 'mean.swept')
-mean.swept[, A := A]
-mean.swept[, prop.swept := A / mean.swept]
-
-#Calculate minimum swept area estimate
-GB.mean <- merge(GB.mean, mean.swept[, list(YEAR, prop.swept)], by = 'YEAR')
-GB.mean[, swept.bio := strat.biomass * prop.swept]
-
-#Add q's from EMAX
-emax.q <- svspp.rpath[, mean(Fall.q), by = RPATH]
-setnames(emax.q, 'V1', 'q')
-GB.mean <- merge(GB.mean, emax.q, by = 'RPATH', all.x = T)
-GB.mean[, expand.bio := swept.bio / q]
-
-#Calculate total estimate variance
-GB.mean[, swept.var := prop.swept^2 * biomass.var]
-
-#Input for GBRpath
-#Biomass needs to be in mt km^-2
-#Convert swept.bio to metric tons
-GB.mean[, swept.bio.mt  := swept.bio * 10^-3]
-GB.mean[, expand.bio.mt := expand.bio * 10^-3]
-#GB.biomass <- GB.mean[YEAR %in% 2013:2015, mean(swept.bio.mt) / A, by = RPATH]
-#setnames(GB.biomass, 'V1', 'Biomass')
-GB.biomass <- GB.mean[YEAR %in% 2013:2015, mean(expand.bio.mt) / A, by = RPATH]
-setnames(GB.biomass, 'V1', 'Biomass')
-
-#Current biomass
-GB.current <- GB.mean[YEAR %in% 2016:2018, mean(expand.bio.mt) / A, by = RPATH]
-setnames(GB.current, 'V1', 'Biomass')
-
-#Shellfish surveys--------------------------------------------------------------
 #Scallops
 cruise.qry <- "select unique year, cruise6, svvessel
                from mstr_cruise
                where purpose_code = 60
-               and year >= 2012
                order by year, cruise6"
 
-cruise <- as.data.table(sqlQuery(channel, cruise.qry))
+cruise <- data.table::as.data.table(DBI::dbGetQuery(channel, cruise.qry))
+cruise <- cruise[!is.na(CRUISE6), ]
 
 #Use cruise codes to select other data
 cruise6 <- sqltext(cruise$CRUISE6)
@@ -176,7 +75,7 @@ station.qry <- paste("select unique cruise6, svvessel, station, stratum,
                       and SHG <= 136
                       order by cruise6, station", sep='')
 
-station <- as.data.table(sqlQuery(channel, station.qry))
+station <- data.table::as.data.table(DBI::dbGetQuery(channel, station.qry))
 
 scalldat <- merge(cruise, station, by = c('CRUISE6', 'SVVESSEL'))
 
@@ -188,21 +87,22 @@ catch.qry <- paste("select cruise6, station, stratum, svspp, catchsex,
                     and svspp = '401'
                     order by cruise6, station, svspp", sep='')
 
-catch <- as.data.table(sqlQuery(channel, catch.qry))
+catch <- data.table::as.data.table(DBI::dbGetQuery(channel, catch.qry))
 
 #merge with scalldat
-setkey(catch, CRUISE6, STATION, STRATUM)
-scalldat <- merge(scalldat, catch, by = key(catch), all.x = T)
+scalldat <- merge(scalldat, catch, by = c('CRUISE6', 'STATION', 'STRATUM'), 
+                  all.x = T)
 
 #use poststrat to assign to EPU
-scalldat.epu <- poststrat(scalldat, epu)
-setnames(scalldat.epu, 'newstrata', 'EPU')
+epu <- sf::st_read(dsn = here('gis', 'EPU_extended.shp'))
+
+scalldat.epu <- survdat::post_strat(scalldat, epu, 'EPU')
 
 #Subset for Georges Bank
 GB.scall <- scalldat.epu[EPU == 'GB', ]
 
 #Using a simple means within strata but can still use survdat functions
-GB.scall.prep <- stratprep(GB.scall, epu.area, strat.col = 'EPU', area.col = 'Area')
+GB.scall.prep <- survdat::strat_prep(GB.scall, epu, 'EPU')
 GB.scall.mean <- stratmean(GB.scall.prep, strat.col = 'EPU', poststrat = T)
 
 #Remove NAs and add RPATH column
