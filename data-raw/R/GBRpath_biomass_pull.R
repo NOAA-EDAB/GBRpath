@@ -21,6 +21,7 @@ bio.index <- bio[variable == 'strat.biomass' & SEASON == 'FALL',
 bio.index[, B := Biomass * 0.02604]
 bio.index[, Biomass := NULL]
 bio.index[, Units := 'mt km^-2']
+bio.index <- bio.index[!is.na(RPATH), ][]
 
 #Add q's from EMAX
 emax.q <- spp[, .(q = mean(Fall.q)), by = RPATH]
@@ -101,21 +102,15 @@ bio.input <- rbindlist(list(bio.input, clam.input))
 #Non Survey groups--------------------------------------------------------------
 #Add groups not available in database using EMAX
 #Remove macrobenthos from survey
-GB.biomass <- GB.biomass[RPATH != 'Macrobenthos', ]
 emax <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
                              'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton', 
                              'Mesozooplankton', 'Microzooplankton', 'Phytoplankton'),
-                   Biomass = c(0.015, NA, 0.416, 0.122, 0.035, 104, 3, 4.6, 5.24, 
-                               14.25, 3.1, 20))
+                   B = c(0.015, NA, 0.416, 0.122, 0.035, 104, 3, 4.6, 5.24, 14.25, 
+                         3.1, 20))
 
-GB.biomass <- rbindlist(list(GB.biomass, emax))
-
-#Merge raw biomass data to use for biomass accumulation
-GB.raw <- rbindlist(list(GB.mean, GB.scall.mean), fill = T)
-
-save(GB.biomass, file = file.path(data.dir, 'GB_biomass.RData'))
-save(GB.raw,     file = file.path(data.dir, 'GB_Biomass_raw.RData'))
-save(GB.current, file = file.path(data.dir, 'GB_biomass_current.RData'))
+bio.input <- rbindlist(list(bio.input[RPATH != 'Macrobenthos'], emax))
 
 #Move to data-raw folder
-usethis::use_data(bio.input)
+usethis::use_data(bio.input, overwrite = T)
+usethis::use_data(bio.index, overwrite = T)
+
