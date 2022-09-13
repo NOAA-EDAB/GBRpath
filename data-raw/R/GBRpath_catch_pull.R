@@ -13,8 +13,14 @@ landings <- comlandr::get_comland_data(channel, filterByArea = GB.stat.areas,
                                                     'EPU'))
 #Merge Rpath groups
 load(here('data-raw', 'Species_codes.RData'))
+#Fix a couple of duplicate codes
+spp[COMNAME %in% c('MORAY UNCL', 'ROCK SEA BASS', 'PUFFER UNCL'), 
+    RPATH := 'OtherDemersals']
+spp[COMNAME == 'SILVERSIDES', RPATH := 'SmPelagics']
+spp[COMNAME == 'GRAY TRIGGERFISH', RPATH := 'SouthernDemersals']
 
-land <- merge(landings$comland, unique(spp[, list(NESPP3, RPATH)]), by = 'NESPP3')
+land <- merge(landings$comland, unique(spp[!is.na(NESPP3), list(NESPP3, RPATH)]), 
+              by = 'NESPP3')
 
 land.index <- land[, .(Landings = sum(SPPLIVMT)), by = c('RPATH', 'Fleet', 'YEAR')]
 
@@ -30,11 +36,17 @@ land.index[is.na(Fleet), Fleet := 'Other']
 #Input landings
 land.input <- land.index[YEAR %in% 1981:1985, .(Landings = mean(Landings, na.rm = T)),
                          by = c('RPATH', 'Fleet')]
+land.input[, Units := 'mt km^-2']
 
+#Move to data-raw folder
+usethis::use_data(land.input, overwrite = T)
+usethis::use_data(land.index, overwrite = T)
 
 #Discards-----------------------------------------------------------------------
 #Observer data base is on nova not sole
-channel <- odbcConnect('nova', uid, pwd)
+channel <- dbutils::connect_to_database('nova', 'slucey')
+
+disc <- comlandr::get_
 
 ob.qry <- "select year, month, area, negear, nespp4, hailwt, catdisp, 
           drflag, tripid, haulnum, link1, link3
@@ -269,7 +281,6 @@ GB.disc[, Discards := DK  * Gear.Tot]
 
 GB.disc[, c('DK', 'Gear.Tot') := NULL]
 save(GB.disc, file = file.path(data.dir, 'GB_discards.RData'))
-
 
 
 
