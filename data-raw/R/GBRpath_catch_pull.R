@@ -7,8 +7,7 @@ channel <- dbutils::connect_to_database('sole', 'slucey')
 
 GB.stat.areas <- c(521, 522, 525:526, 537, 551, 552, 561, 562)
 landings <- comlandr::get_comland_data(channel, filterByArea = GB.stat.areas,
-                                       filterByYear = 1981:1985, aggGear = T, 
-                                       aggArea = T, unkVar = 'EPU',
+                                       aggGear = T, aggArea = T, unkVar = 'EPU',
                                        knStrata = c('NESPP3', 'YEAR', 'HY', 'QY',
                                                     'MONTH', 'Fleet', 'TONCL1',
                                                     'EPU'))
