@@ -12,7 +12,7 @@ bio <- mskeyrun::surveyIndexAll
 bio <- merge(bio, unique(spp[, list(SVSPP, RPATH)]), by = 'SVSPP')
 
 bio.index <- bio[variable == 'strat.biomass' & SEASON == 'FALL', 
-                 .(Biomass = sum(value)), by = c('RPATH', 'YEAR')]
+                 .(Biomass = sum(value, na.rm = T)), by = c('RPATH', 'YEAR')]
 
 #Need to expand from kg/tow to mt/km^2
 #A tow is standardized to 0.0384 km^2
@@ -25,6 +25,7 @@ bio.index <- bio.index[!is.na(RPATH), ][]
 
 #Add q's from EMAX
 emax.q <- spp[, .(q = mean(Fall.q)), by = RPATH]
+emax.q[is.na(q), q := 1]
 bio.index <- merge(bio.index, emax.q, by = 'RPATH', all.x = T)
 bio.index[, B := B / q]
 bio.index[, q := NULL]
