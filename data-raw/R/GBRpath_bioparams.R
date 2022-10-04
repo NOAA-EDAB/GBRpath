@@ -180,6 +180,7 @@ GB.skate <- GB.skate[, lapply(list(PB, QB), mean)]
 setnames(GB.skate, c('V1', 'V2'), c('PB', 'QB'))
 GB.skate[, RPATH := 'OtherSkates']
 GB.add <- rbindlist(list(GB.add, GB.skate), use.names = T)
-GB.bioparams <- rbindlist(list(GB.bioparams, GB.add), use.names = T)
+bioparam.input <- rbindlist(list(GB.bioparams, GB.add), use.names = T)
 
-save(GB.bioparams, file = file.path(data.dir, 'GB_bioparams.RData'))
+usethis::use_data(bioparam.input, overwrite = T)
+
