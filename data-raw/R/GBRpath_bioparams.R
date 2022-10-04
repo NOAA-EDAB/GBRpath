@@ -1,19 +1,10 @@
 #Biological parameters for GBRpath
-#User parameters----------------------------------------------------------------
-if(Sys.info()['sysname']=="Windows"){
-  main.dir <- "C:/Users/Sean.Lucey/Desktop/GBRpath"
-}
 
-if(Sys.info()['sysname']=="Linux"){
-  main.dir  <- "/home/slucey/slucey/GBRpath"
-}
-
-data.dir <- file.path(main.dir, 'data')
 
 #Required packages--------------------------------------------------------------
-#devtools::install_github("ropensci/rfishbase")
+#remotes::install_github("ropensci/rfishbase")
 library(rfishbase); library(data.table)
-load(file.path(data.dir, 'SOE_species_list.RData'))
+load(here('data-raw', 'Species_codes.RData'))
 
 #User functions-----------------------------------------------------------------
 rightcase <- function(x){
@@ -111,7 +102,8 @@ setnames(GB.params, c('new.PB', 'new.QB'), c('PB', 'QB'))
 
 #Used fishbase for skates and hakes
 GB.params <- GB.params[!RPATH %in% c('RedHake', 'WinterSkate'), ]
-#Several parameters need to be duplicated
+
+#Several parameters need to be duplicated as their parameters will be similar to others
 GB.double <- GB.params[RPATH %in% c('AtlScallop', 'AmLobster', 'Illex', 'Micronekton'), ]
 GB.double[RPATH == 'Micronekton', RPATH := 'Krill']
 GB.double[RPATH == 'AtlScallop',  RPATH := 'Clams']
@@ -122,14 +114,16 @@ ceph[, RPATH := 'OtherCephalopods']
 GB.double <- rbindlist(list(GB.double, ceph))
 
 GB.params <- rbindlist(list(GB.params, GB.double))
+
 #FishBase-----------------------------------------------------------------------
 #Fill-in groups not in Buchheister
-GB.fish <- unique(species[RPATH %in% c('Goosefish', 'OffHake', 'SilverHake', 'RedHake', 
-                                       'WhiteHake', 'Redfish', 'Pollock', 'OceanPout', 
-                                       'BlackSeaBass', 'Scup', 'Fourspot','AmPlaice', 
-                                       'Windowpane', 'WinterFlounder', 'WitchFlounder', 
-                                       'SmoothDogfish', 'Barndoor', 'WinterSkate',
-                                       'LittleSkate'), list(RPATH, SCINAME)], by = 'SCINAME')
+GB.fish <- unique(spp[RPATH %in% c('Goosefish', 'OffHake', 'SilverHake', 'RedHake', 
+                                   'WhiteHake', 'Redfish', 'Pollock', 'OceanPout', 
+                                   'BlackSeaBass', 'Scup', 'Fourspot','AmPlaice', 
+                                   'Windowpane', 'WinterFlounder', 'WitchFlounder', 
+                                   'SmoothDogfish', 'Barndoor', 'WinterSkate',
+                                   'LittleSkate'), list(RPATH, SCINAME)], 
+                  by = 'SCINAME')
 #Fix scinames with extra space
 GB.fish[, SCINAME := fixspace(as.character(SCINAME))]
 
@@ -146,15 +140,14 @@ fish <- validate_names(GB.fish[, Sciname])
 pb.fishbase <- as.data.table(species(fish, fields = c('Species', 'LongevityWild')))
 pb.fishbase[, PB := 1 / LongevityWild]
 qb.fishbase <- as.data.table(popqb(fish, fields = c('Species', 'PopQB')))
-qb.fishbase <- qb.fishbase[, mean(PopQB), by = 'Species']
-setnames(qb.fishbase, 'V1', 'QB')
+qb.fishbase <- qb.fishbase[, .(QB = mean(PopQB, na.rm = T)), by = 'Species']
 
 fish.params <- merge(pb.fishbase, qb.fishbase, by = 'Species', all = T)
 fish.params[, 'LongevityWild' := NULL]
 
 #Add RPATH code back on
 fish.params[, SCINAME := toupper(Species)]
-fish.params <- merge(fish.params, unique(species[, list(RPATH, SCINAME)]), by = 'SCINAME',
+fish.params <- merge(fish.params, unique(spp[, list(RPATH, SCINAME)]), by = 'SCINAME',
                      all.x = T)
 #There are a couple species with extra spaces at the end...need to fix this
 fish.params[SCINAME %like% 'PSEUDOPLEURO',  RPATH := 'WinterFlounder']
@@ -162,13 +155,13 @@ fish.params[SCINAME %like% 'HIPPOGLOSSINA', RPATH := 'Fourspot']
 fish.params[, c('SCINAME', 'Species') := NULL]
 
 #Use EMAX values for aggregate group if still missing
-fish.params <- merge(fish.params, unique(species[, list(RPATH, EMAX)]), by = 'RPATH')
+fish.params <- merge(fish.params, unique(spp[, list(RPATH, EMAX)]), by = 'RPATH')
 EMAX <- data.table(agg = c('Demersals- benthivores', 'Demersals- piscivores',
                             'Demersals- omnivores'),
                    PB.agg = 0.45, QB.agg = c(0.92, 2.44, 0.83))
-fish.params[is.na(QB) & EMAX %like% 'Benth', QB := 0.92]
-fish.params[is.na(QB) & EMAX %like% 'Pisc',  QB := 2.44]
-fish.params[is.na(QB) & EMAX %like% 'Omni',  QB := 0.83]
+fish.params[is.na(QB) & substr(EMAX, 1, 1) == 'B', QB := 0.92]
+fish.params[is.na(QB) & substr(EMAX, 1, 1) == 'P', QB := 2.44]
+fish.params[is.na(QB) & substr(EMAX, 1, 1) == 'O', QB := 0.83]
 fish.params[is.na(PB), PB := 0.45]
 fish.params[, EMAX := NULL]
 
