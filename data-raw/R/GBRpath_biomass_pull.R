@@ -107,7 +107,7 @@ emax <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS
                              'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 
                              'Phytoplankton', 'Bacteria'),
                    B = c(0.015, NA, 0.416, 0.122, 0.035, 0.024, 104, 3, 4.6, 
-                         5.24, 14.25, 3.1, 19.773, 3.456))
+                         5.24, 24.24, 3.1, 19.773, 3.456))
 
 bio.input <- rbindlist(list(bio.input[RPATH != 'Macrobenthos'], emax))
 
