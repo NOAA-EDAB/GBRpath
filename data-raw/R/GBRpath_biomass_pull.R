@@ -112,9 +112,6 @@ emax <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS
 
 bio.input <- rbindlist(list(bio.input[RPATH != 'Macrobenthos'], emax))
 
-#Missed other cephalopods
-bio.input <- rbindlist(list(bio.input, data.table(RPATH = 'OtherCephalopods',
-                                                  B = NA)))
 
 #Move to data-raw folder
 usethis::use_data(bio.input, overwrite = T)
