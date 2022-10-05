@@ -1,32 +1,14 @@
 #Diet pull for GBRpath
-#User parameters----------------------------------------------------------------
-if(Sys.info()['sysname']=="Windows"){
-  main.dir <- "C:/Users/Sean.Lucey/Desktop/GBRpath"
-}
 
-if(Sys.info()['sysname']=="Linux"){
-  main.dir  <- "/home/slucey/slucey/GBRpath"
-}
+library(data.table); library(here); library(dbutils)
 
-data.dir <- file.path(main.dir, 'data')
-gis.dir  <- file.path(main.dir, 'gis')
+channel <- dbutils::connect_to_database('sole', 'slucey')
 
-library(RODBC)
-uid <- 'slucey'
-cat("Oracle Password: ")
-pwd <- scan(stdin(), character(), n = 1)
-
-channel <- odbcConnect('sole', uid, pwd)
-
-#Required packages--------------------------------------------------------------
-library(data.table); library(rgdal)
-load(file.path(data.dir, 'SOE_species_list.RData'))
-
-#User functions-----------------------------------------------------------------
+load(here('data-raw', 'Species_codes.RData'))
 
 #Food Habits--------------------------------------------------------------------
 #Assign prey to Rpath nodes
-prey <- as.data.table(read.csv(file = file.path(data.dir, 'SASPREY12B.csv')))
+prey <- as.data.table(read.csv(file = here('data-raw', 'SASPREY12B.csv')))
 
 #Start with 1:1
 prey[PYCOMNAM == 'ATLANTIC HERRING',        RPATH := 'AtlHerring']
@@ -165,37 +147,29 @@ allfh.qry <- "select year, season, cruise6, station, stratum, tow, declat, declo
              pynam, pyamtw, pyamtv, perpyw, perpyv
              from FHDBS.ALLFH_FEAST"
 
-allfh <- as.data.table(sqlQuery(channel, allfh.qry))
+allfh <- as.data.table(DBI::dbGetQuery(channel, allfh.qry))
 
 #Subset GB stomachs
 #Use only stations
 stations <- unique(allfh[!is.na(DECLON), list(CRUISE6, STRATUM, STATION, TOW, DECLAT, DECLON)], 
                    by = c('CRUISE6', 'STRATUM', 'STATION', 'TOW'))
 stations[, DECLON := DECLON * -1]
+setnames(stations, c('DECLAT', 'DECLON'), c('LAT', 'LON'))
 
-#Convert to spatial points data fram
-coordinates(stations) <- ~DECLON+DECLAT
-stations@proj4string <- CRS('+init=epsg:4326') #Lat/Lon code
-lcc <- CRS("+proj=lcc +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-72 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0 ") #Lambert Conformal Conic
-stations <- spTransform(stations, lcc)
+#Grab GB shapefile
+GB <- sf::read_sf(here('data-raw', 'gis'), 'GB_SOE_strata')
 
-#Grab strata
-epu <- readOGR(gis.dir, 'EPU_extended')
+#Post stratify
+stations <- survdat::post_strat(stations, GB, 'EPU')
 
-#Identify tows within new strata
-epu <- spTransform(epu, lcc)
-stations$EPU <- over(stations, epu)[, 'EPU']
-
-#Output data (convert spatial data frame back to lat/lon)
-stations <- spTransform(stations, CRS('+init=epsg:4326'))
-sta.data <- as.data.table(as.data.frame(stations))
-sta.data[, c('DECLAT', 'DECLON') := NULL]
-allfh <- merge(allfh, sta.data, by = c('CRUISE6', 'STRATUM', 'STATION', 'TOW'))
+#Merge back
+allfh <- merge(allfh, stations, by = c('CRUISE6', 'STRATUM', 'STATION', 'TOW'),
+               all.x = T)
 
 GB.fh <- allfh[EPU == 'GB' & !PYNAM %in% c('EMPTY', 'BLOWN'), ]
 
 #Assign Rpath codes to pred
-rpath.code <- unique(species[, list(SVSPP, RPATH)])
+rpath.code <- unique(spp[, list(SVSPP, RPATH)])
 GB.fh <- merge(GB.fh, rpath.code, by = 'SVSPP', all.x = T)
 setnames(GB.fh, 'RPATH', 'Rpred')
 
@@ -215,8 +189,7 @@ GB.fh <- GB.fh[!Rprey %in% c('NotUsed', 'AR', 'UNKFish', 'UNKSkate'), ]
 
 #Merge prey items
 setkey(GB.fh, YEAR, SEASON, CRUISE6, STRATUM, STATION, TOW, Rpred, PDID, Rprey)
-GB.fh2 <- GB.fh[, sum(PYAMTW), by = key(GB.fh)]
-setnames(GB.fh2, 'V1', 'PYAMTW')
+GB.fh2 <- GB.fh[, .(PYAMTW = sum(PYAMTW)), by = key(GB.fh)]
 
 #Calculate Percent weight using a cluster sampling design (Nelson 2014)
 #Clusters are station/Rpred combos
@@ -308,13 +281,13 @@ convert.table <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWha
                                      'Phytoplankton- Primary Producers', 'Bacteria',
                                      'Discard', 'Detritus-POC'))
                                      
-load(file.path(data.dir, 'GB_biomass.RData'))
+load(here('data', 'bio.input.rda'))
 #Add biomass to convert.table
 groups <- unique(convert.table[, RPATH])
 for(igroup in 1:length(groups)){
-  if(nrow(GB.biomass[RPATH == groups[igroup], ]) > 0){
+  if(nrow(bio.input[RPATH == groups[igroup], ]) > 0){
     convert.table[RPATH == groups[igroup], 
-                  Biomass := GB.biomass[RPATH == groups[igroup], Biomass]][]
+                  Biomass := bio.input[RPATH == groups[igroup], B]][]
   }
 }
 #Calculate proportions of biomass per EMAX group
@@ -711,8 +684,10 @@ GB.diet <- rbindlist(list(GB.diet, GB.diet.plus), use.names = T)
 
 #Need to add Bacteria
 bact <- data.table(Rpred = 'Bacteria', Rprey = 'Detritus', preyper = 1.000)
-GB.diet <- rbindlist(list(GB.diet, bact))
 
-save(GB.diet, file = file.path(data.dir, 'GB_diet.RData'))
+diet.input <- rbindlist(list(GB.diet, bact))
+
+
+usethis::use_data(diet.input, overwrite = T)
 
 
