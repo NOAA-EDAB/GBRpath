@@ -27,7 +27,7 @@ for(igroup in 1:length(groups)){
       spF <- summary(spLM)$fstatistic
       spP <- pf(spF[1], spF[2], spF[3], lower = F)
       #If significant replace 0 with slope
-      if(spP <= 0.05) BA.sp[, BA := spLM$coefficients[2]]
+      try(if(spP <= 0.05) BA.sp[, BA := spLM$coefficients[2]])
       #Add slope and intercept term for plots
       BA.sp[, m := spLM$coefficients[2]]
       BA.sp[, b := spLM$coefficients[1]]
