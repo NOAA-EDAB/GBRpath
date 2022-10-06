@@ -170,6 +170,16 @@ GB.fh <- allfh[EPU == 'GB' & !PYNAM %in% c('EMPTY', 'BLOWN'), ]
 
 #Assign Rpath codes to pred
 rpath.code <- unique(spp[, list(SVSPP, RPATH)])
+#Fix Rpath names that didn't make the Georges Bank model
+rpath.code[RPATH == 'AtlCroaker',  RPATH := 'SouthernDemersals']
+rpath.code[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+rpath.code[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
+rpath.code[RPATH == 'AmShad',      RPATH := 'RiverHerring']
+rpath.code[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
+rpath.code[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
+rpath.code[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
+rpath.code[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
+
 GB.fh <- merge(GB.fh, rpath.code, by = 'SVSPP', all.x = T)
 setnames(GB.fh, 'RPATH', 'Rpred')
 
@@ -231,10 +241,11 @@ Rpred.missing <- c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 'Sharks
 
 #Use biomass to disaggregate EMAX prey groups where necessary
 convert.table <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 
-                                      'HMS', 'Sharks', 'AtlHerring', 'AtlMackerel', 
-                                      'Butterfish', 'SmPelagics', 'Mesopelagics', 
-                                      'OtherPelagics', 'Cod', 'Haddock', 'Goosefish', 
-                                      'OffHake', 'SilverHake', 'RedHake', 'WhiteHake', 
+                                      'HMS', 'Sharks', 'AtlHerring', 'RiverHerring',
+                                      'AtlMackerel', 'Butterfish', 'SmPelagics', 
+                                      'Mesopelagics', 'OtherPelagics', 'Cod', 
+                                      'Haddock', 'Goosefish', 'OffHake', 
+                                      'SilverHake', 'RedHake', 'WhiteHake', 
                                       'Redfish', 'Pollock', 'OceanPout', 'BlackSeaBass', 
                                       'Bluefish', 'Scup', 'OtherDemersals', 
                                       'SouthernDemersals', 'Fourspot', 'SummerFlounder', 
@@ -251,7 +262,9 @@ convert.table <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWha
                                       'Phytoplankton', 'Bacteria', 'Discards', 'Detritus'),
                             EMAX = c('Sea Birds', 'Pinnipeds', 'Baleen Whales', 
                                      'Odontocetes', 'HMS', 'Sharks- pelagics', 
-                                     'Small Pelagics- commercial', 'Small Pelagics- commercial',
+                                     'Small Pelagics- commercial', 
+                                     'Small Pelagics- anadromous', 
+                                     'Small Pelagics- commercial',
                                      'Small Pelagics- commercial', 'Small Pelagics- other',
                                      'Mesopelagics', 'Medium Pelagics- (piscivores & other)',
                                      'Demersals- piscivores', 'Demersals- benthivores',
@@ -680,12 +693,25 @@ setnames(combo, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 GB.diet.plus <- rbindlist(list(GB.diet.plus, combo))
 
 #Merge diet.plus with regular diet
-GB.diet <- rbindlist(list(GB.diet, GB.diet.plus), use.names = T)
+#using SouthernDemersal and OtherFlatfish diets from EMAX
+GB.diet <- rbindlist(list(GB.diet[!Rpred %in% c('SouthernDemersals', 'OtherFlatfish')],
+                          GB.diet.plus), use.names = T)
 
 #Need to add Bacteria
 bact <- data.table(Rpred = 'Bacteria', Rprey = 'Detritus', preyper = 1.000)
 
-diet.input <- rbindlist(list(GB.diet, bact))
+GB.diet <- rbindlist(list(GB.diet, bact))
+
+#Fix decimal error from external inputs
+diet.input <- copy(GB.diet)
+diet.sum <- GB.diet[, .(DC = sum(preyper)), by = Rpred]
+DC.fix <- diet.sum[DC != 1, Rpred]
+for(ipred in 1:length(DC.fix)){
+  DC.diff <- 1 - diet.sum[Rpred == DC.fix[ipred], DC]
+  pred.diet <- setorder(GB.diet[Rpred == DC.fix[ipred], ], -preyper)[1]
+  diet.input[Rpred == pred.diet[, Rpred] & Rprey == pred.diet[, Rprey],
+             preyper := pred.diet[, preyper] + DC.diff]
+}
 
 
 usethis::use_data(diet.input, overwrite = T)

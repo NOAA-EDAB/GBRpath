@@ -39,6 +39,31 @@ land.input <- land.index[YEAR %in% 1981:1985, .(Landings = mean(Landings, na.rm 
                          by = c('RPATH', 'Fleet')]
 land.input[, Units := 'mt km^-2']
 
+#Fix species that didn't make the cut for GB model
+land.index[RPATH == 'AtlCroaker',  RPATH := 'SouthernDemersals']
+land.index[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+land.index[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
+land.index[RPATH == 'AmShad',      RPATH := 'RiverHerring']
+land.index[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
+land.index[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
+land.index[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
+land.index[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
+land.input[RPATH == 'AtlCroaker',  RPATH := 'SouthernDemersals']
+land.input[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+land.input[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
+land.input[RPATH == 'AmShad',      RPATH := 'RiverHerring']
+land.input[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
+land.input[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
+land.input[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
+land.input[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
+
+land.index <- land.index[, .(Landings = sum(Landings)), 
+                         by = c('RPATH', 'Fleet', 'YEAR', 'Units')]
+setcolorder(land.index, c('RPATH', 'Fleet', 'YEAR', 'Landings', 'Units'))
+land.input <- land.input[, .(Landings = sum(Landings)), 
+                         by = c('RPATH', 'Fleet', 'Units')]
+setcolorder(land.input, c('RPATH', 'Fleet', 'Landings', 'Units'))
+
 #Move to data-raw folder
 usethis::use_data(land.input, overwrite = T)
 usethis::use_data(land.index, overwrite = T)
@@ -68,6 +93,31 @@ disc.index[is.na(Fleet), Fleet := 'Other']
 disc.input <- disc.index[YEAR %in% 1981:1985, .(Discards = mean(Discards, na.rm = T)),
                          by = c('RPATH', 'Fleet')]
 disc.input[, Units := 'mt km^-2']
+
+#Fix species that didn't make the cut for GB model
+disc.index[RPATH == 'AtlCroaker',  RPATH := 'SouthernDemersals']
+disc.index[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+disc.index[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
+disc.index[RPATH == 'AmShad',      RPATH := 'RiverHerring']
+disc.index[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
+disc.index[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
+disc.index[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
+disc.index[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
+disc.input[RPATH == 'AtlCroaker',  RPATH := 'SouthernDemersals']
+disc.input[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+disc.input[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
+disc.input[RPATH == 'AmShad',      RPATH := 'RiverHerring']
+disc.input[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
+disc.input[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
+disc.input[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
+disc.input[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
+
+disc.index <- disc.index[, .(Discards = sum(Discards)), 
+                         by = c('RPATH', 'Fleet', 'YEAR', 'Units')]
+setcolorder(disc.index, c('RPATH', 'Fleet', 'YEAR', 'Discards', 'Units'))
+disc.input <- disc.input[, .(Discards = sum(Discards)), 
+                         by = c('RPATH', 'Fleet', 'Units')]
+setcolorder(disc.input, c('RPATH', 'Fleet', 'Discards', 'Units'))
 
 #Move to data-raw folder
 usethis::use_data(disc.input, overwrite = T)

@@ -116,6 +116,26 @@ bio.input <- rbindlist(list(bio.input[RPATH != 'Macrobenthos'], emax))
 bio.input <- rbindlist(list(bio.input, data.table(RPATH = 'OtherCephalopods',
                                                   B = 0.001)))
 
+#Fix species that didn't make the cut for GB model
+bio.index[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+bio.index[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
+bio.index[RPATH == 'AmShad',      RPATH := 'RiverHerring']
+bio.index[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
+bio.index[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
+bio.index[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
+bio.index[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
+bio.input[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+bio.input[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
+bio.input[RPATH == 'AmShad',      RPATH := 'RiverHerring']
+bio.input[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
+bio.input[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
+bio.input[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
+bio.input[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
+
+bio.index <- bio.index[, .(B = sum(B)), by = c('RPATH', 'YEAR', 'Units')]
+setcolorder(bio.index, c('RPATH', 'YEAR', 'B', 'Units'))
+bio.input <- bio.input[, .(B = sum(B)), by = 'RPATH']
+
 #Move to data-raw folder
 usethis::use_data(bio.input, overwrite = T)
 usethis::use_data(bio.index, overwrite = T)
