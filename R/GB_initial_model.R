@@ -114,7 +114,7 @@ usethis::use_data(GB.params, overwrite = T)
 
 #Initial unbalanced model
 
-GB <- rpath(GB.params, 'Georges Bank', 1)
+GB.init <- rpath(GB.params, 'Georges Bank', 1)
 
-usethis::use_data(GB, overwrite = T)
+usethis::use_data(GB.init, overwrite = T)
 
