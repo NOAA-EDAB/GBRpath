@@ -1,229 +1,231 @@
-#Prebalance for Georges Bank
+#Pre-balance functions
 #SML
 
-#User parameters----------------------------------------------------------------
-if(Sys.info()['sysname']=="Windows"){
-  main.dir <- "C:/Users/Sean.Lucey/Desktop/GBRpath"
-}
+library(data.table); library(ggplot2)
 
-if(Sys.info()['sysname']=="Linux"){
-  main.dir  <- "/home/slucey/slucey/GBRpath"
-}
+load(here('data', 'GB.params.rda'))
+load(here('data', 'GB.init.rda'))
 
-data.dir <- file.path(main.dir, 'data')
-
-#Required packages--------------------------------------------------------------
-library(data.table)
-
-#-------------------------------------------------------------------------------
-#User created functions
-
-#-------------------------------------------------------------------------------
-#Load in pre balanced model
-load(file.path(data.dir, 'Input_GB_params.RData'))
-load(file.path(data.dir, 'Unbalanced_GB.RData'))
-unbal.GB <- as.data.table(write.Rpath(GB))
-
-
-living.GB <- unbal.GB[type < 2, list(Group, Biomass, Removals, TL, PB, QB)]
-
-#Biomass Across Taxa (Criteria 1)---------
-#Biomass Range
-max.bio <- max(living.GB[, Biomass])
-min.bio <- min(living.GB[, Biomass])
-bio.mag <- round(log(max.bio, base = 10)) - round(log(min.bio, base = 10))
-bio.mag
-
-#Slope of Biomass
-bio.mod <- lm(log(living.GB[, Biomass], base = 10) ~ living.GB[, TL])
-
-plot(living.GB[, list(TL, Biomass)], log = "y", typ = 'n')
-text(living.GB[, TL], living.GB[, Biomass], living.GB[, Group], cex = .5)
-abline(bio.mod)
-#+- 1 Standard Error
-std <- coef(summary(bio.mod))[, 2]
-abline(a = coef(bio.mod)[1] + std[1], b = coef(bio.mod)[2] + std[2], lty = 2)
-abline(a = coef(bio.mod)[1] - std[1], b = coef(bio.mod)[2] - std[2], lty = 2)
-
-bio.slope <- coef(bio.mod)[2]
-bio.slope
-
-#Trophic Level
-TL.level <- c(1, seq(2, 5.5, .25))
-for(iTL in 1:(length(TL.level) - 1)){
-  living.GB[TL >= TL.level[iTL] & TL < TL.level[iTL + 1], TL.group := TL.level[iTL]]
-  living.GB[TL >= TL.level[iTL] & TL < TL.level[iTL + 1], TL.bio := sum(Biomass)][]
-}
-TL.model <- unique(living.GB[, .(TL.group, TL.bio)])
-plot(TL.model[, TL.group], TL.model[, TL.bio])
-
-TL.mod <- lm(log(TL.model[, TL.bio], base = 10) ~ TL.model[, TL.group])
-
-opar <- par(mar = c(4, 6, 2, 2))
-plot(TL.model[, .(TL.group, TL.bio)], log = "y", pch = 19, axes = F, xlab = '',
-     ylab = '')
-abline(TL.mod)
-#+- 1 Standard Error
-std <- coef(summary(TL.mod))[, 2]
-abline(a = coef(TL.mod)[1] + std[1], b = coef(TL.mod)[2] + std[2], lty = 2)
-abline(a = coef(TL.mod)[1] - std[1], b = coef(TL.mod)[2] - std[2], lty = 2)
-
-axis(1)
-axis(2, at = axTicks(2), labels = c(0.5, 1.00, 2.0, 5.0, 10.0, 20.0), las = T)
-box(lwd = 2)
-mtext(1, text = 'Trophic Level', line = 2)
-mtext(2, text = expression('Biomass, kg km'^-2 * '(log scale)'), line = 3)
-par(opar)
-
-TL.slope <- coef(TL.mod)[2]
-TL.slope
-
-#Not from prebal but look at F
-living.GB[, F := Removals / Biomass]
-living.GB[F > 1, ]
-
-#Biomass Ratios (Criteria 2)----
-#Need to classify each group
-groups1 <- data.table(Group = c('AtlHerring', 'AtlMackerel', 'Butterfish', 
-                                'SmPelagics', 'Mesopelagics', 'OtherPelagics', 'Cod', 
-                                'Haddock', 'Goosefish', 'OffHake', 'SilverHake', 
-                                'RedHake', 'WhiteHake', 'Redfish', 'Pollock', 'OceanPout', 
-                                'BlackSeaBass', 'Bluefish', 'Scup', 'OtherDemersals', 
-                                'SouthernDemersals', 'Fourspot', 'SummerFlounder', 
-                                'AmPlaice', 'Windowpane', 'WinterFlounder', 'WitchFlounder', 
-                                'YTFlounder', 'OtherFlatfish', 'SmFlatfishes', 'SpinyDogfish', 
-                                'SmoothDogfish', 'Barndoor', 'WinterSkate', 'LittleSkate', 
-                                'OtherSkates', 'Illex', 'Loligo', 'OtherCephalopods', 
-                                'AmLobster', 'AtlScallop', 
-                                'Clams'), 
-                      'Data Source' = c(rep('NEFSC BTS', 40), 'NEFSC Scallop', 
-                                        'NEFSC Clam'),
-                      Classification = c(rep('Pelagic (Small; Round)', 5),
-                                         'Pelagic (Medium; Round)', 
-                                         'Demersal (Round)', 'Demersal (Round)',
-                                         'Demersal', rep('Demersal (Round)', 6),
-                                         'Demersal', 'Demersal (round)', 
-                                         'Pelagic (Medium; Round)', 'Pelagic (Small; Round)',
-                                         'Demersal (Round)', 'Demersal (round)',
-                                         rep('Demersal (Flat)', 9), 'Demersal (Round)',
-                                         'Demersal (Round)', rep('Demersal (Flat)', 4),
-                                         rep('Invertebrate (Pelagic)', 3),
-                                         rep('Invertebrate (Benthic)', 3)))
-
-groups2 <- data.table(Group = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
-                                'Sharks', 'Macrobenthos', 'Megabenthos', 
-                                'OtherShrimps', 'Krill', 'Micronekton', 
-                                'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 
-                                'Phytoplankton'), 
-                      Classification = c('Bird', 'Mammal', 'Whale', 'Whale', 'HMS', 
-                                         'Shark',rep('Invertebrate (Benthic)', 2),
-                                         rep('Invertebrate (Pelagic)', 4), 
-                                         rep('Zooplankton', 2), 'Primary Producer'))
-
-
-spclass.GB <- rbindlist(list(groups1[, .(Group, Classification)], groups2))
-
-spclass.GB[Classification %like% 'Round', RF := 'Round']
-spclass.GB[Classification %like% 'Flat',  RF := 'Flat']
-spclass.GB[Classification %like% 'Dem',   type := 'Demersal']
-spclass.GB[Classification %like% 'Pel' & !Classification %like% 'Invert', 
-           type := 'Pelagic']
-spclass.GB[Classification %in% c('Demersal (Round)', 'Demersal (Flat)', 'Demersal',
-                                 'Pelagic (Small; Round)', 'Pelagic (Medium; Round)',
-                                 'HMS', 'Shark'), fish := T]
-spclass.GB[Classification %in% c('Invertebrate (Pelagic)', 'Invertebrate (Benthic)', 
-                                 'Primary Producer'), invert := T]
-spclass.GB[Group %in% c('Mesozooplankton', 'Microzooplankton', 'GelZooplankton', 
-                        'Micronekton'), Zoop := T]
-
-living.GB <- merge(living.GB, spclass.GB, by = 'Group', all.x = T)
-
-#Predator Prey ratios
-PredPrey <- data.table(Ratio = c('SP:ZP', 'ZP:PP', 'SP:PP', 'DM:BI', 'SH:SP', 
-                                 'MB:SP', 'W:ZP'),
-                       Value = c(living.GB[Classification == 'Pelagic (Small; Round)', 
-                                           sum(Biomass)] /
-                                   living.GB[Zoop == T, sum(Biomass)],
-                                 living.GB[Zoop == T, sum(Biomass)] / 
-                                   living.GB[Group == 'Phytoplankton', sum(Biomass)],
-                                 living.GB[Classification == 'Pelagic (Small; Round)', 
-                                           sum(Biomass)] /
-                                   living.GB[Group == 'Phytoplankton', sum(Biomass)],
-                                 living.GB[type == 'Demersal', sum(Biomass)] /
-                                   living.GB[Classification == 'Invertebrate (Benthic)', 
-                                             sum(Biomass)],
-                                 living.GB[Classification %in% c('Shark', 'HMS'), 
-                                           sum(Biomass)] /
-                                   living.GB[Classification == 'Pelagic (Small; Round)', 
-                                             sum(Biomass)],
-                                 living.GB[Classification %in% c('Mammal', 'Bird'), 
+prebal <- function(rpath.obj, spClasses){
+  model <- data.table::as.data.table(Rpath::write.Rpath(rpath.obj))
+  living <- model[type < 2, ]
+  
+  #Biomass Range----
+  max.bio <- max(living[, Biomass])
+  min.bio <- min(living[, Biomass])
+  bio.mag <- round(log(max.bio, base = 10)) - round(log(min.bio, base = 10))
+  
+  #Slope of Biomass----
+  bio.mod <- lm(log(living[, Biomass], base = 10) ~ living[, TL])
+  
+  #Slope by Trophic level----
+  TL.level <- c(1, seq(2, 5.5, .25))
+  for(iTL in 1:(length(TL.level) - 1)){
+    living[TL >= TL.level[iTL] & TL < TL.level[iTL + 1], TL.group := TL.level[iTL]]
+    living[TL >= TL.level[iTL] & TL < TL.level[iTL + 1], TL.bio := sum(Biomass)][]
+  }
+  TL.model <- unique(living[, .(TL.group, TL.bio)])
+  
+  TL.mod <- lm(log(TL.model[, TL.bio], base = 10) ~ TL.model[, TL.group])
+  
+  #Not from prebal but look at F----
+  living[, Fmort := Removals / Biomass]
+  Bad.F <- living[Fmort > 1, .(Group, Biomass, Removals, Fmort)]
+  
+  #Predator Prey ratios----
+  ratio.tab <- merge(living[, .(Group, Biomass, TL)], spClasses, by = 'Group', 
+                     all.x = T)
+  
+  PredPrey <- data.table(Ratio = c('SP:ZP', 'ZP:PP', 'SP:PP', 'DM:BI', 'SH:SP', 
+                                   'MB:SP', 'W:ZP'),
+                         Value = c(ratio.tab[Classification == 'Pelagic (Small; Round)', 
+                                             sum(Biomass)] /
+                                     ratio.tab[Zoop == T, sum(Biomass)],
+                                   ratio.tab[Zoop == T, sum(Biomass)] / 
+                                     ratio.tab[Group == 'Phytoplankton', sum(Biomass)],
+                                   ratio.tab[Classification == 'Pelagic (Small; Round)', 
+                                             sum(Biomass)] /
+                                     ratio.tab[Group == 'Phytoplankton', sum(Biomass)],
+                                   ratio.tab[type == 'Demersal', sum(Biomass)] /
+                                     ratio.tab[Classification == 'Invertebrate (Benthic)', 
+                                               sum(Biomass)],
+                                   ratio.tab[Classification %in% c('Shark', 'HMS'), 
+                                             sum(Biomass)] /
+                                     ratio.tab[Classification == 'Pelagic (Small; Round)', 
+                                               sum(Biomass)],
+                                   ratio.tab[Classification %in% c('Mammal', 'Bird'), 
+                                             sum(Biomass)] / 
+                                     ratio.tab[Classification == 'Pelagic (Small; Round)', 
+                                               sum(Biomass)],
+                                   ratio.tab[Classification == 'Whale', sum(Biomass)] / 
+                                     ratio.tab[Zoop == T, sum(Biomass)]))
+  
+  #Energy flows
+  Fish <- data.table(Ratio = c('DM:PL', 'FF:RF', 'SP:AF', 'HMS:AF', 'Sharks:AF', 
+                               'DM:AF'),
+                     Value = c(ratio.tab[type == 'Demersal', sum(Biomass)] /
+                                 ratio.tab[Classification %in% c('Pelagic (Small; Round)', 
+                                                                 'Shark', 
+                                                                 'HMS',
+                                                                 'Pelagic (Medium; Round'),
+                                           sum(Biomass)],
+                               ratio.tab[RF == 'Flat', sum(Biomass)] / 
+                                 ratio.tab[RF == 'Round', sum(Biomass)],
+                               ratio.tab[Classification == 'Pelagic (Small; Round)', 
+                                         sum(Biomass)] /
+                                 ratio.tab[fish == T, sum(Biomass)],
+                               ratio.tab[Classification == 'HMS', sum(Biomass)] / 
+                                 ratio.tab[fish == T, sum(Biomass)],
+                               ratio.tab[Classification == 'Shark', sum(Biomass)] / 
+                                 ratio.tab[fish == T, sum(Biomass)],
+                               ratio.tab[type == 'Demersal', sum(Biomass)] / 
+                                 ratio.tab[fish == T, sum(Biomass)]))
+  
+  Invert <- data.table(Ratio = c('BI:AI', 'PI:AI', 'GZ:AI', 'SM:AI', 'ZP:AI', 'PP:AI', 
+                                 'ZP:BI'),
+                       Value = c(ratio.tab[Classification == 'Invertebrate (Benthic)', 
                                            sum(Biomass)] / 
-                                   living.GB[Classification == 'Pelagic (Small; Round)', 
-                                             sum(Biomass)],
-                                 living.GB[Classification == 'Whale', sum(Biomass)] / 
-                                   living.GB[Zoop == T, sum(Biomass)]))
+                                   ratio.tab[invert == T, sum(Biomass)],
+                                 ratio.tab[Classification == 'Invertebrate (Pelagic)', 
+                                           sum(Biomass)] / 
+                                   ratio.tab[invert == T, sum(Biomass)],
+                                 ratio.tab[Group == 'GelZooplankton', sum(Biomass)] / 
+                                   ratio.tab[invert == T, sum(Biomass)],
+                                 ratio.tab[Group %in% c('OtherShrimps', 'Micronekton', 'Krill'), 
+                                           sum(Biomass)] / 
+                                   ratio.tab[invert == T, sum(Biomass)],
+                                 ratio.tab[Zoop == T, sum(Biomass)] / 
+                                   ratio.tab[invert == T, sum(Biomass)],
+                                 ratio.tab[Group == 'Phytoplankton', sum(Biomass)] / 
+                                   ratio.tab[invert == T, sum(Biomass)],
+                                 ratio.tab[Zoop == T, sum(Biomass)] / 
+                                   ratio.tab[Classification == 'Invertebrate (Benthic)', 
+                                             sum(Biomass)]))
+  
+  Diet <- data.table(Ratio = c('Pisc:Benth', 'Benth:Plank', 
+                               'Pisc:Plank', 'TL > 4:TL < 3'),
+                     Value = c(ratio.tab[diet == 'Pisc', sum(Biomass)] / 
+                                 ratio.tab[diet == 'Benth', sum(Biomass)],
+                               ratio.tab[diet == 'Benth', sum(Biomass)] / 
+                                 ratio.tab[diet == 'Plank', sum(Biomass)],
+                               ratio.tab[diet == 'Pisc', sum(Biomass)] / 
+                                 ratio.tab[diet == 'Plank', sum(Biomass)],
+                               ratio.tab[TL >= 4, sum(Biomass)] / 
+                                 ratio.tab[TL <= 3, sum(Biomass)]))
+  
+  #Vital Rates (Criteria 3)-----
+  #QB
+  cons.mod <- lm(log(living[Group != 'Phytoplankton', QB], base = 10) ~ 
+                   living[Group != 'Phytoplankton', TL])
+  cons.slope <- cons.mod$coef[2]
+  
+  #PB
+  prod.mod <- lm(log(living[, PB], base = 10) ~ living[, TL])
+  prod.slope <- prod.mod$coef[2]
+  
+  return(list('Biomass Span' = bio.mag,
+              'Biomass Slope' = as.numeric(bio.mod$coef[2]),
+              'Trophic Level Slope' = as.numeric(TL.mod$coef[2]),
+              'Too High F' = Bad.F,
+              'Predator Prey' = PredPrey,
+              'Energy Flows - Fish' = Fish,
+              'Energy Flows - Invert' = Invert,
+              'Energy Flows - Diet' = Diet,
+              'Vital Rates - QB' = cons.slope,
+              'Vital Rates - PB' = prod.slope))
+}
 
-#Energy flows
-Fish <- data.table(Ratio = c('DM:PL', 'FF:RF', 'SP:AF', 'HMS:AF', 'Sharks:AF', 
-                             'DM:AF'),
-                   Value = c(living.GB[type == 'Demersal', sum(Biomass)] /
-                               living.GB[Classification %in% c('Pelagic (Small; Round)', 
-                                                               'Shark', 
-                                                               'HMS',
-                                                               'Pelagic (Medium; Round'),
-                                         sum(Biomass)],
-                             living.GB[RF == 'Flat', sum(Biomass)] / 
-                               living.GB[RF == 'Round', sum(Biomass)],
-                             living.GB[Classification == 'Pelagic (Small; Round)', 
-                                       sum(Biomass)] /
-                               living.GB[fish == T, sum(Biomass)],
-                             living.GB[Classification == 'HMS', sum(Biomass)] / 
-                               living.GB[fish == T, sum(Biomass)],
-                             living.GB[Classification == 'Shark', sum(Biomass)] / 
-                               living.GB[fish == T, sum(Biomass)],
-                             living.GB[type == 'Demersal', sum(Biomass)] / 
-                               living.GB[fish == T, sum(Biomass)]))
+slopePlot <- function(rpath.obj, type = 'Biomass', ref = T){
+  model <- data.table::as.data.table(Rpath::write.Rpath(rpath.obj))
+  living <- model[type < 2, ]
+  
+  if(type == 'Biomass'){
+    #Slope of Biomass
+    lm.mod <- lm(log(living[, Biomass], base = 10) ~ living[, TL])
+    #+- 1 Standard Error
+    std <- coef(summary(lm.mod))[, 2]
+    
+    #Plot basics
+    slope <- ggplot(data = living,
+                    aes(x = TL, y = Biomass)) +
+      geom_label(aes(label = Group)) 
+  }
+  
+  if(type == 'TL'){
+    #Slope by Trophic level
+    TL.level <- c(1, seq(2, 5.5, .25))
+    for(iTL in 1:(length(TL.level) - 1)){
+      living[TL >= TL.level[iTL] & TL < TL.level[iTL + 1], TL.group := TL.level[iTL]]
+      living[TL >= TL.level[iTL] & TL < TL.level[iTL + 1], TL.bio := sum(Biomass)][]
+    }
+    TL.model <- unique(living[, .(TL.group, TL.bio)])
+    
+    lm.mod <- lm(log(TL.model[, TL.bio], base = 10) ~ TL.model[, TL.group])
+    #+- 1 Standard Error
+    std <- coef(summary(lm.mod))[, 2]
+    
+    #Plot basics
+    slope <- ggplot(data = TL.model,
+                    aes(x = TL.group, y = TL.bio)) +
+      geom_point() 
+  }
+  
+  if(type == 'Order'){
+    data.table::setkey(living, TL)
+    living[, TL.order := 1:nrow(living)]
+    
+    lm.mod <- lm(log(living[, Biomass], base = 10) ~ living[, TL.order])
+    #+- 1 Standard Error
+    std <- coef(summary(lm.mod))[, 2]
+    
+    #Plot basics
+    slope <- ggplot(data = living,
+                    aes(x = TL.order, y = Biomass)) +
+      geom_bar(stat = "identity") 
+     
+  }
+  
+  if(type == 'TL Order'){
+    data.table::setkey(TL.model, TL.group)
+    TL.model[, TL.order := 1:nrow(TL.model)]
+    
+    lm.mod <- lm(log(TL.model[, TL.bio], base = 10) ~ TL.model[, TL.order])
+    #+- 1 Standard Error
+    std <- coef(summary(lm.mod))[, 2]
+    
+    #Plot basics
+    slope <- ggplot(data = TL.model,
+                    aes(x = TL.order, y = TL.bio)) +
+      geom_bar(stat = "identity") 
+    print(lm.mod$coef[2])
+  }
+  
+  #Add slope line with standard deviations
+  slope <- slope +
+    scale_y_log10() +
+    geom_abline(intercept = lm.mod$coef[1], 
+                slope = lm.mod$coef[2]) +
+    geom_abline(intercept = lm.mod$coef[1] + std[1], 
+                slope = lm.mod$coef[2] + std[2], lty = 2) +
+    geom_abline(intercept = lm.mod$coef[1] - std[1], 
+                slope = lm.mod$coef[2] - std[2], lty = 2)
+  
+  
+  #Add reference lines for 5 and 10%
+  if(ref){
+    slope <- slope +
+      geom_abline(intercept = lm.mod$coef[1],
+                  slope = -0.1, col = 'red') +
+      geom_abline(intercept = lm.mod$coef[1],
+                  slope = -0.05, col = 'red')
+  }
+  
 
-Invert <- data.table(Ratio = c('BI:AI', 'PI:AI', 'GZ:AI', 'SM:AI', 'ZP:AI', 'PP:AI', 
-                               'ZP:BI'),
-                     Value = c(living.GB[Classification == 'Invertebrate (Benthic)', 
-                                         sum(Biomass)] / 
-                                 living.GB[invert == T, sum(Biomass)],
-                               living.GB[Classification == 'Invertebrate (Pelagic)', 
-                                         sum(Biomass)] / 
-                                 living.GB[invert == T, sum(Biomass)],
-                               living.GB[Group == 'GelZooplankton', sum(Biomass)] / 
-                                 living.GB[invert == T, sum(Biomass)],
-                               living.GB[Group %in% c('OtherShrimps', 'Micronekton', 'Krill'), 
-                                         sum(Biomass)] / 
-                                 living.GB[invert == T, sum(Biomass)],
-                               living.GB[Zoop == T, sum(Biomass)] / 
-                                 living.GB[invert == T, sum(Biomass)],
-                               living.GB[Group == 'Phytoplankton', sum(Biomass)] / 
-                                 living.GB[invert == T, sum(Biomass)],
-                               living.GB[Zoop == T, sum(Biomass)] / 
-                                 living.GB[Classification == 'Invertebrate (Benthic)', 
-                                           sum(Biomass)]))
+  plot(slope)
+}
 
-plank <- c('AtlHerring', 'AtlMackerel', 'SmPelagics')
-pisc  <- c('Barndoor', 'Bluefish', 'Cod', 'Fourspot', 'Goosefish', 'HMS', 'OffHake', 
-           'SilverHake', 'Sharks', 'SpinyDogfish', 'SummerFlounder', 'OtherPelagics')
 
-living.GB[Group %in% plank, diet := 'Plank']
-living.GB[Group %in% pisc,  diet := 'Pisc']
-living.GB[is.na(diet) & fish == T, diet := 'Benth']
-
-Diet <- data.table(Ratio = c('Pisc:Benth', 'Benth:Plank', 
-                             'Pisc:Plank', 'TL > 4:TL < 3'),
-                   Value = c(living.GB[diet == 'Pisc', sum(Biomass)] / 
-                               living.GB[diet == 'Benth', sum(Biomass)],
-                             living.GB[diet == 'Benth', sum(Biomass)] / 
-                               living.GB[diet == 'Plank', sum(Biomass)],
-                             living.GB[diet == 'Pisc', sum(Biomass)] / 
-                               living.GB[diet == 'Plank', sum(Biomass)],
-                             living.GB[TL >= 4, sum(Biomass)] / 
-                               living.GB[TL <= 3, sum(Biomass)]))
-
+taxaplots <- function()
 opar <- par(mfrow = c(2, 2), mar = c(5, 0, 0, 2), oma = c(2, 4, 2, 0))
 barplot(PredPrey[, Value], names.arg = PredPrey[, Ratio], las = 2)
 legend('topright', legend = 'A', bty = 'n', cex = 2)
@@ -235,11 +237,8 @@ barplot(Diet[, Value], names.arg = Diet[, Ratio], las = 2)
 legend('topright', legend = 'D', bty = 'n', cex = 2)
 mtext(2, outer = T, text = 'Ratio', line = 2.5)
 
-#Vital Rates (Criteria 3)-----
-#QB
-cons.mod <- lm(log(living.GB[Group != 'Phytoplankton', QB], base = 10) ~ 
-                 living.GB[Group != 'Phytoplankton', TL])
 
+#QB slope
 plot(living.GB[Group != 'Phytoplankton', list(TL, QB)], log = "y", typ = 'n')
 text(living.GB[Group != 'Phytoplankton', TL], living.GB[Group != 'Phytoplankton', QB], 
      living.GB[, Group], cex = .5)
@@ -249,12 +248,7 @@ std <- coef(summary(cons.mod))[, 2]
 abline(a = coef(cons.mod)[1] + std[1], b = coef(cons.mod)[2] + std[2], lty = 2)
 abline(a = coef(cons.mod)[1] - std[1], b = coef(cons.mod)[2] - std[2], lty = 2)
 
-cons.slope <- coef(cons.mod)[2]
-cons.slope
-
 #PB
-prod.mod <- lm(log(living.GB[, PB], base = 10) ~ living.GB[, TL])
-
 plot(living.GB[, list(TL, PB)], log = "y", typ = 'n')
 text(living.GB[, TL], living.GB[, PB], living.GB[, Group], cex = .5)
 abline(prod.mod)
@@ -263,7 +257,7 @@ std <- coef(summary(prod.mod))[, 2]
 abline(a = coef(prod.mod)[1] + std[1], b = coef(prod.mod)[2] + std[2], lty = 2)
 abline(a = coef(prod.mod)[1] - std[1], b = coef(prod.mod)[2] - std[2], lty = 2)
 
-prod.slope <- coef(prod.mod)[2]
-prod.slope
+
+
 
 
