@@ -1,39 +1,35 @@
+#Steps to balancing the Georges Bank model
+library(data.table); library(here)
 
+#Load prebal functions
+source(here('R', 'PreBal.R'))
 
-#Balancing Act
+#Load data
+load(here('data', 'GB.init.rda'))
+load(here('data', 'spclass.GB.rda'))
+
+#Initial prebal diagnostics
+prebal(GB.init, spclass.GB)
+
+#Biomass Span - 6x
+#Biomass Slope -0.63
+# There is an issue with this metric - PreBal pub uses ranked order to 
+# plot not raw TL - I can live with this for now
+
 #look at worst EEs first
-output.GB <- as.data.table(write.Rpath(GB))
+output.GB <- as.data.table(write.Rpath(GB.init))
 setkey(output.GB, EE)
 
-#Overall Balance - biomass slope ~ -70% according to prebal it should be 5-10%
-#Going to drop the biomass of lower trophic levels
-GB.params$model[Group %in% c('Phytoplankton', 'Clams', 'Macrobenthos', 'Mesozooplankton',
-                             'Microzooplankton', 'AtlScallop', 'Bacteria', 'Micronekton',
-                             'GelZooplankton', 'Krill'), Biomass := Biomass / 10]
-#That got the slope to -32%
-#Raise other groups biomass
-GB.params$model[!Group %in% c('Phytoplankton', 'Clams', 'Macrobenthos', 'Mesozooplankton',
-                              'Microzooplankton', 'AtlScallop', 'Bacteria', 'Micronekton',
-                              'GelZooplankton', 'Krill'), Biomass := Biomass * 4]
-#Save original unbalance parameter set
-save(GB.params, file = file.path(data.dir, 'GB_unbalanced_params.RData'))
+#Several of these are pelagics and many of the prebal metrics suggest that 
+#pelagics are too low.  Also know that the survey is remarkably poor at sampling
+#pelagics.
 
-#That got it to -14% which is good enough to start
-unbal.GB <- as.data.table(write.Rpath(GB))
-living.GB <- unbal.GB[type < 2, list(Group, Biomass, Removals, TL, PB, QB)]
-bio.mod <- lm(log(living.GB[, Biomass], base = 10) ~ living.GB[, TL])
 
-plot(living.GB[, list(TL, Biomass)], log = "y", typ = 'n')
-text(living.GB[, TL], living.GB[, Biomass], living.GB[, Group], cex = .8)
-abline(bio.mod)
-#+- 1 Standard Error
-std <- coef(summary(bio.mod))[, 2]
-abline(a = coef(bio.mod)[1] + std[1], b = coef(bio.mod)[2] + std[2], lty = 2)
-abline(a = coef(bio.mod)[1] - std[1], b = coef(bio.mod)[2] - std[2], lty = 2)
 
-bio.slope <- coef(bio.mod)[2]
-bio.slope
 
+
+
+#-----Old balancing
 #Overall production - PreBal suggest similar trend to biomass but mean PBs are 
 #on par with other shelf models from Ecobase
 ecobase <- data.table(TL = c('1-2', '2-3', '3-4', '4+'), 
@@ -41,7 +37,7 @@ ecobase <- data.table(TL = c('1-2', '2-3', '3-4', '4+'),
                       GB.initialPB = c(91.25, 20.78, 1.28, 0.27))
 
 #1 - Landings > Biomass----
-# 1.A - Added EMAX q's to bring up most biomass values - included above)
+
 
 #There were still 2 groups with F > 1.  
 # 1.B Top down balancing SmPelagics
