@@ -46,6 +46,9 @@ for(igroup in GB.params$model[Type < 2, Group]){
 }
 
 #Add EEs for groups without biomass
+#Other flatfish biomass shows up as zero so set to NA and let the model calculate
+GB.params$model[Group == 'OtherFlatfish', Biomass := NA]
+GB.params$model[Group == 'OtherFlatfish', EE := 0.8]
 #Originally had Seals, PP and Bacteria set to EE but I added EMAX value
 #Add NWACS value for pinnepeds
 GB.params$model[Group %in% c('Seals'), Biomass := 0.035]
