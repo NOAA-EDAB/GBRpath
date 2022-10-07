@@ -46,8 +46,9 @@ for(igroup in GB.params$model[Type < 2, Group]){
 }
 
 #Add EEs for groups without biomass
-GB.params$model[Group %in% c('Seals'), EE := 0.8]
-#Originally had PP and Bacteria set to EE but I added EMAX value
+#Originally had Seals, PP and Bacteria set to EE but I added EMAX value
+#Add NWACS value for pinnepeds
+GB.params$model[Group %in% c('Seals'), Biomass := 0.035]
 
 #Biological Parameters
 load(here('data', 'bioparam.input.rda'))
