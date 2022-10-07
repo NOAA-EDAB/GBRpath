@@ -1,344 +1,142 @@
 #Biomass pull for GBRpath
-#User parameters----------------------------------------------------------------
-if(Sys.info()['sysname']=="Windows"){
-  main.dir <- "C:/Users/Sean.Lucey/Desktop/GBRpath"
-}
+library(here); library(data.table); library(mskeyrun); library(usethis)
 
-if(Sys.info()['sysname']=="Linux"){
-  main.dir  <- "/home/slucey/slucey/GBRpath"
-}
+#Bottom Trawl Survey-----------------
+#Grab species list
+load(here('data-raw', 'Species_codes.RData'))
 
-data.dir <- file.path(main.dir, 'data')
-gis.dir  <- file.path(main.dir, 'gis')
+#Grab biomass data from ms-keyrun
+bio <- mskeyrun::surveyIndexAll
 
-library(RODBC)
-uid <- 'slucey'
-cat("Oracle Password: ")
-pwd <- scan(stdin(), character(), n = 1)
+#Merge with Rpath groups
+bio <- merge(bio, unique(spp[, list(SVSPP, RPATH)]), by = 'SVSPP')
 
-channel <- odbcConnect('sole', uid, pwd)
+bio.index <- bio[variable == 'strat.biomass' & SEASON == 'FALL', 
+                 .(Biomass = sum(value, na.rm = T)), by = c('RPATH', 'YEAR')]
 
-#Required packages--------------------------------------------------------------
-library(Survdat); library(data.table); library(rgdal); library(fitdistrplus)
-load(file.path(data.dir, 'Species_codes.RData'))
-
-#User functions-----------------------------------------------------------------
-#Convert output to text for RODBC query
-sqltext <- function(x){
-  out <- x[1]
-  if(length(x) > 1){
-    for(i in 2:length(x)){
-      out <- paste(out, x[i], sep = "','")
-    }
-  }
-  out <- paste("'", out, "'", sep = '')
-  return(out)
-}
-
-#Bottom trawl-------------------------------------------------------------------
-#Generate cruise list
-cruise.qry <- "select unique year, cruise6, season
-              from mstr_cruise
-              where purpose_code = 10
-              and year >= 2012
-              and season = 'FALL'
-              order by year, cruise6"
-
-cruise <- as.data.table(sqlQuery(channel, cruise.qry))
-
-#Use cruise codes to select other data
-cruise6 <- sqltext(cruise$CRUISE6)
-
-#Station data
-station.qry <- paste("select unique cruise6, svvessel, station, stratum,
-                      tow, decdeg_beglat as lat, decdeg_beglon as lon, 
-                      begin_est_towdate as est_towdate
-                      from union_fscs_svsta
-                      where cruise6 in (", cruise6, ")
-                      and TOGA <= 1324
-                      order by cruise6, station", sep='')
-  
-station <- as.data.table(sqlQuery(channel, station.qry))
-
-#Grab swept area
-sweptarea.qry <- paste("select unique cruise6, station, area_swept_wings_mean_km2 as sweptarea
-                     from tow_evaluation
-                     where cruise6 in (", cruise6, ")", sep = '')
-
-sweptarea <- as.data.table(sqlQuery(channel, sweptarea.qry))
-
-station <- merge(station, sweptarea, by = c('CRUISE6', 'STATION'))
-
-#Replace sweptarea NAs with average sweptarea
-station[, mean.swept := mean(SWEPTAREA, na.rm = T), by = c('CRUISE6', 'STRATUM')]
-station[is.na(SWEPTAREA), SWEPTAREA := mean.swept]
-#2013 strata 01250 had no sweptareas so using average for the year
-sweptarea.13 <- mean(station[CRUISE6 == 201304, SWEPTAREA], na.rm = T)
-station[CRUISE6 == 201304 & STRATUM == 1250, SWEPTAREA := sweptarea.13]
-
-#merge cruise and station
-survdat <- merge(cruise, station, by = 'CRUISE6')
-setkey(survdat, CRUISE6, STATION, STRATUM, TOW)
-
-#Catch data
-catch.qry <- paste("select cruise6, station, stratum, tow, svspp, catchsex, 
-                   expcatchnum as abundance, expcatchwt as biomass
-                   from UNION_FSCS_SVCAT
-                   where cruise6 in (", cruise6, ")
-                   and stratum not like 'YT%'
-                   order by cruise6, station, svspp", sep='')
-
-catch <- as.data.table(sqlQuery(channel, catch.qry))
-
-#merge with survdat
-survdat <- merge(survdat, catch, by = key(survdat), all = T)
-#Remove catch from non-rep tows
-survdat <- survdat[!is.na(LON), ]
-
-#Assign Rpath species designations
-svspp.rpath <- unique(spp[!is.na(SVSPP), list(SVSPP, RPATH, Fall.q)])
-
-survdat <- merge(survdat, svspp.rpath, by = 'SVSPP', all.x = T)
-
-#Assign catch to EPUs
-#Grab strata
-epu <- readOGR(gis.dir, 'EPU_extended')
-
-#Generate area table
-epu.area <- getarea(epu, 'EPU')
-
-#use poststrat to assign to EPU
-survdat.epu <- poststrat(survdat, epu)
-setnames(survdat.epu, 'newstrata', 'EPU')
-
-#Subset for Georges Bank
-GB <- survdat.epu[EPU == 'GB', ]
-
-#Using a simple means within strata but can still use survdat functions
-GB.prep <- stratprep(GB, epu.area, strat.col = 'EPU', area.col = 'Area')
-GB.mean <- stratmean(GB.prep, group.col = 'RPATH', strat.col = 'EPU', poststrat = T)
-
-#Calculate minimum swept area biomass estimates (i.e. q = 1)
-#Georges Bank area
-A <- epu.area[EPU == 'GB', Area]
-#Using wings swept area per tow
-mean.swept <- GB[, mean(SWEPTAREA), by = YEAR]
-setnames(mean.swept, 'V1', 'mean.swept')
-mean.swept[, A := A]
-mean.swept[, prop.swept := A / mean.swept]
-
-#Calculate minimum swept area estimate
-GB.mean <- merge(GB.mean, mean.swept[, list(YEAR, prop.swept)], by = 'YEAR')
-GB.mean[, swept.bio := strat.biomass * prop.swept]
+#Need to expand from kg/tow to mt/km^2
+#A tow is standardized to 0.0384 km^2
+#kg to mt is 0.001
+# so conversion is 0.001 / 0.0384 or 0.02604
+bio.index[, B := Biomass * 0.02604]
+bio.index[, Biomass := NULL]
+bio.index[, Units := 'mt km^-2']
+bio.index <- bio.index[!is.na(RPATH), ][]
 
 #Add q's from EMAX
-emax.q <- svspp.rpath[, mean(Fall.q), by = RPATH]
-setnames(emax.q, 'V1', 'q')
-GB.mean <- merge(GB.mean, emax.q, by = 'RPATH', all.x = T)
-GB.mean[, expand.bio := swept.bio / q]
+emax.q <- spp[, .(q = mean(Fall.q)), by = RPATH]
+emax.q[is.na(q), q := 1]
+bio.index <- merge(bio.index, emax.q, by = 'RPATH', all.x = T)
+bio.index[, B := B / q]
+bio.index[, q := NULL]
 
-#Calculate total estimate variance
-GB.mean[, swept.var := prop.swept^2 * biomass.var]
-
-#Input for GBRpath
-#Biomass needs to be in mt km^-2
-#Convert swept.bio to metric tons
-GB.mean[, swept.bio.mt  := swept.bio * 10^-3]
-GB.mean[, expand.bio.mt := expand.bio * 10^-3]
-#GB.biomass <- GB.mean[YEAR %in% 2013:2015, mean(swept.bio.mt) / A, by = RPATH]
-#setnames(GB.biomass, 'V1', 'Biomass')
-GB.biomass <- GB.mean[YEAR %in% 2013:2015, mean(expand.bio.mt) / A, by = RPATH]
-setnames(GB.biomass, 'V1', 'Biomass')
-
-#Current biomass
-GB.current <- GB.mean[YEAR %in% 2016:2018, mean(expand.bio.mt) / A, by = RPATH]
-setnames(GB.current, 'V1', 'Biomass')
+#Input biomass
+bio.input <- bio.index[YEAR %in% 1981:1985, .(B = mean(B, na.rm = T)), by = RPATH]
 
 #Shellfish surveys--------------------------------------------------------------
-#Scallops
-cruise.qry <- "select unique year, cruise6, svvessel
-               from mstr_cruise
-               where purpose_code = 60
-               and year >= 2012
-               order by year, cruise6"
+#Scallops and clam survey not included in ms-keyrun data set as they are not 
+#used in the other models
+library(dbutils); library(DBI); library(sf); library(survdat)
 
-cruise <- as.data.table(sqlQuery(channel, cruise.qry))
+#Connect to the database
+channel <- dbutils::connect_to_database('sole', 'slucey')
 
-#Use cruise codes to select other data
-cruise6 <- sqltext(cruise$CRUISE6)
+scall <- survdat::get_survdat_scallop_data(channel, getWeightLength = T)
 
-#Station data
-station.qry <- paste("select unique cruise6, svvessel, station, stratum, 
-                      decdeg_beglat as lat, decdeg_beglon as lon,
-                      avgdepth as depth
-                      from Union_fscs_svsta
-                      where cruise6 in (", cruise6, ")
-                      and SHG <= 136
-                      order by cruise6, station", sep='')
+#Scallop survey did not record weight prior to 2001 (FSCS) so need to manually
+#calculate catch weights
+scalldat <- scall$survdat[, BIOMASS := sum(WGTLEN), by = c('YEAR', 'STATION')]
 
-station <- as.data.table(sqlQuery(channel, station.qry))
-
-scalldat <- merge(cruise, station, by = c('CRUISE6', 'SVVESSEL'))
-
-#Catch data
-catch.qry <- paste("select cruise6, station, stratum, svspp, catchsex, 
-                    expcatchnum as abundance, expcatchwt as biomass
-                    from UNION_FSCS_SVCAT
-                    where cruise6 in (", cruise6, ")
-                    and svspp = '401'
-                    order by cruise6, station, svspp", sep='')
-
-catch <- as.data.table(sqlQuery(channel, catch.qry))
-
-#merge with scalldat
-setkey(catch, CRUISE6, STATION, STRATUM)
-scalldat <- merge(scalldat, catch, by = key(catch), all.x = T)
-
+#Calculate scallop index
 #use poststrat to assign to EPU
-scalldat.epu <- poststrat(scalldat, epu)
-setnames(scalldat.epu, 'newstrata', 'EPU')
+epu <- sf::st_read(dsn = here::here('gis', 'EPU_extended.shp'))
 
-#Subset for Georges Bank
-GB.scall <- scalldat.epu[EPU == 'GB', ]
+scall.mean <- survdat::calc_stratified_mean(scalldat, areaPolygon = epu,
+                                            areaDescription = 'EPU',
+                                            filterByArea = 'GB',
+                                            filterBySeason = 'SUMMER', tidy = T)
 
-#Using a simple means within strata but can still use survdat functions
-GB.scall.prep <- stratprep(GB.scall, epu.area, strat.col = 'EPU', area.col = 'Area')
-GB.scall.mean <- stratmean(GB.scall.prep, strat.col = 'EPU', poststrat = T)
+scall.index <- scall.mean[variable == 'strat.biomass', .(Biomass = value), by = YEAR]
 
-#Remove NAs and add RPATH column
-GB.scall.mean <- GB.scall.mean[!is.na(SVSPP), ]
-GB.scall.mean[, RPATH := 'AtlScallop']
-GB.scall.mean[, SVSPP := NULL]
+#Need to expand from kg/tow to mt/km^2
+#A tow is approximately 0.0045 km^2 
+# 0.001317 (dredge width in nautical miles) * 1.852(convert naut mi to km)
+# 1.0 (tow length in nautical miles) * 1.852(convert naut mi to km)
+#kg to mt is 0.001
+# so conversion is 0.001 / 0.0045 or 0.222
+scall.index[, B := Biomass * 0.222]
+scall.index[, Biomass := NULL]
+scall.index[, Units := 'mt km^-2']
+scall.index[, RPATH := 'AtlScallop']
 
-#Calculate total biomass/abundance estimates
-a.scall <- (0.001317 * 1.852) * (1.0 * 1.852) #convert dredge area/tow distance to km from nm
-GB.scall.mean[, prop.swept := A / a.scall]
-GB.scall.mean[, swept.bio := strat.biomass * prop.swept]
-
-#Calculate total estimate variance
-GB.scall.mean[, swept.var := prop.swept^2 * biomass.var]
-
-#Input for GBRpath
-#Biomass needs to be in mt km^-2
-#Convert swept.bio to metric tons
-GB.scall.mean[, swept.bio.mt := swept.bio * 10^-3]
-
-GB.scall.biomass <- GB.scall.mean[YEAR %in% 2013:2015, mean(swept.bio.mt) / A, by = RPATH]
-setnames(GB.scall.biomass, 'V1', 'Biomass')
-
-#Current biomass
-GB.scall.current <- GB.scall.mean[YEAR %in% 2016:2018, mean(swept.bio.mt) / A, by = RPATH]
-setnames(GB.scall.current, 'V1', 'Biomass')
+#Input biomass
+scall.input <- scall.index[YEAR %in% 1981:1985, .(B = mean(B, na.rm = T)),
+                           by = RPATH]
 
 #Replace scallop biomass from bottomtrawl survey
-GB.biomass[RPATH == 'AtlScallop', Biomass := GB.scall.biomass[, Biomass]]
-GB.current[RPATH == 'AtlScallop', Biomass := GB.scall.current[, Biomass]]
+bio.input[RPATH == 'AtlScallop', B := scall.input[, B]]
+
 
 #Clam survey--------------------------------------------------------------------
-#Generate cruise list
-cruise.qry <- "select unique year, cruise6, svvessel
-               from mstr_cruise
-               where purpose_code = 50
-               and year >= 2012
-               order by year, cruise6"
+clam <- survdat::get_survdat_clam_data(channel)
 
-cruise <- as.data.table(sqlQuery(channel, cruise.qry))
+#Use GB clam region to calculate biomass
+clam.mean <- clam$data[!is.na(SVSPP) & clam.region == 'GB', 
+                       .(B = mean(BIOMASS.MW, na.rm = T)), by = c('YEAR', 'SVSPP')]
+clam.index <- clam.mean[, .(B = sum(B)), by = YEAR]
 
-#Use cruise codes to select other data
-cruise6 <- sqltext(cruise$CRUISE6)
+#Need to expand from kg/tow to mt/km^2
+# Clam tows can vary greatly by I'll use an example tow as the expansion
+# 0.0039624 (dredge width in km) * 0.374(tow length in km) = 0.00148 
+#kg to mt is 0.001
+# so conversion is 0.001 / 0.00148 or 0.6757
+clam.index[, B := B * 0.6757]
+clam.index[, Units := 'mt km^-2']
+clam.index[, RPATH := 'Clams']
 
-#Station data
-station.qry <- paste("select unique cruise6, svvessel, station, stratum, 
-                      decdeg_beglat as lat, decdeg_beglon as lon,
-                      avgdepth as depth
-                      from Union_fscs_svsta
-                      where cruise6 in (", cruise6, ")
-                      and SHG <= 136
-                      order by cruise6, station", sep='')
-
-station <- as.data.table(sqlQuery(channel, station.qry))
-setkey(station, CRUISE6, SVVESSEL)
-
-#merge cruise and station
-clamdat <- merge(cruise, station, by = key(station))
-
-#remove station with bad lat/lon
-clamdat <- clamdat[!is.na(LON), ]
-
-#Catch data
-catch.qry <- paste("select cruise6, station, stratum, svspp, catchsex, 
-                    expcatchnum as abundance, expcatchwt as biomass
-                    from UNION_FSCS_SVCAT
-                    where cruise6 in (", cruise6, ")
-                    and svspp in ('403', '409')
-                    order by cruise6, station, svspp", sep='')
-
-catch <- as.data.table(sqlQuery(channel, catch.qry))
-setkey(catch, CRUISE6, STATION, STRATUM)
-
-#merge with clamdat
-clamdat <- merge(clamdat, catch, by = key(catch), all.x = T)
-
-#use poststrat to assign to EPU
-clamdat.epu <- poststrat(clamdat, epu)
-setnames(clamdat.epu, 'newstrata', 'EPU')
-
-#Subset for Georges Bank
-GB.clam <- clamdat.epu[EPU == 'GB', ]
-
-#Using a simple means within strata but can still use survdat functions
-GB.clam.prep <- stratprep(GB.clam, epu.area, strat.col = 'EPU', area.col = 'Area')
-GB.clam.mean <- stratmean(GB.clam.prep, strat.col = 'EPU', poststrat = T)
-
-#Remove NAs
-GB.clam.mean <- GB.clam.mean[!is.na(SVSPP), ]
-
-#Subset for 2013 and 2016
-GB.clam.mean <- GB.clam.mean[YEAR %in% c(2013, 2016), ]
-
-#Get mean per species and sum for "clam" group
-#Calculate total biomass/abundance estimates
-a.clam <- 0.0039624 * 0.374 
-GB.clam.mean[, prop.swept := A / a.clam]
-GB.clam.mean[, swept.bio := strat.biomass * prop.swept]
-
-#Calculate total estimate variance
-GB.clam.mean[, swept.var := prop.swept^2 * biomass.var]
-
-#Biomass needs to be in mt km^-2
-#Convert swept.bio to metric tons
-GB.clam.mean[, swept.bio.mt := swept.bio * 10^-3]
-
-GB.clam.biomass <- GB.clam.mean[, mean(swept.bio.mt) / A, by = SVSPP]
-setnames(GB.clam.biomass, 'V1', 'Biomass')
-
-#Now merge
-GB.clam.biomass[, RPATH := 'Clams']
-GB.clam.biomass[, SVSPP := NULL]
-GB.clam.biomass <- GB.clam.biomass[, sum(Biomass), by = RPATH]
-
-#Add clam biomass from bottomtrawl survey
-GB.biomass <- rbindlist(list(GB.biomass, data.table(RPATH = 'Clams', 
-                                                    Biomass = GB.clam.biomass[, V1])))
-#Current is not different
-GB.current <- rbindlist(list(GB.current, data.table(RPATH = 'Clams', 
-                                                    Biomass = GB.clam.biomass[, V1])))
+#Input biomass
+clam.input <- clam.index[YEAR %in% 1981:1985, .(B = mean(B, na.rm = T)),
+                           by = RPATH]
+#Add clam biomass 
+bio.input <- rbindlist(list(bio.input, clam.input))
 
 #Non Survey groups--------------------------------------------------------------
 #Add groups not available in database using EMAX
 #Remove macrobenthos from survey
-GB.biomass <- GB.biomass[RPATH != 'Macrobenthos', ]
 emax <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
-                             'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton', 
-                             'Mesozooplankton', 'Microzooplankton', 'Phytoplankton'),
-                   Biomass = c(0.015, NA, 0.416, 0.122, 0.035, 104, 3, 4.6, 5.24, 
-                               14.25, 3.1, 20))
+                             'Sharks', 'Macrobenthos', 'Krill', 'Micronekton', 
+                             'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 
+                             'Phytoplankton', 'Bacteria'),
+                   B = c(0.015, NA, 0.416, 0.122, 0.035, 0.024, 104, 3, 4.6, 
+                         5.24, 24.24, 3.1, 19.773, 3.456))
 
-GB.biomass <- rbindlist(list(GB.biomass, emax))
+bio.input <- rbindlist(list(bio.input[RPATH != 'Macrobenthos'], emax))
 
-#Merge raw biomass data to use for biomass accumulation
-GB.raw <- rbindlist(list(GB.mean, GB.scall.mean), fill = T)
+#No other cephalopods in 81 - 85
+bio.input <- rbindlist(list(bio.input, data.table(RPATH = 'OtherCephalopods',
+                                                  B = 0.001)))
 
-save(GB.biomass, file = file.path(data.dir, 'GB_biomass.RData'))
-save(GB.raw,     file = file.path(data.dir, 'GB_Biomass_raw.RData'))
-save(GB.current, file = file.path(data.dir, 'GB_biomass_current.RData'))
+#Fix species that didn't make the cut for GB model
+bio.index[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+bio.index[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
+bio.index[RPATH == 'AmShad',      RPATH := 'RiverHerring']
+bio.index[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
+bio.index[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
+bio.index[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
+bio.index[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
+bio.input[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+bio.input[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
+bio.input[RPATH == 'AmShad',      RPATH := 'RiverHerring']
+bio.input[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
+bio.input[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
+bio.input[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
+bio.input[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
+
+bio.index <- bio.index[, .(B = sum(B)), by = c('RPATH', 'YEAR', 'Units')]
+setcolorder(bio.index, c('RPATH', 'YEAR', 'B', 'Units'))
+bio.input <- bio.input[, .(B = sum(B)), by = 'RPATH']
+
+#Move to data-raw folder
+usethis::use_data(bio.input, overwrite = T)
+usethis::use_data(bio.index, overwrite = T)
+
