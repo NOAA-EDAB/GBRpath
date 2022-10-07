@@ -79,7 +79,7 @@ NWACS <- data.table(Group = c('Phytoplankton', 'Other primary producers', 'Bacte
                               'Microzooplankton', 'Mesozooplankton', 'Mesozooplankton',
                               'GelZooplankton', 'Micronekton', 
                               rep('Macrobenthos', 4), 'AtlScallop', 'AmLobster',
-                              'OtherShrimps', 'Mesopelagics', 'AtlHerring', 'SmPelagics',
+                              'OtherShrimps', 'Mesopelagics', 'AtlHerring', 'RiverHerring',
                               rep('OtherPelagics', 3), 'SmPelagics', 'AtlMackerel',
                               'Illex', 'Butterfish', 'SmPelagics', rep('Bluefish', 3),
                               rep('OtherPelagics', 3), rep('SouthernDemersals', 3),
