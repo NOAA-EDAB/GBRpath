@@ -702,6 +702,9 @@ bact <- data.table(Rpred = 'Bacteria', Rprey = 'Detritus', preyper = 1.000)
 
 GB.diet <- rbindlist(list(GB.diet, bact))
 
+#Remove predators not used for Georges Bank (not enough stomachs)
+GB.diet <- GB.diet[!Rpred %in% c('Freshwater', 'LargePelagics'), ]
+
 #Fix decimal error from external inputs
 diet.input <- copy(GB.diet)
 diet.sum <- GB.diet[, .(DC = sum(preyper)), by = Rpred]
