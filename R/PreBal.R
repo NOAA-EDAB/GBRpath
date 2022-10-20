@@ -3,8 +3,30 @@
 
 library(data.table); library(ggplot2)
 
-load(here('data', 'GB.params.rda'))
-load(here('data', 'GB.init.rda'))
+check.ee <- function(rpath.obj){
+  model.out <- data.table::as.data.table(Rpath::write.Rpath(rpath.obj))
+  setorder(model.out, -EE)
+  output <- model.out[, .(Group, EE)]
+  return(output)
+}
+
+check.mort <- function(rpath.obj, group){
+  model.out <- data.table::as.data.table(Rpath::write.Rpath(rpath.obj, morts = T))
+  group.mort <- model.out[Group == group]
+  out <- data.table::melt(group.mort, id.vars = 'Group')
+  out <- setorder(out[value != 0 & !variable %in% c('PB', 'M0'), ], -value)
+  return(out)
+}
+
+pbcalc <- function(lifespan){
+  pb <- 1/lifespan * 2.5
+  return(pb)
+}
+
+lscalc <- function(pb){
+  life <- 1 / (pb / 2.5)
+  return(life)
+}
 
 prebal <- function(rpath.obj, spClasses){
   model <- data.table::as.data.table(Rpath::write.Rpath(rpath.obj))
@@ -123,6 +145,10 @@ prebal <- function(rpath.obj, spClasses){
   prod.mod <- lm(log(living[, PB], base = 10) ~ living[, TL])
   prod.slope <- prod.mod$coef[2]
   
+  #Check PQ in range of .1 - .3
+  Bad.PQ <- living[GE > 0.3 | GE < 0.1, .(Group, PB, QB, GE)]
+  
+  
   return(list('Biomass Span' = bio.mag,
               'Biomass Slope' = as.numeric(bio.mod$coef[2]),
               'Trophic Level Slope' = as.numeric(TL.mod$coef[2]),
@@ -131,11 +157,12 @@ prebal <- function(rpath.obj, spClasses){
               'Energy Flows - Fish' = Fish,
               'Energy Flows - Invert' = Invert,
               'Energy Flows - Diet' = Diet,
-              'Vital Rates - QB' = cons.slope,
-              'Vital Rates - PB' = prod.slope))
+              'Vital Rates - QB' = as.numeric(cons.slope),
+              'Vital Rates - PB' = as.numeric(prod.slope),
+              'Outside PQ range' = Bad.PQ))
 }
 
-slopePlot <- function(rpath.obj, type = 'Biomass', ref = T){
+slopePlot <- function(rpath.obj, type = 'Biomass', group = NA, ref = F){
   model <- data.table::as.data.table(Rpath::write.Rpath(rpath.obj))
   living <- model[type < 2, ]
   
@@ -200,6 +227,44 @@ slopePlot <- function(rpath.obj, type = 'Biomass', ref = T){
     print(lm.mod$coef[2])
   }
   
+  if(type == 'PB'){
+    #Slope of PB
+    lm.mod <- lm(log(living[, PB], base = 10) ~ living[, TL])
+    #+- 1 Standard Error
+    std <- coef(summary(lm.mod))[, 2]
+    
+    #Plot basics
+    slope <- ggplot(data = living,
+                    aes(x = TL, y = PB)) +
+      geom_label(aes(label = Group))
+  }
+  
+  if(type == 'QB'){
+    #Slope of QB
+    lm.mod <- lm(log(living[Group != 'Phytoplankton', QB], base = 10) ~ 
+                     living[Group != 'Phytoplankton', TL])
+    #+- 1 Standard Error
+    std <- coef(summary(lm.mod))[, 2]
+    
+    #Plot basics
+    slope <- ggplot(data = living[Group != 'Phytoplankton', ],
+                    aes(x = TL, y = QB)) +
+      geom_label(aes(label = Group))
+  }
+ 
+  if(type == 'Lifespan'){
+    living[, Lifespan := lscalc(PB)]
+    #Slope of Biomass
+    lm.mod <- lm(log(living[, Lifespan], base = 10) ~ living[, TL])
+    #+- 1 Standard Error
+    std <- coef(summary(lm.mod))[, 2]
+    
+    #Plot basics
+    slope <- ggplot(data = living,
+                    aes(x = TL, y = Lifespan)) +
+      geom_label(aes(label = Group))
+  }
+  
   #Add slope line with standard deviations
   slope <- slope +
     scale_y_log10() +
@@ -220,42 +285,48 @@ slopePlot <- function(rpath.obj, type = 'Biomass', ref = T){
                   slope = -0.05, col = 'red')
   }
   
-
+  #Highlight a group
+  if(!is.na(group)){
+    slope <- slope +
+      geom_label(data = living[Group == group, ], aes(label = Group),
+                 fontface = 'bold')
+  }
+  
   plot(slope)
 }
 
 
-taxaplots <- function()
-opar <- par(mfrow = c(2, 2), mar = c(5, 0, 0, 2), oma = c(2, 4, 2, 0))
-barplot(PredPrey[, Value], names.arg = PredPrey[, Ratio], las = 2)
-legend('topright', legend = 'A', bty = 'n', cex = 2)
-barplot(Fish[, Value], names.arg = Fish[, Ratio], las = 2)
-legend('topright', legend = 'B', bty = 'n', cex = 2)
-barplot(Invert[, Value], names.arg = Invert[, Ratio], las = 2)
-legend('topright', legend = 'C', bty = 'n', cex = 2)
-barplot(Diet[, Value], names.arg = Diet[, Ratio], las = 2)
-legend('topright', legend = 'D', bty = 'n', cex = 2)
-mtext(2, outer = T, text = 'Ratio', line = 2.5)
-
-
-#QB slope
-plot(living.GB[Group != 'Phytoplankton', list(TL, QB)], log = "y", typ = 'n')
-text(living.GB[Group != 'Phytoplankton', TL], living.GB[Group != 'Phytoplankton', QB], 
-     living.GB[, Group], cex = .5)
-abline(cons.mod)
-#+- 1 Standard Error
-std <- coef(summary(cons.mod))[, 2]
-abline(a = coef(cons.mod)[1] + std[1], b = coef(cons.mod)[2] + std[2], lty = 2)
-abline(a = coef(cons.mod)[1] - std[1], b = coef(cons.mod)[2] - std[2], lty = 2)
-
-#PB
-plot(living.GB[, list(TL, PB)], log = "y", typ = 'n')
-text(living.GB[, TL], living.GB[, PB], living.GB[, Group], cex = .5)
-abline(prod.mod)
-#+- 1 Standard Error
-std <- coef(summary(prod.mod))[, 2]
-abline(a = coef(prod.mod)[1] + std[1], b = coef(prod.mod)[2] + std[2], lty = 2)
-abline(a = coef(prod.mod)[1] - std[1], b = coef(prod.mod)[2] - std[2], lty = 2)
+# taxaplots <- function()
+# opar <- par(mfrow = c(2, 2), mar = c(5, 0, 0, 2), oma = c(2, 4, 2, 0))
+# barplot(PredPrey[, Value], names.arg = PredPrey[, Ratio], las = 2)
+# legend('topright', legend = 'A', bty = 'n', cex = 2)
+# barplot(Fish[, Value], names.arg = Fish[, Ratio], las = 2)
+# legend('topright', legend = 'B', bty = 'n', cex = 2)
+# barplot(Invert[, Value], names.arg = Invert[, Ratio], las = 2)
+# legend('topright', legend = 'C', bty = 'n', cex = 2)
+# barplot(Diet[, Value], names.arg = Diet[, Ratio], las = 2)
+# legend('topright', legend = 'D', bty = 'n', cex = 2)
+# mtext(2, outer = T, text = 'Ratio', line = 2.5)
+# 
+# 
+# #QB slope
+# plot(living.GB[Group != 'Phytoplankton', list(TL, QB)], log = "y", typ = 'n')
+# text(living.GB[Group != 'Phytoplankton', TL], living.GB[Group != 'Phytoplankton', QB], 
+#      living.GB[, Group], cex = .5)
+# abline(cons.mod)
+# #+- 1 Standard Error
+# std <- coef(summary(cons.mod))[, 2]
+# abline(a = coef(cons.mod)[1] + std[1], b = coef(cons.mod)[2] + std[2], lty = 2)
+# abline(a = coef(cons.mod)[1] - std[1], b = coef(cons.mod)[2] - std[2], lty = 2)
+# 
+# #PB
+# plot(living.GB[, list(TL, PB)], log = "y", typ = 'n')
+# text(living.GB[, TL], living.GB[, PB], living.GB[, Group], cex = .5)
+# abline(prod.mod)
+# #+- 1 Standard Error
+# std <- coef(summary(prod.mod))[, 2]
+# abline(a = coef(prod.mod)[1] + std[1], b = coef(prod.mod)[2] + std[2], lty = 2)
+# abline(a = coef(prod.mod)[1] - std[1], b = coef(prod.mod)[2] - std[2], lty = 2)
 
 
 
