@@ -166,7 +166,7 @@ stations <- survdat::post_strat(stations, GB, 'EPU')
 allfh <- merge(allfh, stations, by = c('CRUISE6', 'STRATUM', 'STATION', 'TOW'),
                all.x = T)
 
-GB.fh <- allfh[EPU == 'GB' & !PYNAM %in% c('EMPTY', 'BLOWN'), ]
+GB.fh <- allfh[EPU == 'GB' & !PYNAM %in% c('EMPTY', 'BLOWN') & SEASON == 'FALL', ]
 
 #Assign Rpath codes to pred
 rpath.code <- unique(spp[, list(SVSPP, RPATH)])
@@ -231,6 +231,7 @@ GB.diet[, tot.preyw := sum(sum.rhat), by = Rpred]
 GB.diet[, preyper := sum.rhat / tot.preyw]
 GB.diet[, c('sum.rhat', 'tot.preyw') := NULL]
 setkey(GB.diet, Rpred, preyper)
+
 
 #Add diet for groups not surveyed
 Rpred.missing <- c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 'Sharks',
@@ -716,6 +717,14 @@ for(ipred in 1:length(DC.fix)){
              preyper := pred.diet[, preyper] + DC.diff]
 }
 
+#Precision is a bit overkill - rounding to 4 decimal places
+diet.input[, preyper := round(preyper, digits = 4)]
+diet.input <- diet.input[preyper != 0,]
+
+#Decided to switch OtherDemersals to diet like southern demersals
+demersal <- diet.input[Rpred == 'SouthernDemersals', ]
+demersal[, Rpred := 'OtherDemersals']
+diet.input <- rbindlist(list(diet.input[Rpred != 'OtherDemersals', ], demersal))
 
 usethis::use_data(diet.input, overwrite = T)
 
