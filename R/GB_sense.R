@@ -4,24 +4,55 @@
 #Required packages--------------------------------------------------------------
 library(here); library(data.table); library(Rpath)
 
-#Load and balance model
-load(here('data', 'GB_balanced_params.RData'))
-
-#load current biomass/landings
-load(here('data', 'GB_biomass_current.RData'))
-load(here('data', 'GB_landings_current.RData'))
-
-#Run Rpath
-GB <- rpath(GB.params, 'Georges Bank')
+#Load balanced parameters and model
+load(here('data', 'GB.params.bal.rda'))
+load(here('data', 'GB.bal.rda'))
 
 #Need to fix GB pedigree file - bigger issue to fix eventually!
-GB.params$pedigree <- GB.params$pedigree[!Group %in% c('DredgeScallop', 'DredgeClam',
-                                                       'Gillnet', 'Longline', 
-                                                       'PotTrap', 'OtterTrawlSm',
-                                                       'OtterTrawlLg', 'Midwater',
-                                                       'OtherFisheries'), ]
+GB.params.bal$pedigree <- GB.params.bal$pedigree[!Group %in% c('ScallopDredge',
+                                                               'ClamDredge',
+                                                               'OtherDredge',
+                                                               'FixedGear',
+                                                               'Pelagic',
+                                                               'Trap',
+                                                               'SmallMesh',
+                                                               'LargeMesh',
+                                                               'HMSFleet',
+                                                               'OtherFisheries'), ]
 
 
+#Assign pedigrees - currently based off Lucey 2019 values - need to  revisit
+GB.params.bal$pedigree$Biomass <- c(0.5, 0.8, 0.5, 0.5, 0.5, 0.4, 0.2, 0.2, 0.5,
+                                    0.2, 0.5, 0.4, 0.5, 0.2, 0.2, 0.4, 0.4, 0.2,
+                                    0.2, 0.2, 0.4, 0.4, 0.4, 0.4, 0.2, 0.2, 0.2,
+                                    0.4, 0.2, 0.2, 0.4, 0.2, 0.2, 0.4, 0.2, 0.5,
+                                    0.5, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2,
+                                    0.5, 0.2, 0.5, 0.2, 0.2, 0.2, 0.2, 0.5, 0.5,
+                                    0.5, 0.5, 0.5, 0.8, 0.5, 0.8, 0.8)
+
+GB.params.bal$pedigree$PB <- c(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.2, 0.2, 0.2, 0.2,
+                               0.5, 0.5, 0.5, 0.2, 0.2, 0.7, 0.6, 0.7, 0.6, 0.7,
+                               0.6, 0.7, 0.7, 0.7, 0.2, 0.6, 0.5, 0.5, 0.6, 0.2,
+                               0.7, 0.7, 0.7, 0.7, 0.2, 0.8, 0.8, 0.2, 0.6, 0.6,
+                               0.7, 0.7, 0.2, 0.6, 0.6, 0.6, 0.6, 0.5, 0.6, 0.6,
+                               0.6, 0.5, 0.6, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0,
+                               0.0)
+
+GB.params.bal$pedigree$QB <- c(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.2, 0.2, 0.2, 0.2,
+                               0.5, 0.5, 0.5, 0.2, 0.2, 0.6, 0.6, 0.7, 0.6, 0.7,
+                               0.6, 0.7, 0.6, 0.6, 0.2, 0.6, 0.5, 0.5, 0.6, 0.2,
+                               0.6, 0.6, 0.6, 0.6, 0.2, 0.8, 0.8, 0.2, 0.6, 0.6,
+                               0.6, 0.6, 0.2, 0.6, 0.6, 0.6, 0.6, 0.5, 0.6, 0.6,
+                               0.6, 0.5, 0.6, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0,
+                               0.0)
+
+GB.params.bal$pedigree$Diet <- c(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.2, 0.2, 0.2, 
+                                 0.2, 0.5, 0.5, 0.5, 0.2, 0.2, 0.2, 0.2, 0.2,
+                                 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5,
+                                 0.5, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.8,
+                                 0.8, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.6, 0.6,
+                                 0.6, 0.6, 0.5, 0.6, 0.6, 0.6, 0.5, 0.6, 0.5,
+                                 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.0)
 #Test dynamic run
 # GB.scene <- rsim.scenario(GB, GB.params, years = 2014:2113)
 # GB.scene$params$NoIntegrate[2:6] <- 0
@@ -29,12 +60,12 @@ GB.params$pedigree <- GB.params$pedigree[!Group %in% c('DredgeScallop', 'DredgeC
 # rsim.plot(GB.testrun, GB.params$model[Type < 3, Group])
 
 #Set up sense runs
-all_years <- 2014:2063
-scene <- rsim.scenario(GB, GB.params, years = all_years)
+all_years <- 1981:2031
+scene <- rsim.scenario(GB.bal, GB.params.bal, years = all_years)
 
 # ----- Set up ecosense generator ----- #######################################
 scene$params$BURN_YEARS <- 50
-NUM_RUNS <- 1000
+NUM_RUNS <- 300
 parlist <- as.list(rep(NA, NUM_RUNS))
 kept <- rep(NA, NUM_RUNS)
 
@@ -43,7 +74,7 @@ for (irun in 1:NUM_RUNS){
   GBsense <- copy(scene) 
   # INSERT SENSE ROUTINE BELOW
   parlist[[irun]] <- GBsense$params 		# Base ecosim params
-  parlist[[irun]] <- rsim.sense(GBsense, GB.params)	# Replace the base params with Ecosense params  
+  parlist[[irun]] <- rsim.sense(GBsense, GB.params.bal)	# Replace the base params with Ecosense params  
   GBsense$start_state$Biomass <- parlist[[irun]]$B_BaseRef
   parlist[[irun]]$BURN_YEARS <- 50			# Set Burn Years to 50
   GBsense$params <- parlist[[irun]]
@@ -60,9 +91,13 @@ for (irun in 1:NUM_RUNS){
 KEPT <- which(kept==T)
 nkept <- length(KEPT)
 nkept
-# 1104 / 30000 = 3.6%
+# 34 / 300 = 11.3%
 GB.sense <- parlist[KEPT]
 save(GB.sense, file = file.path(data.dir, 'GB_ecosense_valid.RData'))
+
+
+#This is still old code below here
+
 
 #Run scenario-----
 #Set 1----
