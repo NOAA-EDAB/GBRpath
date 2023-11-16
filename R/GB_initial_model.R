@@ -16,14 +16,14 @@ groups <- c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 'Sharks',
             'YTFlounder', 'OtherFlatfish', 'SmFlatfishes', 'SpinyDogfish', 
             'SmoothDogfish', 'Barndoor', 'WinterSkate', 'LittleSkate', 
             'OtherSkates', 'Illex', 'Loligo', 'OtherCephalopods', 'AmLobster',
-            'Macrobenthos', 'Megabenthos', 'AtlScallop', 'Clams', 'OtherShrimps',
-            'Krill', 'Micronekton', 'GelZooplankton', 'Mesozooplankton', 
-            'Microzooplankton', 'Bacteria', 'Phytoplankton',
+            'Macrobenthos', 'Megabenthos', 'AtlScallop', 'OceanQuahog', 'SurfClam',
+            'OtherShrimps', 'Krill', 'Micronekton', 'GelZooplankton', 
+            'Mesozooplankton', 'Microzooplankton', 'Bacteria', 'Phytoplankton',
             'Detritus', 'Discards', 
             'ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
             'Trap', 'SmallMesh', 'LargeMesh', 'HMSFleet', 'OtherFisheries')
 
-types <- c(rep(0, 58), 1, 2, 2, rep(3, 10))
+types <- c(rep(0, 59), 1, 2, 2, rep(3, 10))
 
 GB.params <- create.rpath.params(groups, types)
 
