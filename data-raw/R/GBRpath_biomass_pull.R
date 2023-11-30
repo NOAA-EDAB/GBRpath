@@ -41,11 +41,12 @@ library(dbutils); library(DBI); library(sf); library(survdat)
 #Connect to the database
 channel <- dbutils::connect_to_database('sole', 'slucey')
 
-scall <- survdat::get_survdat_scallop_data(channel, getWeightLength = T)
+#scall <- survdat::get_survdat_scallop_data(channel, getWeightLength = T)
+load(here::here('data', 'survdatScallops.RData'))
 
 #Scallop survey did not record weight prior to 2001 (FSCS) so need to manually
 #calculate catch weights
-scalldat <- scall$survdat[, BIOMASS := sum(WGTLEN), by = c('YEAR', 'STATION')]
+scalldat <- scallops$survdat[, BIOMASS := sum(WGTLEN), by = c('YEAR', 'STATION')]
 
 #Calculate scallop index
 #use poststrat to assign to EPU
@@ -78,12 +79,12 @@ bio.input[RPATH == 'AtlScallop', B := scall.input[, B]]
 
 
 #Clam survey--------------------------------------------------------------------
-clam <- survdat::get_survdat_clam_data(channel)
+#clam <- survdat::get_survdat_clam_data(channel)
+load(here::here('data', 'survdatClams.RData'))
 
 #Use GB clam region to calculate biomass
-clam.mean <- clam$data[!is.na(SVSPP) & clam.region == 'GB', 
+clam.index <- clams$data[!is.na(SVSPP) & clam.region == 'GB', 
                        .(B = mean(BIOMASS.MW, na.rm = T)), by = c('YEAR', 'SVSPP')]
-clam.index <- clam.mean[, .(B = sum(B)), by = YEAR]
 
 #Need to expand from kg/tow to mt/km^2
 # Clam tows can vary greatly by I'll use an example tow as the expansion
