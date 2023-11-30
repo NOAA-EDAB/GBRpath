@@ -551,7 +551,7 @@ setnames(mega, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 GB.diet.plus <- rbindlist(list(GB.diet.plus, lob))
 GB.diet.plus <- rbindlist(list(GB.diet.plus, mega))
 
-#AtlScallops and Clams will use Megabenthos- filters
+#AtlScallops, OceanQuahog and SurfClam will use Megabenthos- filters
 filter <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Bacteria',
                               'Detritus-POC'),
                      DC = c(0.69, 0.08, 0.23))
