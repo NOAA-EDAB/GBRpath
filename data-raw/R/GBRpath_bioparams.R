@@ -107,12 +107,14 @@ GB.params <- GB.params[!RPATH %in% c('RedHake', 'WinterSkate'), ]
 GB.double <- GB.params[RPATH %in% c('AtlScallop', 'AmLobster', 'Illex', 'Micronekton'), ]
 GB.double[RPATH == 'Micronekton', RPATH := 'Krill']
 GB.double[RPATH == 'AtlScallop',  RPATH := 'OceanQuahog']
-GB.double[RPATH == 'AtlScallop',  RPATH := 'SurfClam']
 GB.double[RPATH == 'AmLobster',   RPATH := 'Megabenthos']
 GB.double[RPATH == 'Illex', RPATH := 'Loligo']
 ceph <- copy(GB.double[RPATH == 'Loligo', ])
 ceph[, RPATH := 'OtherCephalopods']
 GB.double <- rbindlist(list(GB.double, ceph))
+surf <- copy(GB.double[RPATH == 'OceanQuahog', ])
+surf[, RPATH := 'SurfClam']
+GB.double <- rbindlist(list(GB.double, surf))
 
 GB.params <- rbindlist(list(GB.params, GB.double))
 
