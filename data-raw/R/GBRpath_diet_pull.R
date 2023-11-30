@@ -49,8 +49,9 @@ prey[PYCOMNAM == 'NORTHERN SHRIMP',         RPATH := 'OtherShrimps'] #Change to 
 prey[PYCOMNAM == 'HORSESHOE CRAB',          RPATH := 'Megabenthos']
 #Easy many to ones
 prey[PYCOMNAM %in% c('SEA SCALLOP', 'SEA SCALLOP VISCERA'), RPATH := 'AtlScallop']
-prey[PYCOMNAM %in% c('ATLANTIC SURFCLAM', 'SURFCLAM VISCERA', 'OCEAN QUAHOG', 
-                     'OCEAN QUAHOG VISCERA', 'OCEAN QUAHOG SHELL'), RPATH := 'Clams']
+prey[PYCOMNAM %in% c('ATLANTIC SURFCLAM', 'SURFCLAM VISCERA'), RPATH := 'SurfClam']
+prey[PYCOMNAM %in% c('OCEAN QUAHOG', 'OCEAN QUAHOG VISCERA', 'OCEAN QUAHOG SHELL'), 
+                    RPATH := 'OceanQuahog']
 prey[PYCOMNAM %in% c('LONGFIN SQUID', 'LOLIGO SP PEN'), RPATH := 'Loligo']
 prey[PYNAM    %in% c('LOLIGO SP', 'LOLIGO SP BEAKS'),   RPATH := 'Loligo']
 
