@@ -238,7 +238,7 @@ setkey(GB.diet, Rpred, preyper)
 Rpred.missing <- c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 'Sharks',
                    'SmPelagics', 'SouthernDemersals', 'OtherFlatfish', 'OtherCephalopods',
                    'AmLobster', 'Macrobenthos', 'Megabenthos', 'AtlScallops', 
-                   'Clams', 'OtherShrimps', 'Krill', 'Micronekton', 'GelZooplankton',
+                   'OceanQuahog','SurfClam', 'OtherShrimps', 'Krill', 'Micronekton', 'GelZooplankton',
                    'Mesozooplankton', 'Microzooplankton')
 
 #Use biomass to disaggregate EMAX prey groups where necessary
@@ -258,7 +258,7 @@ convert.table <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWha
                                       'OtherSkates', 'Illex', 'Loligo', 'OtherCephalopods', 
                                       'AmLobster', 'Macrobenthos', 'Macrobenthos',
                                       'Macrobenthos', 'Macrobenthos', 'Megabenthos', 
-                                      'AtlScallop', 'Clams', 'OtherShrimps', 'Krill', 
+                                      'AtlScallop', 'OceanQuahog','SurfClam', 'OtherShrimps', 'Krill', 
                                       'Micronekton', 'Micronekton', 'GelZooplankton', 
                                       'Mesozooplankton', 'Mesozooplankton', 'Microzooplankton', 
                                       'Phytoplankton', 'Bacteria', 'Discards', 'Detritus'),
@@ -561,12 +561,15 @@ filter[, preyper := DC * Rpath.prop]
 filter <- filter[, sum(preyper), by = RPATH]
 #Two Rpred
 scal <- copy(filter[, Rpred := 'AtlScallop'][])
-clam <- copy(filter[, Rpred := 'Clams'][])
+quahog <- copy(filter[, Rpred := 'OceanQuahog'][])
+surfclam <- copy(filter[, Rpred := 'SurfClam'][])
 setnames(scal, c('RPATH', 'V1'), c('Rprey', 'preyper'))
-setnames(clam, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+setnames(quahog, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+setnames(surfclam, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, scal))
-GB.diet.plus <- rbindlist(list(GB.diet.plus, clam))
+GB.diet.plus <- rbindlist(list(GB.diet.plus, quahog))
+GB.diet.plus <- rbindlist(list(GB.diet.plus, surfclam))
 
 #Krill and Micronekton will use Micronekton
 micro <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Small copepods',
