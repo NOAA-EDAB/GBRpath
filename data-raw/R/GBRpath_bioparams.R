@@ -106,7 +106,8 @@ GB.params <- GB.params[!RPATH %in% c('RedHake', 'WinterSkate'), ]
 #Several parameters need to be duplicated as their parameters will be similar to others
 GB.double <- GB.params[RPATH %in% c('AtlScallop', 'AmLobster', 'Illex', 'Micronekton'), ]
 GB.double[RPATH == 'Micronekton', RPATH := 'Krill']
-GB.double[RPATH == 'AtlScallop',  RPATH := 'Clams']
+GB.double[RPATH == 'AtlScallop',  RPATH := 'OceanQuahog']
+GB.double[RPATH == 'AtlScallop',  RPATH := 'SurfClam']
 GB.double[RPATH == 'AmLobster',   RPATH := 'Megabenthos']
 GB.double[RPATH == 'Illex', RPATH := 'Loligo']
 ceph <- copy(GB.double[RPATH == 'Loligo', ])
