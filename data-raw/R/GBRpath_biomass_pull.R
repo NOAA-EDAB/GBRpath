@@ -36,10 +36,10 @@ bio.input <- bio.index[YEAR %in% 1981:1985, .(B = mean(B, na.rm = T)), by = RPAT
 #Shellfish surveys--------------------------------------------------------------
 #Scallops and clam survey not included in ms-keyrun data set as they are not 
 #used in the other models
-library(dbutils); library(DBI); library(sf); library(survdat)
+library(DBI); library(sf); library(survdat)
 
 #Connect to the database
-channel <- dbutils::connect_to_database('sole', 'slucey')
+# channel <- dbutils::connect_to_database('sole', 'slucey')
 
 #scall <- survdat::get_survdat_scallop_data(channel, getWeightLength = T)
 load(here::here('data', 'survdatScallops.RData'))
@@ -50,7 +50,7 @@ scalldat <- scallops$survdat[, BIOMASS := sum(WGTLEN), by = c('YEAR', 'STATION')
 
 #Calculate scallop index
 #use poststrat to assign to EPU
-epu <- sf::st_read(dsn = here::here('gis', 'EPU_extended.shp'))
+epu <- sf::st_read(dsn = here::here('data-raw','gis', 'EPU_extended.shp'))
 
 scall.mean <- survdat::calc_stratified_mean(scalldat, areaPolygon = epu,
                                             areaDescription = 'EPU',
@@ -93,7 +93,8 @@ clam.index <- clams$data[!is.na(SVSPP) & clam.region == 'GB',
 # so conversion is 0.001 / 0.00148 or 0.6757
 clam.index[, B := B * 0.6757]
 clam.index[, Units := 'mt km^-2']
-clam.index[, RPATH := 'Clams']
+clam.index$RPATH <- ifelse(clam.index$SVSPP == 409, 'OceanQuahog','SurfClam')
+#clam.index[, RPATH := 'Clams']
 
 #Input biomass
 clam.input <- clam.index[YEAR %in% 1981:1985, .(B = mean(B, na.rm = T)),
