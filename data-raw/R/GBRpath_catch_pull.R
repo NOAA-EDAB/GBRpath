@@ -120,9 +120,13 @@ disc.input <- disc.input[, .(Discards = sum(Discards)),
 setcolorder(disc.input, c('RPATH', 'Fleet', 'Discards', 'Units'))
 
 #Need to add a row for clam discards (set to zero)
-clam.disc <- data.table(RPATH = 'Clams', Fleet = 'Clam Dredge', Discards = 0,
+quahog.disc <- data.table(RPATH = 'OceanQuahog', Fleet = 'Clam Dredge', Discards = 0,
                         Units = 'mt km^-2')
-disc.input <- rbindlist(list(disc.input, clam.disc))
+disc.input <- rbindlist(list(disc.input, quahog.disc))
+
+surfclam.disc <- data.table(RPATH = 'SurfClam', Fleet = 'Clam Dredge', Discards = 0,
+                          Units = 'mt km^-2')
+disc.input <- rbindlist(list(disc.input, surfclam.disc))
 
 #Move to data-raw folder
 usethis::use_data(disc.input, overwrite = T)
