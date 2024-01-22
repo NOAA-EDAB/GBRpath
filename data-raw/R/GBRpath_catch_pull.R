@@ -5,12 +5,17 @@ library(comlandr)
 #Connect to database
 channel <- dbutils::connect_to_database('sole', 'slucey')
 
+## need to figure out unkVar and knStrata fields
 GB.stat.areas <- c(521, 522, 525:526, 537, 551, 552, 561, 562)
-landings <- comlandr::get_comland_data(channel, filterByArea = GB.stat.areas,
-                                       aggGear = T, aggArea = T, unkVar = 'EPU',
-                                       knStrata = c('NESPP3', 'YEAR', 'HY', 'QY',
-                                                    'MONTH', 'Fleet', 'TONCL1',
+landings <- comlandr::get_comland_data(channel, filterByYear = 2000:2022 ,filterByArea = GB.stat.areas,
+                                       aggGear = T, aggArea = T, 
+                                       unkVar = c('MONTH', 'Fleet', 'EPU'),
+                                       knStrata = c('HY', 'QY', 'MONTH', 'Fleet', 'TONCL2',
                                                     'EPU'))
+
+
+
+saveRDS(landings,here::here("data-raw/landings.rds"))
 #Merge Rpath groups
 load(here('data-raw', 'Species_codes.RData'))
 #Fix a couple of duplicate codes
@@ -26,7 +31,7 @@ land <- merge(landings$comland[EPU == 'GB', ], unique(spp[!is.na(NESPP3),
 land.index <- land[, .(Landings = sum(SPPLIVMT)), by = c('RPATH', 'Fleet', 'YEAR')]
 
 #Divide by the area of Georges Bank
-epu <- sf::st_read(dsn = here::here('gis', 'EPU_extended.shp'))
+epu <- sf::st_read(dsn = here::here('data-raw/gis', 'EPU_extended.shp'))
 epu.area <- survdat::get_area(epu, 'EPU')
 land.index[, Landings := Landings / as.numeric(epu.area[STRATUM == 'GB', Area])]
 
