@@ -155,6 +155,7 @@ fish.params <- merge(fish.params, unique(spp[, list(RPATH, SCINAME)]), by = 'SCI
 #There are a couple species with extra spaces at the end...need to fix this
 fish.params[SCINAME %like% 'PSEUDOPLEURO',  RPATH := 'WinterFlounder']
 fish.params[SCINAME %like% 'HIPPOGLOSSINA', RPATH := 'Fourspot']
+fish.params[SCINAME %like% 'LEUCORAJA ERINACEUS', RPATH := 'LittleSkate']
 fish.params[, c('SCINAME', 'Species') := NULL]
 
 #Use EMAX values for aggregate group if still missing
