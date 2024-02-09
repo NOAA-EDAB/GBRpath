@@ -7,7 +7,7 @@ channel <- dbutils::connect_to_database('sole', 'slucey')
 
 ## need to figure out unkVar and knStrata fields
 GB.stat.areas <- c(521, 522, 525:526, 537, 551, 552, 561, 562)
-landings <- comlandr::get_comland_data(channel, filterByYear = 2000:2022 ,filterByArea = GB.stat.areas,
+landings <- comlandr::get_comland_data(channel, filterByYear = 1981:2022 ,filterByArea = GB.stat.areas,
                                        aggGear = T, aggArea = T, 
                                        unkVar = c('MONTH', 'Fleet', 'EPU'),
                                        knStrata = c('HY', 'QY', 'MONTH', 'Fleet', 'TONCL2',
