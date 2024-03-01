@@ -112,6 +112,22 @@ emax <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS
                    B = c(0.015, NA, 0.416, 0.122, 0.035, 0.024, 104, 3, 4.6, 
                          5.24, 24.24, 3.1, 19.773, 3.456))
 
+
+# partition Mesozooplankton in LgCopepods and SmCopepods
+
+# ratio of CALANUS_FINMARCHICUS biomass to all copepod biomass
+copes_ratio <- 0.8371757
+# see copepod_reorganization.R for calculation of ratio
+
+# Divide Mesozooplankton biomass into large and small copepod groups
+emax <- rbindlist(list(emax, data.table(RPATH = 'LgCopepods', B = 24.24 * copes_ratio)))
+emax <- rbindlist(list(emax, data.table(RPATH = 'SmCopepods', B = 24.24 * (1 - copes_ratio))))
+
+# remove mesozooplankton
+emax <- emax[RPATH != 'Mesozooplankton']
+
+
+# bind to bio.input
 bio.input <- rbindlist(list(bio.input[RPATH != 'Macrobenthos'], emax))
 
 #No other cephalopods in 81 - 85
