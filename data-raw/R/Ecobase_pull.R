@@ -80,6 +80,8 @@ input2 <- row_to_names(input2, 1)
 
 # select only group_name Large Copepods and Small copepods
 EMAX_copepod_params <- input2[group_name %in% c('Large Copepods', 'Small copepods'),]
+# add column for RPATH values 'LgCopepods' and 'SmCopepods'
+EMAX_copepod_params[, RPATH := c('LgCopepods', 'SmCopepods')]
 
 # save to data folder
 usethis::use_data(EMAX_copepod_params, overwrite = T)
