@@ -76,7 +76,7 @@ NWACS <- data.table(Group = c('Phytoplankton', 'Other primary producers', 'Bacte
                            10.283, 2.900, 0.900, 1.833, 1.500, 1.833, 1.838, 1.247,
                            0.690, 6.794, 5.581, 3.217, 14.301, 80.000, 80.000, NA),
                     RPATH = c('Phytoplankton', 'Phytoplankton', 'Bacteria', 
-                              'Microzooplankton', 'Mesozooplankton', 'Mesozooplankton',
+                              'Microzooplankton', 'SmCopepods', 'LgCopepods',
                               'GelZooplankton', 'Micronekton', 
                               rep('Macrobenthos', 4), 'AtlScallop', 'AmLobster',
                               'OtherShrimps', 'Mesopelagics', 'AtlHerring', 'RiverHerring',
