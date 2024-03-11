@@ -105,21 +105,24 @@ copes_avg$biomass<-copes_avg$abd*copes_avg$weight
 calfin<-copes_avg %>% filter(spp_long=="CALANUS_FINMARCHICUS")
 copes_ratio<- calfin$biomass/sum(copes_avg$biomass)
 
+#load GB params
+load(here("data/GB.params.rda"))
+
 #adjust starting biomasses
 #SmCopepods
-sm_new<-GB.rpath.params$model$Biomass[which(GB.rpath.params[["model"]][["Group"]] == "SmCopepods")] + GB.rpath.params$model$Biomass[which(GB.rpath.params[["model"]][["Group"]] == "LgCopepods")] * (1-copes_ratio)
-GB.rpath.params$model$Biomass[which(GB.rpath.params[["model"]][["Group"]] == "SmCopepods")] <- sm_new
+sm_new<-GB.params$model$Biomass[which(GB.params[["model"]][["Group"]] == "SmCopepods")] + GB.params$model$Biomass[which(GB.params[["model"]][["Group"]] == "LgCopepods")] * (1-copes_ratio)
+GB.params$model$Biomass[which(GB.params[["model"]][["Group"]] == "SmCopepods")] <- sm_new
 #LgCopepods
-lg_new<-GB.rpath.params$model$Biomass[which(GB.rpath.params[["model"]][["Group"]] == "LgCopepods")] * copes_ratio
-GB.rpath.params$model$Biomass[which(GB.rpath.params[["model"]][["Group"]] == "LgCopepods")] <- lg_new
+lg_new<-GB.params$model$Biomass[which(GB.params[["model"]][["Group"]] == "LgCopepods")] * copes_ratio
+GB.params$model$Biomass[which(GB.params[["model"]][["Group"]] == "LgCopepods")] <- lg_new
 
 
 # Diet adjustments --------------------------------------------------------
 #get rid of NAs first
-GB.rpath.params$diet<-replace(GB.rpath.params$diet,is.na(GB.rpath.params$diet),0)
+GB.params$diet<-replace(GB.params$diet,is.na(GB.params$diet),0)
 
 #Shift AmLobster[1] predation
-#Shift 0.5% from Macrobenthos[20] to LgCopepods[17]
+#Shift 0.5% from Macrobenthos[48] to LgCopepods[17]
 GB.rpath.params$diet[20,2]<-GB.rpath.params$diet[20,2]-0.005
 GB.rpath.params$diet[17,2]<-GB.rpath.params$diet[17,2]+0.005
 #Shift 0.5% from Macrobenthos[20]] to LgCopepods[38]
