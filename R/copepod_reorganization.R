@@ -15,7 +15,7 @@ library(spatialEco) #more advanced GIS
 library(dplyr) 
 library(tidyverse)
 library(here)
-
+library(Rpath)
 # Biomass adjustments -----------------------------------------------------
 
 world <- ne_countries(scale = "medium", returnclass = "sf")
@@ -121,35 +121,45 @@ GB.params$model$Biomass[which(GB.params[["model"]][["Group"]] == "LgCopepods")] 
 #get rid of NAs first
 GB.params$diet<-replace(GB.params$diet,is.na(GB.params$diet),0)
 
-#Shift AmLobster[1] predation
-#Shift 0.5% from Macrobenthos[48] to LgCopepods[17]
-GB.rpath.params$diet[20,2]<-GB.rpath.params$diet[20,2]-0.005
-GB.rpath.params$diet[17,2]<-GB.rpath.params$diet[17,2]+0.005
-#Shift 0.5% from Macrobenthos[20]] to LgCopepods[38]
-GB.rpath.params$diet[20,2]<-GB.rpath.params$diet[20,2]-0.005
-GB.rpath.params$diet[38,2]<-GB.rpath.params$diet[38,2]+0.005
+#Shift AmLobster[47] predation
+#Shift 0.5% from Macrobenthos[48] to LgCopepods[59]
+GB.params$diet[48,48]<-GB.params$diet[48,48]-0.005
+GB.params$diet[59,48]<-GB.params$diet[59,48]+0.005
+#Shift 0.5% from Macrobenthos[48] to SmCopepods[60]
+GB.params$diet[48,48]<-GB.params$diet[48,48]-0.005
+GB.params$diet[60,48]<-GB.params$diet[60,48]+0.005
 
-#Shift AtlMackerel[4] predation
-#Remove 5% from Macrobenthos[20]
-#Remove 15% from Micronekton[23]
-#Remove 10% from SmPelagics[41]
-#Remove 30% from LgCopepods[17]
-#Move 60% to SmCopepods[38]
-GB.rpath.params$diet[20,5]<-GB.rpath.params$diet[20,5]-0.05
-GB.rpath.params$diet[23,5]<-GB.rpath.params$diet[23,5]-0.15
-GB.rpath.params$diet[41,5]<-GB.rpath.params$diet[41,5]-0.1
-GB.rpath.params$diet[17,5]<-GB.rpath.params$diet[17,5]-0.3
-GB.rpath.params$diet[38,5]<-GB.rpath.params$diet[38,5]+0.6
+#Shift AtlMackerel[8] predation
+#Remove 5% from Macrobenthos[48]
+#Remove 15% from Micronekton[55]
+#Remove 10% from SmPelagics[11]
+#Remove 30% from LgCopepods[59]
+#Move 60% to SmCopepods[60]
+GB.params$diet[48,9]<-GB.params$diet[48,9]-0.05
+GB.params$diet[55,9]<-GB.params$diet[55,9]-0.15
+GB.params$diet[11,9]<-GB.params$diet[11,9]-0.1
+GB.params$diet[59,9]<-GB.params$diet[59,9]-0.3
+GB.params$diet[60,9]<-GB.params$diet[60,9]+0.6
 
-#Shift SmCopepod[38] predation
-#Move 0.25% from SmCopepods[38] to LgCopepods[17]
-GB.rpath.params$diet[38,39]<-GB.rpath.params$diet[38,39]-0.0025
-GB.rpath.params$diet[17,39]<-GB.rpath.params$diet[17,39]+0.0025
+#Shift SmCopepod[60] predation
+#Move 0.25% from SmCopepods[60] to LgCopepods[59]
+GB.params$diet[60,61]<-GB.params$diet[60,61]-0.0025
+GB.params$diet[59,61]<-GB.params$diet[59,61]+0.0025
 
 
 #For rest of groups, add portion to SmCope consumption
-GB.rpath.params$diet[38,c(3:4,5:38,40:50)]<-
-  GB.rpath.params$diet[38,c(3:4,5:38,40:50)]+
-  GB.rpath.params$diet[17,c(3:4,5:38,40:50)]*(1-copes_ratio)
-GB.rpath.params$diet[17,c(3:4,5:38,40:50)]<-
-  GB.rpath.params$diet[17,c(3:4,5:38,40:50)]*copes_ratio
+GB.params$diet[60,c(2:8,10:47,49:60,62)]<-
+  GB.params$diet[60,c(2:8,10:47,49:60,62)]+
+  GB.params$diet[59,c(2:8,10:47,49:60,62)]*(1-copes_ratio)
+GB.params$diet[59,c(2:8,10:47,49:60,62)]<-
+  GB.params$diet[59,c(2:8,10:47,49:60,62)]*copes_ratio
+
+# overwrite GB.params and initial model
+check.rpath.params(GB.params)
+usethis::use_data(GB.params, overwrite = T)
+
+#Initial unbalanced model
+
+GB.init <- rpath(GB.params, 'Georges Bank', 1)
+
+usethis::use_data(GB.init, overwrite = T)
