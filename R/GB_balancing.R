@@ -14,12 +14,9 @@ load(here('data', 'BA.input.rda'))
 prebal(GB.init, spclass.GB)
 
 #Biomass Span - 6x
-<<<<<<< HEAD
-#Biomass Slope -0.4419503
-=======
 #Biomass Slope -0.4388654
 # PREBAL recomends a biomass slope of -0.05 to -0.1
->>>>>>> 42aeaf139cd7f4eb2a28b6dc5a8c8180a26ca041
+
 # There is an issue with this metric - PreBal pub uses ranked order to 
 # plot not raw TL - I can live with this for now
 # should try to reduce slope during balancing
@@ -482,7 +479,6 @@ GB.params.adj$model[Group == 'Haddock', PB := PB + 0.01 * PB]
 # Still having issues with Discards, GelZooplankton. Few other groups also above 1
 # Step 21 - Discards -------
 # Sarah W. and Sean suggested removing discards from diets of preds as was done in other models
-# Reallocating shark predation from discards to other prey
 check.mort(GB.new, 'Discards')
 # largest predation from Microzooplankton, Micronekton, Gelzooplankton
 # moving all predation from microzooplankton on Discards to phytoplankton
@@ -541,7 +537,14 @@ GB.params.adj$model[Group == 'WitchFlounder', PB := PB + 0.01 * PB]
 # reducing biomass of Macrobenthos by 3/4
 GB.params.adj$model[Group == 'Macrobenthos', Biomass := Biomass / 4]
 
-# Step 24 - LgCopepods -------
+# Step 24 - Microzooplankton -------
+check.mort(GB.new, 'Microzooplankton')
+# Cannibalism is biggest problem
+# move 90% the predation by microzooplankton on microzooplankton to phytoplankton
+GB.params.adj$diet[Group == 'Microzooplankton', Microzooplankton := 0.0216]
+GB.params.adj$diet[Group == 'Phytoplankton', Microzooplankton := Microzooplankton + 0.1944]
+
+# Step 25 - LgCopepods -------
 check.mort(GB.new, 'LgCopepods')
 # Biggest predators GelZooplankton, Microzooplankton
 # moving half of their predation on LgCopepods to SmCopepods
@@ -549,16 +552,11 @@ GB.params.adj$diet[Group == 'LgCopepods', GelZooplankton := 0.1614075]
 GB.params.adj$diet[Group == 'SmCopepods', GelZooplankton := GelZooplankton + 0.1614075]
 GB.params.adj$diet[Group == 'LgCopepods', Microzooplankton := 0.05023055]
 GB.params.adj$diet[Group == 'SmCopepods', Microzooplankton := Microzooplankton + 0.05023055]
-# moving 1/4 predation by micronekton from LgCopepods to SmCopepods
-GB.params.adj$diet[Group == 'LgCopepods', Micronekton := 0.1933876]
-GB.params.adj$diet[Group == 'SmCopepods', Micronekton := Micronekton + 0.06446253]
+# moving half predation by micronekton from LgCopepods to Phytoplankton
+GB.params.adj$diet[Group == 'LgCopepods', Micronekton := 0.1079329]
+GB.params.adj$diet[Group == 'Phytoplankton', Micronekton := Micronekton + 0.1079329]
 
-# Step 25 - Microzooplankton -------
-check.mort(GB.new, 'Microzooplankton')
-# Cannibalism is biggest problem
-# move 90% the predation by microzooplankton on microzooplankton to phytoplankton
-GB.params.adj$diet[Group == 'Microzooplankton', Microzooplankton := 0.0216]
-GB.params.adj$diet[Group == 'Phytoplankton', Microzooplankton := Microzooplankton + 0.1944]
+
 
 
 
@@ -567,7 +565,7 @@ GB.params.adj$diet[Group == 'Phytoplankton', Microzooplankton := Microzooplankto
 #1 - No clue
 #realistic 0.1 - 0.8
 fleets <- c('DredgeScallop', 'DredgeClam', 'Gillnet', 'Longline', 'PotTrap',
-            'OtterTrawlSm', 'OtterTrawlLg', 'Midwater', 'OtherFisheries')
+            'OtterTrawlSm', 'OtterTrawlLg', 'Midwater') #, 'OtherFisheries')
 
 #Biomass -
 GB.params$pedigree[, B := 0.2]
