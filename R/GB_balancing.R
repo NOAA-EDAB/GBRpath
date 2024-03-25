@@ -14,9 +14,15 @@ load(here('data', 'BA.input.rda'))
 prebal(GB.init, spclass.GB)
 
 #Biomass Span - 6x
+<<<<<<< HEAD
 #Biomass Slope -0.4419503
+=======
+#Biomass Slope -0.4388654
+# PREBAL recomends a biomass slope of -0.05 to -0.1
+>>>>>>> 42aeaf139cd7f4eb2a28b6dc5a8c8180a26ca041
 # There is an issue with this metric - PreBal pub uses ranked order to 
 # plot not raw TL - I can live with this for now
+# should try to reduce slope during balancing
 
 #Several of these are pelagics and many of the prebal metrics suggest that 
 #pelagics are too low.  Also know that the survey is remarkably poor at sampling
@@ -35,7 +41,7 @@ GB.new <- rpath(GB.params, 'Georges Bank')
 #Multiple pelagics (Mack/Herring) by 10
 
 aggEE <- c('OtherPelagics', 'SmPelagics', 'Megabenthos', 'OtherCephalopods',
-           'OtherSkates', 'Mesopelagics')
+            'Mesopelagics', 'OtherSkates')
 GB.params.adj$model[Group %in% aggEE, Biomass := NA]
 GB.params.adj$model[Group %in% aggEE, EE := 0.8]
 
