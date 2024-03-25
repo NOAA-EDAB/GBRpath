@@ -12,10 +12,14 @@ landings <- comlandr::get_comland_data(channel, filterByYear = 1981:2022 ,filter
                                        unkVar = c('MONTH', 'Fleet', 'EPU'),
                                        knStrata = c('HY', 'QY', 'MONTH', 'Fleet', 'TONCL2',
                                                     'EPU'))
+landings <- comlandr::get_comland_data(channel, filterByYear = 1981:2022 ,filterByArea = GB.stat.areas,
+                                       aggGear = F, aggArea = T, 
+                                       unkVar = c('MONTH', 'NEGEAR', 'EPU'),
+                                       knStrata = c('HY', 'QY', 'MONTH', 'NEGEAR', 'TONCL2',
+                                                    'EPU'))
 
 
-
-saveRDS(landings,here::here("data-raw/landings.rds"))
+saveRDS(landings,here::here("data-raw/landingsNEGEAR.rds"))
 #Merge Rpath groups
 load(here('data-raw', 'Species_codes.RData'))
 #Fix a couple of duplicate codes
