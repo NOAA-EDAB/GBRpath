@@ -14,7 +14,7 @@ load(here('data', 'BA.input.rda'))
 prebal(GB.init, spclass.GB)
 
 #Biomass Span - 6x
-#Biomass Slope -0.4388654
+#Biomass Slope -0.7946378
 # PREBAL recomends a biomass slope of -0.05 to -0.1
 
 # There is an issue with this metric - PreBal pub uses ranked order to 
@@ -96,7 +96,7 @@ check.mort(GB.new, 'WitchFlounder')
 #Main pred - Macrobenthos
 #Large F from LargeMesh and SmallMesh
 #Droping macrobenthos biomass
-# GB.params.adj$model[Group == 'Macrobenthos', Biomass := Biomass / 3]
+GB.params.adj$model[Group == 'Macrobenthos', Biomass := Biomass / 3]
 #Drop 30% of large and small mesh catch - Shelf break species
 mesh.fleet <- c('SmallMesh', 'SmallMesh.disc', 'LargeMesh', 'LargeMesh.disc')
 for(imesh in 1:length(mesh.fleet)){
@@ -476,87 +476,11 @@ GB.params.adj$model[Group == 'AmLobster', PB := PB + 0.05 * PB]
 GB.params.adj$model[Group == 'Barndoor', PB := PB + 0.05 * PB]
 GB.params.adj$model[Group == 'Haddock', PB := PB + 0.01 * PB]
 
-# Still having issues with Discards, GelZooplankton. Few other groups also above 1
-# Step 21 - Discards -------
-# Sarah W. and Sean suggested removing discards from diets of preds as was done in other models
-check.mort(GB.new, 'Discards')
-# largest predation from Microzooplankton, Micronekton, Gelzooplankton
-# moving all predation from microzooplankton on Discards to phytoplankton
-GB.params.adj$diet[Group == 'Discards', Microzooplankton := NA] #removed 0.504
-GB.params.adj$diet[Group == 'Phytoplankton', Microzooplankton := Microzooplankton + 0.504]
-# EE still too large
-# next biggest predation from Micronekton
-# moving all predation from Micronekton on Discards to phytoplankton
-GB.params.adj$diet[Group == 'Discards', Micronekton := NA] #removed 0.163
-GB.params.adj$diet[Group == 'Phytoplankton', Micronekton := Micronekton + 0.163]
-# Same for GelZooplankton
-GB.params.adj$diet[Group == 'Discards', GelZooplankton := NA] #removed 0.102
-GB.params.adj$diet[Group == 'Phytoplankton', GelZooplankton := GelZooplankton + 0.102]
-# Same for Krill
-GB.params.adj$diet[Group == 'Discards', Krill := NA] #removed 0.163
-GB.params.adj$diet[Group == 'Phytoplankton', Krill := Krill + 0.163]
-# Same for OceanQuahog, SurfClam, AtlScallop
-GB.params.adj$diet[Group == 'Discards', OceanQuahog := NA] #removed 0.23
-GB.params.adj$diet[Group == 'Phytoplankton', OceanQuahog := OceanQuahog + 0.23]
-GB.params.adj$diet[Group == 'Discards', SurfClam := NA] #removed 0.23
-GB.params.adj$diet[Group == 'Phytoplankton', SurfClam := SurfClam + 0.23]
-GB.params.adj$diet[Group == 'Discards', AtlScallop := NA] #removed 0.23
-GB.params.adj$diet[Group == 'Phytoplankton', AtlScallop := AtlScallop + 0.23]
-# That worked but may have been an over correction
-# EE went from 1.66E2 to 0.0857 with change to Quahog, SurClam, and Scallop
 
-
-# Step 22 - GelZooplankton -------
-check.mort(GB.new, 'GelZooplankton')
-# Largest predation from GelZooplankton, Micronekton, Krill
-# Moving 3/4 of cannibalism to phytoplankton
-GB.params.adj$diet[Group == 'GelZooplankton', GelZooplankton := 0.09175]
-GB.params.adj$diet[Group == 'Phytoplankton', GelZooplankton := GelZooplankton + 0.27525]
-# Moving half the remaining cannibalism to micronekton
-GB.params.adj$diet[Group == 'GelZooplankton', GelZooplankton := 0.045875]
-GB.params.adj$diet[Group == 'Micronekton', GelZooplankton := GelZooplankton + 0.045875]
-# Moving 90% predation by Micronekton to phytoplankton
-GB.params.adj$diet[Group == 'GelZooplankton', Micronekton := 0.0326]
-GB.params.adj$diet[Group == 'Phytoplankton', Micronekton := Micronekton +  0.2934]
-# Moving 90% predation by Krill to SmCopepods
-GB.params.adj$diet[Group == 'GelZooplankton', Krill := 0.0326]
-GB.params.adj$diet[Group == 'SmCopepods', Krill := SmCopepods + 0.2934]
-
-
-# Step 23 - EEs between 1 and 2 -------
+# Step 23 - More PB bumps -------
 #bump up PBs
-
-GB.params.adj$model[Group == 'Windowpane', PB := PB + 0.15 * PB]
-GB.params.adj$model[Group == 'WinterFlounder', PB := PB + 0.15 * PB]
-GB.params.adj$model[Group == 'WinterSkate', PB := PB + 0.1 * PB]
-GB.params.adj$model[Group == 'AtlScallop', PB := PB + 0.2 * PB]
-GB.params.adj$model[Group == 'OceanQuahog', PB := PB + 0.2 * PB]
 GB.params.adj$model[Group == 'Cod', PB := PB + 0.05 * PB]
 GB.params.adj$model[Group == 'WitchFlounder', PB := PB + 0.01 * PB]
-
-# reducing biomass of Macrobenthos by 3/4
-GB.params.adj$model[Group == 'Macrobenthos', Biomass := Biomass / 4]
-
-# Step 24 - Microzooplankton -------
-check.mort(GB.new, 'Microzooplankton')
-# Cannibalism is biggest problem
-# move 90% the predation by microzooplankton on microzooplankton to phytoplankton
-GB.params.adj$diet[Group == 'Microzooplankton', Microzooplankton := 0.0216]
-GB.params.adj$diet[Group == 'Phytoplankton', Microzooplankton := Microzooplankton + 0.1944]
-
-# Step 25 - LgCopepods -------
-check.mort(GB.new, 'LgCopepods')
-# Biggest predators GelZooplankton, Microzooplankton
-# moving half of their predation on LgCopepods to SmCopepods
-GB.params.adj$diet[Group == 'LgCopepods', GelZooplankton := 0.1614075]
-GB.params.adj$diet[Group == 'SmCopepods', GelZooplankton := GelZooplankton + 0.1614075]
-GB.params.adj$diet[Group == 'LgCopepods', Microzooplankton := 0.05023055]
-GB.params.adj$diet[Group == 'SmCopepods', Microzooplankton := Microzooplankton + 0.05023055]
-# moving half predation by micronekton from LgCopepods to Phytoplankton
-GB.params.adj$diet[Group == 'LgCopepods', Micronekton := 0.1079329]
-GB.params.adj$diet[Group == 'Phytoplankton', Micronekton := Micronekton + 0.1079329]
-
-
 
 
 
@@ -564,8 +488,8 @@ GB.params.adj$diet[Group == 'Phytoplankton', Micronekton := Micronekton + 0.1079
 #0 - perfect
 #1 - No clue
 #realistic 0.1 - 0.8
-fleets <- c('DredgeScallop', 'DredgeClam', 'Gillnet', 'Longline', 'PotTrap',
-            'OtterTrawlSm', 'OtterTrawlLg', 'Midwater') #, 'OtherFisheries')
+fleets <- c('ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
+            'Trap', 'SmallMesh', 'LargeMesh', 'HMSFleet') #, 'OtherFisheries')
 
 #Biomass -
 GB.params$pedigree[, B := 0.2]
@@ -575,7 +499,7 @@ GB.params$pedigree[Group %in% c('Redfish', 'AmPlaice', 'SouthernDemersals', 'Pol
                                 'Goosefish', 'BlackSeaBass', 'Sharks'), B := 0.4]
 GB.params$pedigree[Group %in% c('Seabirds', 'BalWhale', 'ToothWhale', 'HMS',
                                 'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton',
-                                'Mesozooplankton', 'Microzooplankton', 'Phytoplankton'),
+                                'LgCopepods','SmCopepods', 'Microzooplankton', 'Phytoplankton'),
                    B := 0.5]
 GB.params$pedigree[Group %in% c('Bacteria', 'Detritus','Discards', 'Seals'), B := 0.8]
 GB.params$pedigree[Group %in% c('SmPelagics', 'OtherCephalopods', 'OtherShrimp',
@@ -586,12 +510,12 @@ GB.params$pedigree[Group %in% c('SmPelagics', 'OtherCephalopods', 'OtherShrimp',
 GB.params$pedigree[, PB := 0.2]
 GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), PB := 0]
 GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
-                                'Mesozooplankton', 'GelZooplankton', 'Micronekton',
+                                'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
                                 'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
                                 'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
                                 'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
                                 'ToothWhale', 'Seabirds'), PB := 0.5]
-GB.params$pedigree[Group %in% c('Krill', 'Clams', 'AtlScallop', 'AmLobster','Megabenthos',
+GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
                                 'Illex', 'Loligo', 'OtherCephalopods', 'Barndoor',
                                 'Fourspot', 'OffHake',  'RedHake', 'Redfish', 'Scup',
                                 'SmoothDogfish'), PB := 0.6]
@@ -605,12 +529,12 @@ GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), PB := 0.8]
 GB.params$pedigree[, QB := 0.2]
 GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), QB := 0]
 GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
-                                'Mesozooplankton', 'GelZooplankton', 'Micronekton',
+                                'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
                                 'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
                                 'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
                                 'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
                                 'ToothWhale', 'Seabirds'), QB := 0.5]
-GB.params$pedigree[Group %in% c('Krill', 'Clams', 'AtlScallop', 'AmLobster','Megabenthos',
+GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
                                 'Illex', 'Loligo', 'OtherCephalopods', 'Barndoor',
                                 'Fourspot', 'OffHake',  'RedHake', 'Redfish', 'Scup',
                                 'SmoothDogfish', 'Goosefish',  'OceanPout',
@@ -624,12 +548,12 @@ GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), QB := 0.8]
 GB.params$pedigree[, Diet := 0.2]
 GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), Diet := 0]
 GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
-                                'Mesozooplankton', 'GelZooplankton', 'Micronekton',
+                                'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
                                 'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
                                 'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
                                 'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
                                 'ToothWhale', 'Seabirds'), Diet := 0.5]
-GB.params$pedigree[Group %in% c('Krill', 'Clams', 'AtlScallop', 'AmLobster','Megabenthos',
+GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
                                 'Illex', 'Loligo', 'OtherCephalopods'), Diet := 0.6]
 GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), Diet := 0.8]
 
@@ -643,7 +567,7 @@ for(igear in 1:length(fleets)){
                                   'Goosefish', 'BlackSeaBass', 'Sharks'), gear := 0.4]
   GB.params$pedigree[Group %in% c('Seabirds', 'BalWhale', 'ToothWhale', 'HMS',
                                   'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton',
-                                  'Mesozooplankton', 'Microzooplankton', 'Phytoplankton'),
+                                  'LgCopepods','SmCopepods', 'Microzooplankton', 'Phytoplankton'),
                      gear := 0.5][]
   setnames(GB.params$pedigree, 'gear', fleets[igear])
 }
