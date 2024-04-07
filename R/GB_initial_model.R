@@ -171,10 +171,101 @@ lg.copes.prey <- diet.input |>
                   filter(Rprey == 'Mesozooplankton') |>
                   mutate(Rprey := 'LgCopepods') |>
                   mutate(preyper := preyper * l.copes.ratio)
+
+
+# SmPelagics not feeding on LgCopepods or SmCopepods but are in
+# the GOM model. Proportioning the missing diet to these groups
+# similar to their proportion in the GOM model
+SmPelagics_diet <- diet.input |> 
+                  filter(Rpred == 'SmPelagics')
+
+
+remaining_diet <- 1 - sum(SmPelagics_diet$preyper)
+
+large <- remaining_diet * 0.7
+small <- remaining_diet * 0.3
+
+# create new row in sm.copes.prey
+# rpred is SmPelagics and rprey is SmCopepods
+# value is small
+sm.copes.prey <- rbind(sm.copes.prey, 
+                       data.table(Rpred = 'SmPelagics', Rprey = 'SmCopepods', preyper = small))
+
+# create new row in lg.copes.prey
+# rpred is SmPelagics and rprey is LgCopepods
+# value is large
+lg.copes.prey <- rbind(lg.copes.prey, 
+                       data.table(Rpred = 'SmPelagics', Rprey = 'LgCopepods', preyper = large))
+
+
+# GelZooplankton not feeding on LgCopepods or SmCopepods but are in
+# the GOM model. Proportioning the missing diet to these groups
+# similar to their proportion in the GOM model
+GelZooplankton_diet <- diet.input |> 
+                  filter(Rpred == 'GelZooplankton')
+
+remaining_diet <- 1 - sum(GelZooplankton_diet$preyper)
+
+large <- remaining_diet * 0.4
+small <- remaining_diet * 0.6
+
+# create new row in sm.copes.prey
+# rpred is GelZooplankton and rprey is SmCopepods
+# value is small
+sm.copes.prey <- rbind(sm.copes.prey, 
+                       data.table(Rpred = 'GelZooplankton', Rprey = 'SmCopepods', preyper = small))
+
+# create new row in lg.copes.prey
+# rpred is GelZooplankton and rprey is LgCopepods
+# value is large
+lg.copes.prey <- rbind(lg.copes.prey, 
+                       data.table(Rpred = 'GelZooplankton', Rprey = 'LgCopepods', preyper = large))
+
+
 # combine sm.copes.prey and lg.copes.prey with diet.input
 diet.input <- rbind(diet.input, sm.copes.prey, lg.copes.prey)
 # remove rows with Mesozooplankton in Rprey or Rpred
 diet.input <- diet.input[!(Rprey == 'Mesozooplankton' | Rpred == 'Mesozooplankton')]
+
+# krill and micronekton should have micronekton diet from EMAX diet
+# remove entries from diet.input where Rpred is Micronekton or krill
+diet.input <- diet.input[!(Rpred == 'Micronekton' | Rpred == 'Krill')]
+# create new krill entries with Rprey = c('Phytoplankton' 'SmCopepods',
+# 'LgCopepods', 'Micronekton', 'Detritus')
+krill_diet <- data.table(Rpred = 'Krill', 
+                         Rprey = c('Phytoplankton', 'SmCopepods', 'LgCopepods', 'Micronekton', 'Detritus'),
+                         preyper = c(0.162, 0.308, 0.326, 0.041, 0.163))
+# create new micronekton entries with Rprey = c('Phytoplankton' 'SmCopepods',
+# 'LgCopepods', 'Micronekton', 'Detritus')
+micronekton_diet <- data.table(Rpred = 'Micronekton', 
+                         Rprey = c('Phytoplankton', 'SmCopepods', 'LgCopepods', 'Micronekton', 'Detritus'),
+                         preyper = c(0.162, 0.308, 0.326, 0.041, 0.163))
+# combine krill_diet and micronekton_diet with diet.input
+diet.input <- rbind(diet.input, krill_diet, micronekton_diet)
+
+# filter for the trouble groups
+# Seabirds, Balwhale, Sharks, Illex, Loligo, Other Cephalopods, Macrobenthos
+not_one <- diet.input |> 
+                filter(Rpred %in% c('Seabirds', 'BalWhale', 'Sharks', 'Illex', 
+                                    'Loligo', 'OtherCephalopods', 'Macrobenthos'))
+
+# The remaining issues are very close to one
+# increasing the value of preyper equal to the current proportion of the diet
+not_one <- not_one |> 
+            group_by(Rpred) |>
+            mutate(proportion = preyper / sum(preyper))
+
+# removing the preyper column and replacing it with the proportion
+not_one <- not_one |> 
+            select(-preyper) |>
+            rename(preyper = proportion)
+
+# replace values in diet.input with the new values
+# from not_one
+diet.input <- diet.input |> 
+                filter(!(Rpred %in% c('Seabirds', 'BalWhale', 'Sharks', 'Illex', 
+                                    'Loligo', 'OtherCephalopods', 'Macrobenthos'))) |>
+                rbind(not_one)
 
 
 preds <- unique(diet.input[, Rpred])
@@ -191,6 +282,8 @@ for(ipred in 1:length(preds)){
 }
 
 check.rpath.params(GB.params)
+
+
 usethis::use_data(GB.params, overwrite = T)
 
 #Initial unbalanced model

@@ -386,7 +386,7 @@ GB.params.adj$diet[Group == 'SmPelagics', SilverHake := SilverHake + 0.0057]
 GB.params.adj$diet[Group == 'RiverHerring', SilverHake := 0.0057]
 
 GB.params.adj$diet[Group == 'SilverHake', SilverHake := SilverHake / 2]
-GB.params.adj$diet[Group == 'Krill', SilverHake := SilverHake + 0.0738]
+GB.params.adj$diet[Group == 'Krill', SilverHake := SilverHake + 0.07786667]
 
 #Look at Haddock
 lscalc(GB.params.adj$model[Group == 'Haddock', PB]) #3.57
@@ -482,6 +482,10 @@ GB.params.adj$model[Group == 'Haddock', PB := PB + 0.01 * PB]
 GB.params.adj$model[Group == 'Cod', PB := PB + 0.05 * PB]
 GB.params.adj$model[Group == 'WitchFlounder', PB := PB + 0.01 * PB]
 
+# Step 24 - Copepods -------
+#Increase Biomass
+GB.params.adj$model[Group == 'LgCopepods', Biomass := Biomass * 1.25]
+GB.params.adj$model[Group == 'SmCopepods', Biomass := Biomass * 1.25]
 
 
 #Assign Pedigrees------
@@ -578,6 +582,7 @@ for(igear in 1:length(fleets)){
 
 #Check results----
 GB.new <- rpath(GB.params.adj, eco.name = 'Georges Bank')
+check.rpath.params(GB.params.adj)
 check.ee(GB.new)
 
 
