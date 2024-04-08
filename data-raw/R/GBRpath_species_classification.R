@@ -26,12 +26,12 @@ groups1 <- data.table(Group = c('AtlHerring', 'AtlMackerel', 'Butterfish',
 groups2 <- data.table(Group = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
                                 'Sharks', 'Macrobenthos', 'Megabenthos', 
                                 'OtherShrimps', 'Krill', 'Micronekton', 
-                                'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 
+                                'GelZooplankton', 'LgCopepods','SmCopepods', 'Microzooplankton', 
                                 'Phytoplankton'), 
                       Classification = c('Bird', 'Mammal', 'Whale', 'Whale', 'HMS', 
                                          'Shark',rep('Invertebrate (Benthic)', 2),
                                          rep('Invertebrate (Pelagic)', 4), 
-                                         rep('Zooplankton', 2), 'Primary Producer'))
+                                         rep('Zooplankton', 3), 'Primary Producer'))
 
 
 spclass.GB <- rbindlist(list(groups1[, .(Group, Classification)], groups2))
@@ -46,7 +46,7 @@ spclass.GB[Classification %in% c('Demersal (Round)', 'Demersal (Flat)', 'Demersa
                                  'HMS', 'Shark'), fish := T]
 spclass.GB[Classification %in% c('Invertebrate (Pelagic)', 'Invertebrate (Benthic)', 
                                  'Primary Producer'), invert := T]
-spclass.GB[Group %in% c('Mesozooplankton', 'Microzooplankton', 'GelZooplankton', 
+spclass.GB[Group %in% c('LgCopepods','SmCopepods', 'Microzooplankton', 'GelZooplankton', 
                         'Micronekton'), Zoop := T]
 
 plank <- c('AtlHerring', 'AtlMackerel', 'SmPelagics')
