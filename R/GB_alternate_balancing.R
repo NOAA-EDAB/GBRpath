@@ -19,7 +19,7 @@ load(here('data', 'BA.input.rda'))
 prebal(GB.init, spclass.GB)
 
 #Biomass Span - 6x
-#Biomass Slope -0.7946378
+#Biomass Slope -0.6157927
 # PREBAL recomends a biomass slope of -0.05 to -0.1
 
 # There is an issue with this metric - PreBal pub uses ranked order to 
@@ -95,15 +95,15 @@ GB.params.adj$model[Group == 'WitchFlounder', PB := pbcalc(20)]
 
 #Predation
 check.mort(GB.new, 'WitchFlounder')
-#Main pred - Macrobenthos
+#Main pred - OtherSkates
 #Large F from LargeMesh and SmallMesh
-#Droping macrobenthos biomass
-GB.params.adj$model[Group == 'Macrobenthos', Biomass := Biomass / 3]
-#Drop 30% of large and small mesh catch - Shelf break species
+# #Droping macrobenthos biomass
+# GB.params.adj$model[Group == 'Macrobenthos', Biomass := Biomass / 3]
+#Drop 50% of large and small mesh catch - Shelf break species
 mesh.fleet <- c('SmallMesh', 'SmallMesh.disc', 'LargeMesh', 'LargeMesh.disc')
 for(imesh in 1:length(mesh.fleet)){
   setnames(GB.params.adj$model, mesh.fleet[imesh], 'fleet')
-  GB.params.adj$model[Group == 'WitchFlounder', fleet := fleet - 0.3 * fleet]
+  GB.params.adj$model[Group == 'WitchFlounder', fleet := fleet - 0.5 * fleet]
   setnames(GB.params.adj$model, 'fleet', mesh.fleet[imesh])
 }
 
@@ -148,7 +148,7 @@ for(ifleet in 1:length(fleets)){
 check.mort(GB.new, 'AtlMackerel')
 
 #Biomass and production seem ok
-#Biggest Predators are spiny dogfish, silver hake, winter skate, cod
+#Biggest Predators are spiny dogfish, silver hake, pollock, winter skate, cod
 #Cutting DC in half and moving to import - assume they are eating mackerel
 #off the bank
 DC.mack <- data.table::melt(GB.params.adj$diet[Group == 'AtlMackerel', ],
