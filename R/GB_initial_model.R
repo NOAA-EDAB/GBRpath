@@ -221,6 +221,168 @@ sm.copes.prey <- rbind(sm.copes.prey,
 lg.copes.prey <- rbind(lg.copes.prey, 
                        data.table(Rpred = 'GelZooplankton', Rprey = 'LgCopepods', preyper = large))
 
+# Seabirds not feeding on LgCopepods or SmCopepods but are in
+# the GOM model. Proportioning the missing diet to these groups
+# similar to their proportion in the GOM model
+Seabirds_diet <- diet.input |> 
+  filter(Rpred == 'Seabirds')
+
+remaining_diet <- 1 - sum(Seabirds_diet$preyper)
+
+large <- remaining_diet * 0.77
+small <- remaining_diet * (1-0.77)
+
+# create new row in sm.copes.prey
+# rpred is GelZooplankton and rprey is SmCopepods
+# value is small
+sm.copes.prey <- rbind(sm.copes.prey, 
+                       data.table(Rpred = 'Seabirds', Rprey = 'SmCopepods', preyper = small))
+
+# create new row in lg.copes.prey
+# rpred is GelZooplankton and rprey is LgCopepods
+# value is large
+lg.copes.prey <- rbind(lg.copes.prey, 
+                       data.table(Rpred = 'Seabirds', Rprey = 'LgCopepods', preyper = large))
+
+
+# BalWhale not feeding on LgCopepods or SmCopepods but are in
+# the GOM model. Proportioning the missing diet to these groups
+# similar to their proportion in the GOM model
+BalWhale_diet <- diet.input |> 
+  filter(Rpred == 'BalWhale')
+
+remaining_diet <- 1 - sum(BalWhale_diet$preyper)
+
+large <- remaining_diet * 0.77
+small <- remaining_diet * (1-0.77)
+
+# create new row in sm.copes.prey
+# rpred is BalWhale and rprey is SmCopepods
+# value is small
+sm.copes.prey <- rbind(sm.copes.prey, 
+                       data.table(Rpred = 'BalWhale', Rprey = 'SmCopepods', preyper = small))
+
+# create new row in lg.copes.prey
+# rpred is BalWhale and rprey is LgCopepods
+# value is large
+lg.copes.prey <- rbind(lg.copes.prey, 
+                       data.table(Rpred = 'BalWhale', Rprey = 'LgCopepods', preyper = large))
+
+
+# Sharks not feeding on LgCopepods or SmCopepods but are in
+# the GOM model. Proportioning the missing diet to these groups
+# similar to their proportion in the GOM model
+Sharks_diet <- diet.input |> 
+  filter(Rpred == 'Sharks')
+
+remaining_diet <- 1 - sum(Sharks_diet$preyper)
+
+large <- remaining_diet * 0.77
+small <- remaining_diet * (1-0.77)
+
+# create new row in sm.copes.prey
+# rpred is Sharks and rprey is SmCopepods
+# value is small
+sm.copes.prey <- rbind(sm.copes.prey, 
+                       data.table(Rpred = 'Sharks', Rprey = 'SmCopepods', preyper = small))
+
+# create new row in lg.copes.prey
+# rpred is Sharks and rprey is LgCopepods
+# value is large
+lg.copes.prey <- rbind(lg.copes.prey, 
+                       data.table(Rpred = 'Sharks', Rprey = 'LgCopepods', preyper = large))
+
+# Illex not feeding on LgCopepods or SmCopepods but are in
+# the GOM model. Proportioning the missing diet to these groups
+# similar to their proportion in the GOM model
+Illex_diet <- diet.input |> 
+  filter(Rpred == 'Illex')
+
+remaining_diet <- 1 - sum(Illex_diet$preyper)
+
+large <- remaining_diet * 0.77
+small <- remaining_diet * (1-0.77)
+
+# create new row in sm.copes.prey
+# rpred is Illex and rprey is SmCopepods
+# value is small
+sm.copes.prey <- rbind(sm.copes.prey, 
+                       data.table(Rpred = 'Illex', Rprey = 'SmCopepods', preyper = small))
+
+# create new row in lg.copes.prey
+# rpred is Illex and rprey is LgCopepods
+# value is large
+lg.copes.prey <- rbind(lg.copes.prey, 
+                       data.table(Rpred = 'Illex', Rprey = 'LgCopepods', preyper = large))
+
+# Loligo not feeding on LgCopepods or SmCopepods but are in
+# the GOM model. Proportioning the missing diet to these groups
+# similar to their proportion in the GOM model
+Loligo_diet <- diet.input |> 
+  filter(Rpred == 'Loligo')
+
+remaining_diet <- 1 - sum(Loligo_diet$preyper)
+
+large <- remaining_diet * 0.77
+small <- remaining_diet * (1-0.77)
+
+# create new row in sm.copes.prey
+# rpred is Loligo and rprey is SmCopepods
+# value is small
+sm.copes.prey <- rbind(sm.copes.prey, 
+                       data.table(Rpred = 'Loligo', Rprey = 'SmCopepods', preyper = small))
+
+# create new row in lg.copes.prey
+# rpred is Loligo and rprey is LgCopepods
+# value is large
+lg.copes.prey <- rbind(lg.copes.prey, 
+                       data.table(Rpred = 'Loligo', Rprey = 'LgCopepods', preyper = large))
+
+# OtherCephalopods not feeding on LgCopepods or SmCopepods but are in
+# the GOM model. Proportioning the missing diet to these groups
+# similar to their proportion in the GOM model
+OtherCephalopods_diet <- diet.input |> 
+  filter(Rpred == 'OtherCephalopods')
+
+remaining_diet <- 1 - sum(OtherCephalopods_diet$preyper)
+
+large <- remaining_diet * 0.77
+small <- remaining_diet * (1-0.77)
+
+# create new row in sm.copes.prey
+# rpred is OtherCephalopods and rprey is SmCopepods
+# value is small
+sm.copes.prey <- rbind(sm.copes.prey, 
+                       data.table(Rpred = 'OtherCephalopods', Rprey = 'SmCopepods', preyper = small))
+
+# create new row in lg.copes.prey
+# rpred is Loligo and rprey is LgCopepods
+# value is large
+lg.copes.prey <- rbind(lg.copes.prey, 
+                       data.table(Rpred = 'OtherCephalopods', Rprey = 'LgCopepods', preyper = large))
+
+# Macrobenthos not feeding on LgCopepods or SmCopepods but are in
+# the GOM model. Proportioning the missing diet to these groups
+# similar to their proportion in the GOM model
+Macrobenthos_diet <- diet.input |> 
+  filter(Rpred == 'Macrobenthos')
+
+remaining_diet <- 1 - sum(Macrobenthos_diet$preyper)
+
+large <- remaining_diet * 0.77
+small <- remaining_diet * (1-0.77)
+
+# create new row in sm.copes.prey
+# rpred is Macrobenthos and rprey is SmCopepods
+# value is small
+sm.copes.prey <- rbind(sm.copes.prey, 
+                       data.table(Rpred = 'Macrobenthos', Rprey = 'SmCopepods', preyper = small))
+
+# create new row in lg.copes.prey
+# rpred is Macrobenthos and rprey is LgCopepods
+# value is large
+lg.copes.prey <- rbind(lg.copes.prey, 
+                       data.table(Rpred = 'Macrobenthos', Rprey = 'LgCopepods', preyper = large))
 
 # combine sm.copes.prey and lg.copes.prey with diet.input
 diet.input <- rbind(diet.input, sm.copes.prey, lg.copes.prey)
@@ -243,29 +405,6 @@ micronekton_diet <- data.table(Rpred = 'Micronekton',
 # combine krill_diet and micronekton_diet with diet.input
 diet.input <- rbind(diet.input, krill_diet, micronekton_diet)
 
-# filter for the trouble groups
-# Seabirds, Balwhale, Sharks, Illex, Loligo, Other Cephalopods, Macrobenthos
-not_one <- diet.input |> 
-                filter(Rpred %in% c('Seabirds', 'BalWhale', 'Sharks', 'Illex', 
-                                    'Loligo', 'OtherCephalopods', 'Macrobenthos'))
-
-# The remaining issues are very close to one
-# increasing the value of preyper equal to the current proportion of the diet
-not_one <- not_one |> 
-            group_by(Rpred) |>
-            mutate(proportion = preyper / sum(preyper))
-
-# removing the preyper column and replacing it with the proportion
-not_one <- not_one |> 
-            select(-preyper) |>
-            rename(preyper = proportion)
-
-# replace values in diet.input with the new values
-# from not_one
-diet.input <- diet.input |> 
-                filter(!(Rpred %in% c('Seabirds', 'BalWhale', 'Sharks', 'Illex', 
-                                    'Loligo', 'OtherCephalopods', 'Macrobenthos'))) |>
-                rbind(not_one)
 
 
 preds <- unique(diet.input[, Rpred])
