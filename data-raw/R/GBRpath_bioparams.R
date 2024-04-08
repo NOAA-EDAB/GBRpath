@@ -120,7 +120,7 @@ GB.params <- rbindlist(list(GB.params, GB.double))
 
 #FishBase-----------------------------------------------------------------------
 #Fill-in groups not in Buchheister
-GB.fish <- unique(spp[RPATH %in% c('Goosefish', 'OffHake', 'SilverHake', 'RedHake', 
+GB.fish <- unique(spp[RPATH %in% c('Goosefish', 'SilverHake', 'RedHake', 
                                    'WhiteHake', 'Redfish', 'Pollock', 'OceanPout', 
                                    'BlackSeaBass', 'Scup', 'Fourspot','AmPlaice', 
                                    'Windowpane', 'WinterFlounder', 'WitchFlounder', 
@@ -175,8 +175,7 @@ GB.bioparams <- rbindlist(list(GB.params, fish.params), use.names = T)
 
 #Need to add OtherFlatfish and SmFlatfish
 #Use OtherDemersals for OtherFlatfish and SmPelagics for SmFlatfish
-GB.add <- copy(GB.bioparams[RPATH %in% c('OtherDemersals', 'SmPelagics'), ])
-GB.add[RPATH == 'OtherDemersals', RPATH := 'OtherFlatfish']
+GB.add <- copy(GB.bioparams[RPATH %in% ('SmPelagics'), ])
 GB.add[RPATH == 'SmPelagics', RPATH := 'SmFlatfishes']
 #Need an OtherSkates as well...going to take a mean of Winter and Little
 GB.skate <- copy(GB.bioparams[RPATH %in% c('WinterSkate', 'LittleSkate'), ])
