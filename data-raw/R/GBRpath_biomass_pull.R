@@ -5,6 +5,11 @@ library(here); library(data.table); library(mskeyrun); library(usethis)
 #Grab species list
 load(here('data-raw', 'Species_codes.RData'))
 
+# Replace Rpath values of 'OtherFlatfish' with 'OtherDemersals'
+spp[RPATH == 'OtherFlatfish', RPATH := 'OtherDemersals']
+# Replace Rpath values of 'OffHake' with 'SilverHake'
+spp[RPATH == 'OffHake', RPATH := 'SilverHake']
+
 #Grab biomass data from ms-keyrun
 bio <- mskeyrun::surveyIndexAll
 
