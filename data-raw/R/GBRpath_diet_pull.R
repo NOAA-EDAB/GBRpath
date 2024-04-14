@@ -348,6 +348,9 @@ GB.cluster <- GB.cluster |>
 GB.diet <- GB.cluster |> 
   distinct(Rpred, Rprey, sum.rhat)
 
+#remove NA values using dplyr
+GB.diet <- GB.diet |> 
+  filter(!is.na(sum.rhat))
 
 #Convert to percentages
 # GB.diet[, tot.preyw := sum(sum.rhat), by = Rpred]
