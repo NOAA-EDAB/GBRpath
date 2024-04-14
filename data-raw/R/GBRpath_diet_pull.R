@@ -127,8 +127,8 @@ prey[is.na(RPATH) & MODCAT == 'MISC', RPATH := 'NotUsed']
 #Other
 prey[PYABBR %in% c('INVERT', 'ARTHRO', 'CRUSTA', 'CRUEGG', 'INSECT', 'UROCHO'),
      RPATH := 'Macrobenthos']
-prey[PYABBR %in% c('MARMAM', 'MARMA2', 'DELDEL', 'GLOBSP'), RPATH := 'ToothWhale']
-prey[PYABBR %in% c('AVES', 'AVEFEA'), RPATH := 'Seabirds']
+prey[PYABBR %in% c('MARMAM', 'MARMA2', 'DELDEL', 'GLOBSP'), RPATH := 'Odontocetes']
+prey[PYABBR %in% c('AVES', 'AVEFEA'), RPATH := 'SeaBirds']
 prey[PYABBR %in% c('PLANKT', 'DIATOM'), RPATH := 'Phytoplankton']
 prey[is.na(RPATH) & MODCAT == 'OTHER', RPATH := 'NotUsed'] #Plants and Parasites
 
@@ -365,14 +365,14 @@ GB.diet <- GB.diet |>
 
 # Unsurveyed Groups -----------------------------------------------------------
 #Add diet for groups not surveyed
-Rpred.missing <- c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 'Sharks',
+Rpred.missing <- c('SeaBirds', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 'HMS', 'Sharks',
                    'SmPelagics', 'SouthernDemersals', 'OtherCephalopods',
                    'AmLobster', 'Macrobenthos', 'Megabenthos', 'AtlScallops', 
                    'OceanQuahog','SurfClam', 'OtherShrimps', 'Krill', 'Micronekton', 
                    'GelZooplankton', 'Microzooplankton')
 
 #Use biomass to disaggregate EMAX prey groups where necessary
-convert.table <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 
+convert.table <- data.table(RPATH = c('SeaBirds', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 
                                       'HMS', 'Sharks', 'AtlHerring', 'RiverHerring',
                                       'AtlMackerel', 'Butterfish', 'SmPelagics', 
                                       'Mesopelagics', 'OtherPelagics', 'Cod', 
@@ -457,7 +457,7 @@ balwhale <- merge(balwhale, convert.table[, list(RPATH, EMAX, Rpath.prop)], by =
 balwhale[, preyper := DC * Rpath.prop]
 #Need to sum many:1 EMAX:Rpath
 balwhale <- balwhale[, sum(preyper), by = RPATH]
-balwhale[, Rpred := 'BalWhale']
+balwhale[, Rpred := 'BaleenWhales']
 setnames(balwhale, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 tooth <- data.table(EMAX = c('Micronekton', 'Macrobenthos- crustaceans',
@@ -472,7 +472,7 @@ tooth <- merge(tooth, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX
 tooth[, preyper := DC * Rpath.prop]
 #Need to sum many:1 EMAX:Rpath
 tooth <- tooth[, sum(preyper), by = RPATH]
-tooth[, Rpred := 'ToothWhale']
+tooth[, Rpred := 'Odontocetes']
 setnames(tooth, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(balwhale, tooth))
@@ -495,7 +495,7 @@ birds[EMAX == 'Small Pelagics- anadromous', Rpath.prop := 1]
 birds[, preyper := DC * Rpath.prop]
 #Need to sum many:1 EMAX:Rpath
 birds <- birds[, sum(preyper), by = RPATH]
-birds[, Rpred := 'Seabirds']
+birds[, Rpred := 'SeaBirds']
 setnames(birds, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, birds))
@@ -512,7 +512,7 @@ seals <- merge(seals, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX
 seals[, preyper := DC * Rpath.prop]
 #Need to sum many:1 EMAX:Rpath
 seals <- seals[, sum(preyper), by = RPATH]
-seals[, Rpred := 'Seals']
+seals[, Rpred := 'Pinnipeds']
 setnames(seals, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, seals))
