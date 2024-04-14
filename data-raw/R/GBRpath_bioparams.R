@@ -49,7 +49,7 @@ NWACS <- data.table(Group = c('Phytoplankton', 'Other primary producers', 'Bacte
                               'Demersal omnivores - other', 'Medium pelagics - other',
                               'Sharks - coastal', 'Sharks - pelagic', 'Large pelagics (HMS)', 
                               'Pinnipeds', 'Baleen whales', 'Odontocetes',
-                              'Seabirds', 'Nearshore pisc birds', 'Detritus'),
+                              'SeaBirds', 'Nearshore pisc birds', 'Detritus'),
                     Biomass = c(30.000, 1.605, 7.700, 7.000, 16.000, 17.966, 6.349, 
                                 7.654, 17.452, 7.000, 8.340, 21.000, 5.500, 4.498, 
                                 0.470, 0.090, 1.650, 0.200, 0.371, 2.048, 1.200,
@@ -87,8 +87,8 @@ NWACS <- data.table(Group = c('Phytoplankton', 'Other primary producers', 'Bacte
                               'RedHake', 'SouthernDemersal', rep('YTFlounder', 2),
                               rep('SummerFlounder', 2), 'WinterSkate', 
                               rep('OtherDemersals', 3), 'OtherPelagics', rep('Sharks', 2),
-                              'HMS', 'Seals', 'BalWhale', 'ToothWhale', 'Seabirds',
-                              'Seabirds', 'Detritus'))
+                              'HMS', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 'SeaBirds',
+                              'SeaBirds', 'Detritus'))
 #Calculate weighted mean
 NWACS[, Rpath.bio := sum(Biomass), by = RPATH]
 NWACS[, PB.weight := Biomass * PB]
