@@ -110,7 +110,7 @@ bio.input <- rbindlist(list(bio.input, clam.input))
 #Non Survey groups--------------------------------------------------------------
 #Add groups not available in database using EMAX
 #Remove macrobenthos from survey
-emax <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
+emax <- data.table(RPATH = c('SeaBirds', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 'HMS', 
                              'Sharks', 'Macrobenthos', 'Krill', 'Micronekton', 
                              'GelZooplankton', 'LgCopepods','SmCopepods', 'Microzooplankton', 
                              'Phytoplankton', 'Bacteria'),
