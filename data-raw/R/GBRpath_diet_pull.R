@@ -806,36 +806,44 @@ combo <- merge(combo, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX
 combo[, preyper := newDC * Rpath.prop]
 #Need to sum many:1 EMAX:Rpath
 combo <- combo[, sum(preyper), by = RPATH]
-combo[, Rpred := 'Macrobenthos']
+# combo[, Rpred := 'Macrobenthos']
+# translate to tidyverse
+combo <- combo |> 
+  mutate(Rpred = 'Macrobenthos')
+
 setnames(combo, c('RPATH', 'V1'), c('Rprey', 'preyper'))
 
 GB.diet.plus <- rbindlist(list(GB.diet.plus, combo))
 
-#Weight DCs by biomass
-meso <- data.table(Group = c('Small copepods', 'Large Copepods'),
-                    Biomass = c(13.0, 7.0))
-meso[, meso.prop := Biomass / sum(Biomass)]
 
-sm <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Microzooplankton',
-                          'Small copepods', 'Detritus-POC'),
-                 DC = c(0.724, 0.080, 0.065, 0.131),
-                 meso.prop = meso[Group == 'Small copepods', meso.prop])
-lg <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Microzooplankton',
-                          'Small copepods', 'Large Copepods', 'Gelatinous Zooplankton',
-                          'Macrobenthos- crustaceans', 'Macrobenthos- other', 
-                          'Detritus-POC'),
-                 DC = c(0.547000, 0.043900, 0.174000, 0.122000, 0.053100, 0.000192,
-                        0.000102, 0.059400),
-                 meso.prop = meso[Group == 'Large Copepods', meso.prop])
-combo <- rbindlist(list(sm, lg)) 
-combo[, newDC := DC * meso.prop]
-combo <- merge(combo, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
-combo[, preyper := newDC * Rpath.prop]
-#Need to sum many:1 EMAX:Rpath
-combo <- combo[, sum(preyper), by = RPATH]
-setnames(combo, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+# This created diet for mesozooplankton from Small and Large Copepods
+# No longer needed as not combining the two groups any more
 
-GB.diet.plus <- rbindlist(list(GB.diet.plus, combo))
+# #Weight DCs by biomass
+# meso <- data.table(Group = c('Small copepods', 'Large Copepods'),
+#                     Biomass = c(13.0, 7.0))
+# meso[, meso.prop := Biomass / sum(Biomass)]
+# 
+# sm <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Microzooplankton',
+#                           'Small copepods', 'Detritus-POC'),
+#                  DC = c(0.724, 0.080, 0.065, 0.131),
+#                  meso.prop = meso[Group == 'Small copepods', meso.prop])
+# lg <- data.table(EMAX = c('Phytoplankton- Primary Producers', 'Microzooplankton',
+#                           'Small copepods', 'Large Copepods', 'Gelatinous Zooplankton',
+#                           'Macrobenthos- crustaceans', 'Macrobenthos- other', 
+#                           'Detritus-POC'),
+#                  DC = c(0.547000, 0.043900, 0.174000, 0.122000, 0.053100, 0.000192,
+#                         0.000102, 0.059400),
+#                  meso.prop = meso[Group == 'Large Copepods', meso.prop])
+# combo <- rbindlist(list(sm, lg)) 
+# combo[, newDC := DC * meso.prop]
+# combo <- merge(combo, convert.table[, list(RPATH, EMAX, Rpath.prop)], by = 'EMAX', all.x = T)
+# combo[, preyper := newDC * Rpath.prop]
+# #Need to sum many:1 EMAX:Rpath
+# combo <- combo[, sum(preyper), by = RPATH]
+# setnames(combo, c('RPATH', 'V1'), c('Rprey', 'preyper'))
+# 
+# GB.diet.plus <- rbindlist(list(GB.diet.plus, combo))
 
 #Merge diet.plus with regular diet
 #using SouthernDemersal and OtherFlatfish diets from EMAX
