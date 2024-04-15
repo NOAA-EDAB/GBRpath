@@ -8,14 +8,14 @@ library(data.table); library(Rpath); library(here); library(readr); library(dply
 
 #Georges Bank
 # Define Groups ---------------------------------------------------------------
-groups <- c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 'Sharks', 
+groups <- c('SeaBirds', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 'HMS', 'Sharks', 
             'AtlHerring', 'AtlMackerel', 'RiverHerring', 'Butterfish', 
             'SmPelagics', 'Mesopelagics', 'OtherPelagics', 'Cod', 'Haddock', 
-            'Goosefish', 'OffHake', 'SilverHake', 'RedHake', 'WhiteHake', 
+            'Goosefish', 'SilverHake', 'RedHake', 'WhiteHake', 
             'Redfish', 'Pollock', 'OceanPout', 'BlackSeaBass', 'Bluefish', 'Scup',
             'OtherDemersals', 'SouthernDemersals', 'Fourspot', 'SummerFlounder',
             'AmPlaice', 'Windowpane', 'WinterFlounder', 'WitchFlounder', 
-            'YTFlounder', 'OtherFlatfish', 'SmFlatfishes', 'SpinyDogfish', 
+            'YTFlounder', 'SmFlatfishes', 'SpinyDogfish', 
             'SmoothDogfish', 'Barndoor', 'WinterSkate', 'LittleSkate', 
             'OtherSkates', 'Illex', 'Loligo', 'OtherCephalopods', 'AmLobster',
             'Macrobenthos', 'Megabenthos', 'AtlScallop', 'OceanQuahog', 'SurfClam',
@@ -25,7 +25,7 @@ groups <- c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 'Sharks',
             'ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
             'Trap', 'SmallMesh', 'LargeMesh', 'HMSFleet') #, 'OtherFisheries')
 
-types <- c(rep(0, 60), 1, 2, 2, rep(3, 9))
+types <- c(rep(0, 58), 1, 2, 2, rep(3, 9))
 
 GB.params <- create.rpath.params(groups, types)
 
@@ -55,11 +55,14 @@ GB.params$model[Group %in% c('LgCopepods', 'SmCopepods'), Biomass := EMAX_copepo
 
 #Add EEs for groups without biomass
 #Other flatfish biomass shows up as zero so set to NA and let the model calculate
-GB.params$model[Group == 'OtherFlatfish', Biomass := NA]
-GB.params$model[Group == 'OtherFlatfish', EE := 0.8]
+
+# OtherFlatfish now merged with Otherdemersals
+# GB.params$model[Group == 'OtherFlatfish', Biomass := NA]
+# GB.params$model[Group == 'OtherFlatfish', EE := 0.8]
+
 #Originally had Seals, PP and Bacteria set to EE but I added EMAX value
 #Add NWACS value for pinnepeds
-GB.params$model[Group %in% c('Seals'), Biomass := 0.035]
+GB.params$model[Group %in% c('Pinnipeds'), Biomass := 0.035]
 
 #Biological Parameters --------------------------------------------------------
 load(here('data', 'bioparam.input.rda'))
@@ -119,6 +122,9 @@ load(here('data', 'diet.input.rda'))
 
 
 preds <- unique(diet.input[, Rpred])
+#remove OffHake from preds
+preds <- preds[preds != 'OffHake']
+
 for(ipred in 1:length(preds)){
   setnames(GB.params$diet, preds[ipred], 'Pred')
   pred.diet <- diet.input[Rpred == preds[ipred], ]
