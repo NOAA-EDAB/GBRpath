@@ -931,6 +931,13 @@ EMAX_diet <- EMAX_diet |>
 copes_diet <-  EMAX_diet |>
   filter(Rpred %in% c('SmCopepods', 'LgCopepods'))
 
+# Rprey Macrobenthos is in the diet of Rpred LgCopepods twice
+# sum the values in preyper and remove the duplicate row
+copes_diet <- copes_diet |>
+  group_by(Rprey, Rpred) |>
+  summarise(preyper = sum(preyper))
+
+
 # Add copes_diet to diet.input
 diet.input <- rbind(diet.input, copes_diet)
 
