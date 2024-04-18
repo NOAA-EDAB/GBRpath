@@ -198,9 +198,16 @@ diet.input <- rbind(diet.input, new.SmCopes)
 #Shift SmCopepod predation
 #Move 0.25% from SmCopepods to LgCopepods
 new.SmCopes <- diet.input[Rprey == "SmCopepods" & Rpred == "SmCopepods", "preyper"] - 0.0025
-new.LgCopes <- diet.input[Rprey == "LgCopepods" & Rpred == "SmCopepods", "preyper"] + 0.0025
 diet.input[Rprey == "SmCopepods" & Rpred == "SmCopepods", "preyper"] <- new.SmCopes
-diet.input[Rprey == "LgCopepods" & Rpred == "SmCopepods", "preyper"] <- new.LgCopes
+# create new entry Rpred = "SmCopepods" and Rprey = "LgCopepods", set to 0.0025
+new.LgCopes <- data.table(
+  Rpred = "SmCopepods",
+  Rprey = "LgCopepods",
+  preyper = 0.0025
+)
+# add new entry to diet.input
+diet.input <- rbind(diet.input, new.LgCopes)
+
 
 #For all other predators of SmCopepods, change diet proportional to copes_ratio
 
