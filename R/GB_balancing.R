@@ -14,7 +14,7 @@ load(here('data', 'BA.input.rda'))
 prebal(GB.init, spclass.GB)
 
 #Biomass Span - 6x
-#Biomass Slope -0.7946378
+#Biomass Slope -0.7110158
 # PREBAL recomends a biomass slope of -0.05 to -0.1
 
 # There is an issue with this metric - PreBal pub uses ranked order to 
