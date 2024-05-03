@@ -436,14 +436,14 @@ GB.params.adj$model[Group == 'Cod', Biomass := Biomass * 4]
 #Step 5 adjusted PB, reduced catch by 30%, and doubled B
 # further bumping B
 
-GB.params.adj$model[Group == 'BlackSeaBass', Biomass := Biomass * 4.5]
+GB.params.adj$model[Group == 'BlackSeaBass', Biomass := Biomass * 4]
 
 # Adding 0.2% predation from Sharks, Odontocetes, LittleSkate, OtherPelagics, Barndoor, OtherSkates, WinterSkate
 
 
 GB.params.adj$diet[Group == 'BlackSeaBass', Sharks := 0.002]
 GB.params.adj$diet[Group == 'BlackSeaBass', Odontocetes := 0.002]
-GB.params.adj$diet[Group == 'BlackSeaBass', LittleSkate := 0.002]
+
 GB.params.adj$diet[Group == 'BlackSeaBass', OtherPelagics := 0.002]
 GB.params.adj$diet[Group == 'BlackSeaBass', Barndoor := 0.002]
 GB.params.adj$diet[Group == 'BlackSeaBass', OtherSkates := 0.002]
@@ -452,7 +452,7 @@ GB.params.adj$diet[Group == 'BlackSeaBass', WinterSkate := 0.002]
 # find somewhere to take that from in each diet
 GB.params.adj$diet[Group == 'Haddock', Sharks := Sharks - 0.002]
 GB.params.adj$diet[Group == 'Pollock', Odontocetes := Odontocetes - 0.002]
-GB.params.adj$diet[Group == 'OtherDemersals', LittleSkate := LittleSkate - 0.002]
+
 GB.params.adj$diet[Group == 'RedHake', OtherPelagics := OtherPelagics - 0.002]
 GB.params.adj$diet[Group == 'OtherDemersals', Barndoor := Barndoor - 0.002]
 GB.params.adj$diet[Group == 'OtherDemersals', OtherSkates := OtherSkates - 0.002]
@@ -870,8 +870,37 @@ prebal.plot <- ggplot(data = prebal.toplot,
 plot(prebal.plot)
 ggplot2::ggsave(here('outputs', 'GB_prebal.png'), width = 10, height = 4)
 
+# Comparison of pre and post balancing landings
+
+library(tidyr)
+unbalanced.landings <- GB.params$model |> 
+                        select(Group, fleets) |>
+                        pivot_longer(cols = -Group, names_to = "fleet", values_to = "landings") |>
+                       group_by(Group) |>
+                       mutate(unbalanced_landings = sum(landings)) |> 
+                      select(Group, unbalanced_landings) |>
+                      unique()
+
+balanced.landings <- GB.params.adj$model |> 
+                        select(Group, fleets) |>
+                        pivot_longer(cols = -Group, names_to = "fleet", values_to = "landings") |>
+                       group_by(Group) |>
+                       mutate(balanced_landings = sum(landings)) |> 
+                      select(Group, balanced_landings) |>
+                      unique()
+
+landings.comparison <- merge(unbalanced.landings, balanced.landings, by = 'Group', all = T)
+# Filter for cases where unbalanced and balanced landings are different
+landings.comparison <- landings.comparison |> 
+                        filter(unbalanced_landings != balanced_landings)
+# Convert to mt by multiplying by area in km2
+landings.comparison <- landings.comparison |> 
+                        mutate(unbalanced_landings_mt = unbalanced_landings * 57307.7) |>
+                        mutate(balanced_landings_mt = balanced_landings * 57307.7) |> 
+                        mutate(landings_change_mt = balanced_landings_mt - unbalanced_landings_mt)
 
 
+# Save balanced params and model
 alternate.GB.params.bal <- copy(GB.params.adj)
 alternate.GB.bal <- copy(GB.new)
 
