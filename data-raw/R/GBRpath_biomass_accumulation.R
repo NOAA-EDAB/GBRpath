@@ -66,7 +66,7 @@ ba.plot <- ggplot(data = bio.index[RPATH %in% unique(BA.sig[, RPATH]), ],
 plot(ba.plot)
 
 #Using groups with both short-term and long-term declines
-BA.rpath <- c('Cod', 'Goosefish', 'RedHake', 'YTFlounder')
+BA.rpath <- c('Cod', 'Goosefish', 'RedHake', 'YTFlounder', 'AmLobster')
 
 BA.input <- BA.all[RPATH %in% BA.rpath & timecat == '68 - 19', list(RPATH, BA)]
 
