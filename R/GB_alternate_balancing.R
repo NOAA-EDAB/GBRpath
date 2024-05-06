@@ -4,7 +4,7 @@
 # This will allow for more direct comparison with the GOMrpath and MABrpath models
 
 #Steps to balancing the Georges Bank model
-library(data.table); library(here); library(Rpath)
+library(data.table); library(here); library(Rpath); library(dplyr); library(ggplot2)
 
 #Load prebal functions
 source(here('R', 'PreBal.R'))
@@ -36,6 +36,41 @@ check.ee(GB.init)
 #Copy parameter set 
 GB.params.adj <- copy(GB.params)
 GB.new <- rpath(GB.params, 'Georges Bank')
+
+# Call in GOM params
+load(url("https://github.com/SarahJWeisberg/GOM-Rpath/blob/main/outputs/GOM_params_Rpath.RData?raw=true"))
+
+
+# PB and QB for GB.params.adj should be set to values from GOM.params
+# match by Group
+# pull out PB and QB from GB.params.adj
+GB.PB.QB <- GB.params.adj$model |> 
+          select(Group, PB, QB) |> 
+          setnames(c('Group', 'PB', 'QB'), c('Group', 'GB.PB', 'GB.QB'))
+# same for GOM
+GOM.PB.QB <- GOM.params$model |>
+          select(Group, PB, QB) |>
+          setnames(c('Group', 'PB', 'QB'), c('Group', 'GOM.PB', 'GOM.QB'))
+
+# merge
+GB.GOM.PB.QB <- merge(GB.PB.QB, GOM.PB.QB, by = 'Group')
+
+# remove GB values and rename to 'Group', 'PB', 'QB'
+GB.GOM.PB.QB <- GB.GOM.PB.QB |> 
+          select(Group, GOM.PB, GOM.QB) |>
+          setnames(c('Group', 'PB', 'QB'))
+
+GB.GOM.groups <- GB.GOM.PB.QB$Group
+
+# Set PB in GB.params.adj to GB.GOM.PB.QB$PB
+for(igroup in GB.GOM.groups) {
+  GB.params.adj$model[GB.params.adj$model$Group == igroup, "PB"] <- GB.GOM.PB.QB[GB.GOM.PB.QB$Group == igroup, "PB"]
+}
+# Same for QB
+for(igroup in GB.GOM.groups) {
+  GB.params.adj$model[GB.params.adj$model$Group == igroup, "QB"] <- GB.GOM.PB.QB[GB.GOM.PB.QB$Group == igroup, "QB"]
+}
+
 
 #Step 1 - Pelagics and aggregate groups----
 #Several of the main offenders are pelagic or aggregate groups
