@@ -602,7 +602,16 @@ GB.params.adj$model[Group == 'YTFlounder', Biomass := Biomass * 1.05]
 # Bump PB
 GB.params.adj$model[Group == 'Bacteria', PB := PB * 1.05]
 
+# Step 30 - BA input --------------------
+#Input BA values from BA.input
+load(here('data', 'BA.input.rda'))
 
+BA.Group <- c('AmLobster','Cod','Goosefish','RedHake','YTFlounder')
+#Assign values to GB.params.adj$model$BioAcc from BA.input for groups in BA.Group
+for(igroup in 1:length(BA.Group)){
+  group.name <- BA.Group[igroup]
+  GB.params.adj$model[Group == group.name, BioAcc := BA.input[RPATH == group.name, BA]]
+}
 
 # EDITED TO HERE ------------
 GB.new <- rpath(GB.params.adj, eco.name = 'Georges Bank')
@@ -872,7 +881,7 @@ ggplot2::ggsave(here('outputs', 'GB_prebal.png'), width = 10, height = 4)
 
 # Comparison of pre and post balancing landings
 
-library(tidyr)
+library(dplyr)
 unbalanced.landings <- GB.params$model |> 
                         select(Group, fleets) |>
                         pivot_longer(cols = -Group, names_to = "fleet", values_to = "landings") |>
