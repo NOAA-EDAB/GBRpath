@@ -72,13 +72,13 @@ for(igroup in GB.GOM.groups) {
 }
 
 
-#Step 1 - Pelagics and aggregate groups----
+#Step 01 - Pelagics and aggregate groups----
 #Several of the main offenders are pelagic or aggregate groups
 #Set EE to 0.8 for agg groups due to lack of data
 #Multiple pelagics (Mack/Herring) by 10
 
-aggEE <- c('OtherPelagics', 'SmPelagics', 'Megabenthos', 'OtherCephalopods',
-           'Mesopelagics', 'OtherSkates')
+aggEE <- c('OtherPelagics', 'SmPelagics', 'Megabenthos', 'OtherCephalopods', 
+           'OtherShrimps', 'Mesopelagics', 'OtherSkates', 'SmFlatfishes')
 GB.params.adj$model[Group %in% aggEE, Biomass := NA]
 GB.params.adj$model[Group %in% aggEE, EE := 0.8]
 
@@ -87,17 +87,18 @@ GB.params.adj$model[Group %in% c('AtlHerring', 'AtlMackerel'),
 
 
 
-#Step 2 - Deal with OceanPout, AmPlaice, and WitchFlounder----
+#Step 02 - Deal with OceanPout, AmPlaice, and WitchFlounder----
 #OceanPout
 #Increase Biomass - Not well sampled
-GB.params.adj$model[Group == 'OceanPout', Biomass := Biomass * 4]
+GB.params.adj$model[Group == 'OceanPout', Biomass := Biomass * 3]
 
 #Increase production
 #Ocean pout live 12-14 years
-pbcalc(12) #0.208
-pbcalc(14) #0.179
-#Split the difference
-GB.params.adj$model[Group == 'OceanPout', PB := 0.193]
+# pbcalc(12) #0.208
+# pbcalc(14) #0.179
+# #Split the difference
+# GB.params.adj$model[Group == 'OceanPout', PB := 0.193]
+# Changed this. Now set to match value in GOM model
 
 #Predation
 check.mort(GB.new, 'OceanPout')
@@ -108,11 +109,12 @@ GB.params.adj$diet[Group == 'Import', SpinyDogfish := 0.5]
 
 #American Plaice
 #Increase biomass - flatfish poorly sampled by gear
-GB.params.adj$model[Group == 'AmPlaice', Biomass := Biomass * 5]
+GB.params.adj$model[Group == 'AmPlaice', Biomass := Biomass * 3]
 
 #Live about 20 years
-pbcalc(20) #0.125
-GB.params.adj$model[Group == 'AmPlaice', PB := 0.125]
+# pbcalc(20) #0.125
+# GB.params.adj$model[Group == 'AmPlaice', PB := 0.125]
+# Changed this. Now set to match value in GOM model
 
 #Predation
 check.mort(GB.new, 'AmPlaice')
@@ -125,7 +127,8 @@ check.mort(GB.new, 'AmPlaice')
 GB.params.adj$model[Group == 'WitchFlounder', Biomass := Biomass * 5]
 
 #Live about 20 years
-GB.params.adj$model[Group == 'WitchFlounder', PB := pbcalc(20)]
+# GB.params.adj$model[Group == 'WitchFlounder', PB := pbcalc(20)]
+# Changed this. Now set to match value in GOM model
 
 #Predation
 check.mort(GB.new, 'WitchFlounder')
@@ -139,13 +142,8 @@ for(imesh in 1:length(mesh.fleet)){
   setnames(GB.params.adj$model, 'fleet', mesh.fleet[imesh])
 }
 
-#Step 3 - OtherShrimps
 
-# Increase Biomass - pelagics poorly sampled
-GB.params.adj$model[Group == 'OtherShrimps', Biomass := Biomass * 5]
-# still at EE ~ 16. Come back later
-
-#Step 4 - Fix Discards in diet----
+#Step 03 - Fix Discards in diet----
 check.mort(GB.new, 'Discards') #Macrobenthos
 
 # EE is ratio of DetOut to DetIN - need to lower out unless jacking up landings
@@ -160,10 +158,11 @@ for(isp in 1:length(discard.diet)){
   setnames(GB.params.adj$diet, 'switch', discard.diet[isp])
 }
 
-#Step 5 - BlackSeaBass -------------------
+#Step 04 - BlackSeaBass -------------------
 #Black Sea Bass
-lscalc(GB.params.adj$model[Group == 'BlackSeaBass', PB]) #75
-GB.params.adj$model[Group == 'BlackSeaBass', PB := pbcalc(20)]
+# lscalc(GB.params.adj$model[Group == 'BlackSeaBass', PB]) #75
+# GB.params.adj$model[Group == 'BlackSeaBass', PB := pbcalc(20)]
+# Changed this. Now set to match GOM model value
 
 check.mort(GB.new, 'BlackSeaBass') #Fleets
 #Note - nothing is eating black sea bass in this model - will need to fix this
@@ -180,17 +179,17 @@ for(ifleet in 1:length(fleets)){
 #Double biomass
 GB.params.adj$model[Group == 'BlackSeaBass', Biomass := Biomass * 2]
 
-#Step 6 - Atlantic Mackerel----
+#Step 05 - Atlantic Mackerel----
 check.mort(GB.new, 'AtlMackerel')
 
 #Biomass and production seem ok
 #Biggest Predators are spiny dogfish, silver hake, pollock, winter skate, cod
-#Cutting DC in half and moving to import - assume they are eating mackerel
+#Cutting DC and moving to import - assume they are eating mackerel
 #off the bank
 DC.mack <- data.table::melt(GB.params.adj$diet[Group == 'AtlMackerel', ],
                             id.var = 'Group')
 DC.mack <- DC.mack[!is.na(value), ]
-DC.mack[, new.value := value / 3]
+DC.mack[, new.value := value / 10]
 
 mack.pred <- as.character(DC.mack[, variable])
 
@@ -198,7 +197,7 @@ for(ipred in 1:length(mack.pred)){
   new.value <- DC.mack[variable == mack.pred[ipred], new.value]
   setnames(GB.params.adj$diet, mack.pred[ipred], 'pred')
   GB.params.adj$diet[Group == 'AtlMackerel', pred := new.value]
-  GB.params.adj$diet[Group == 'Import', pred := sum(c(pred, 2 * new.value), na.rm = T)]
+  GB.params.adj$diet[Group == 'Import', pred := sum(c(pred, 9 * new.value), na.rm = T)]
   setnames(GB.params.adj$diet, 'pred', mack.pred[ipred])
 }
 
@@ -209,13 +208,15 @@ GB.params.adj$model[Group %in% c('SpinyDogfish', 'WinterSkate'),
 #Also fixed PB and QB for these predators later
 
 #Reduce catch in half
-for(ifleet in 1:length(fleets)){
-  setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
-  GB.params.adj$model[Group == 'AtlMackerel', fleet := fleet / 2]
-  setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
-}
+# for(ifleet in 1:length(fleets)){
+#   setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
+#   GB.params.adj$model[Group == 'AtlMackerel', fleet := fleet / 2]
+#   setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
+# }
 
-#Step 7 - Reduce F on Southern Dems, Redfish, and Barndoors----
+# Trying not to change landings too much. Might revisit
+
+#Step 06 - Reduce F on Southern Dems, Redfish, and Barndoors----
 
 #Southern Dems
 check.mort(GB.new, 'SouthernDemersals')
@@ -248,56 +249,34 @@ for(ifleet in 1:length(fleets)){
   setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
 }
 
-#Step 8 - Silver Hake----
-check.mort(GB.new, 'SilverHake')
 
-#Cannibalism is the biggest issue
-#PQ ratio is 0.02 should be between 0.1 and 0.3
-#Decrease QB
-GB.params.adj$model[Group == 'SilverHake', QB := QB / 2]
-lscalc(GB.params.adj$model[Group == 'SilverHake', PB]) #30
-#Max age ~ 12
-pbcalc(12)
-GB.params.adj$model[Group == 'SilverHake', PB := pbcalc(12)]
-
-#Some room to decrease QB to closer to 0.3
-GB.params.adj$model[Group == 'SilverHake', QB := QB / 2]
-
-#Step 9 - More EE balance----
-aggEE <- c('OtherShrimps', 'SmFlatfishes')
-GB.params.adj$model[Group %in% aggEE, Biomass := NA]
-GB.params.adj$model[Group %in% aggEE, EE := 0.8]
-
-#Step 10 - WinterFlounder ----------------
+#Step 07 - WinterFlounder ----------------
 #WinterFlounder productivity needs to increase
-lscalc(GB.params.adj$model[Group == 'WinterFlounder', PB]) #35
-GB.params.adj$model[Group == 'WinterFlounder', PB := pbcalc(14)]
+# lscalc(GB.params.adj$model[Group == 'WinterFlounder', PB]) #35
+# GB.params.adj$model[Group == 'WinterFlounder', PB := pbcalc(14)]
+
+# Changed this. Now set to match GOM model value
+
 #Increase Biomass
-GB.params.adj$model[Group == 'WinterFlounder', Biomass := Biomass * 3]
+GB.params.adj$model[Group == 'WinterFlounder', Biomass := Biomass * 1.5]
 check.mort(GB.new, 'WinterFlounder')
 
 #Reduce consumption by Higher trophic level species - PQ ratios much lower than
 #0.1
-high.TL <- c('Pinnipeds', 'BalWhale', 'Odontocetes', 'HMS')
-GB.params.adj$model[Group %in% high.TL, QB := QB / 3]
-#Further reduce seals and whales
-high.TL <- high.TL[which(high.TL != 'HMS')]
-GB.params.adj$model[Group %in% high.TL, QB := QB / 3]
+# high.TL <- c('Pinnipeds', 'BalWhale', 'Odontocetes', 'HMS')
+# GB.params.adj$model[Group %in% high.TL, QB := QB / 3]
+# #Further reduce seals and whales
+# high.TL <- high.TL[which(high.TL != 'HMS')]
+# GB.params.adj$model[Group %in% high.TL, QB := QB / 3]
 
-#Step 11 - Goosefish----
-lscalc(GB.params.adj$model[Group == 'Goosefish', PB]) #75
-GB.params.adj$model[Group == 'Goosefish', PB := pbcalc(30)]
+# Changed this. Now set to match GOM model values
 
-#New production pushes the PQ ratio very low ... need to decrease Q
-GB.params.adj$model[Group == 'Goosefish', QB := QB / 3]
+#Step 08 - Lobster----
+# lscalc(GB.params.adj$model[Group == 'AmLobster', PB]) #1.08
+# GB.params.adj$model[Group == 'AmLobster', PB := pbcalc(15)]
+# GB.params.adj$model[Group == 'AmLobster', QB := QB / 12]
 
-check.mort(GB.new, 'Goosefish')
-#Biggest mortality is from scallop fleet
-
-#Step 12 - Lobster----
-lscalc(GB.params.adj$model[Group == 'AmLobster', PB]) #1.08
-GB.params.adj$model[Group == 'AmLobster', PB := pbcalc(15)]
-GB.params.adj$model[Group == 'AmLobster', QB := QB / 12]
+# Changed this. Now set to match GOM model values
 
 check.mort(GB.new, 'AmLobster') #Macrobenthos, Megabenthos
 
@@ -312,67 +291,131 @@ GB.params.adj$diet[Group == 'AmLobster', OtherDemersals := 0.01] #removed 0.1218
 GB.params.adj$diet[Group == 'Megabenthos',
                    OtherDemersals := OtherDemersals + 0.122]
 
-# Step 13 - Butterfish -----------------
+# Step 09 - Butterfish -----------------
 check.mort(GB.new, 'Butterfish') #LowerTroph/CharsmaticMF
 
 #Look at GelZoop and OtherPel
 #GelZoop highly productive with high QB
-GB.params.adj$model[Group == 'GelZooplankton', PB := PB / 2]
-GB.params.adj$model[Group == 'GelZooplankton', QB := 100]
+# GB.params.adj$model[Group == 'GelZooplankton', PB := PB / 2]
+# GB.params.adj$model[Group == 'GelZooplankton', QB := 100]
+# Now set to match GOM model values
+
 #Still very high mort - reducing DC and moving to Micronekton
 GB.params.adj$diet[Group == 'Butterfish', GelZooplankton := 0.001]
 GB.params.adj$diet[Group == 'Micronekton', GelZooplankton := 0.0137]
 
 #Fix other pelagics
-GB.params.adj$model[Group == 'OtherPelagics', PB := PB / 2]
-GB.params.adj$model[Group == 'OtherPelagics', QB := QB / 3]
+# GB.params.adj$model[Group == 'OtherPelagics', PB := PB / 2]
+# GB.params.adj$model[Group == 'OtherPelagics', QB := QB / 3]
+# Now set to match GOM model values
 
-# EE still at 2.65. Bumping B
+# EE still at 2.54. Bumping B
 
 GB.params.adj$model[Group == 'Butterfish', Biomass := Biomass * 3]
 
-# Step 14 - AtlHerring -----------------
-check.mort(GB.new, 'AtlHerring')
-# Top predators SpinyDogfish and Pollock
+#Step 10 - OtherDemersals----
+#DC looks too much like piscivores
+#Changed DC to look like SouthernDemersals which are more omnivorous
+check.mort(GB.new, 'OtherDemersals')
 
-#Spinydogfish
-lscalc(GB.params.adj$model[Group == 'SpinyDogfish', PB]) #7.8
-GB.params.adj$model[Group == 'SpinyDogfish', PB := pbcalc(31)]
+#Cod, Winterskate, LittleSkate, SpinyDogfish are the major culprits -- again
 
-#New production pushes the PQ ratio very low ... need to decrease Q
-GB.params.adj$model[Group == 'SpinyDogfish', QB := QB / 4]
+#Top down - 0.9
+GB.params.adj$model[Group == 'OtherDemersals', Biomass := NA]
+GB.params.adj$model[Group == 'OtherDemersals', EE := 0.9]
 
-#Check Pollock
-lscalc(GB.params.adj$model[Group == 'Pollock', PB]) #62.5!
-GB.params.adj$model[Group == 'Pollock', PB := pbcalc(25)]
-#New production pushes the PQ ratio very low ... need to decrease Q
-GB.params.adj$model[Group == 'Pollock', QB := QB / 5]
+# Step 11 - Redfish -----------------
+check.mort(GB.new, 'Redfish') #Fisheries
+#Reduce catch by 30%
+for(ifleet in 1:length(fleets)){
+  setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
+  GB.params.adj$model[Group == 'Redfish', fleet := fleet - fleet * 0.3]
+  setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
+}
+#Still off so bumping biomass
+GB.params.adj$model[Group == 'Redfish', Biomass := Biomass * 4]
 
-# Herring EE still at 3.37. Bumping B
-GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 4]
-
-
-# Step 15 - Windowpane -----------------
+# Step 12 - Windowpane -----------------
 check.mort(GB.new, 'Windowpane')
 # Low amounts of mortality from a wide variety of species and fleets
 # Bumping B
-
 GB.params.adj$model[Group == 'Windowpane', Biomass := Biomass * 3.5]
 
 # Still above 1. Macrobenthos main predator and causes issues with other groups.
 # Droping macrobenthos biomass
 GB.params.adj$model[Group == 'Macrobenthos', Biomass := Biomass / 3]
 
-#Step 16 - OtherDemersals----
-#DC looks too much like piscivores
-#Changed DC to look like SouthernDemersals which are more omnivorous
-check.mort(GB.new, 'OtherDemersals')
+# Step 13 - AtlMackerel again ------------------
+check.mort(GB.new, 'AtlMackerel')
+# already adjusted diets in step 5
+# Bumping B
+GB.params.adj$model[Group == 'AtlMackerel', Biomass := Biomass * 4]
 
-#Cod, Winterskate, Windowpane, SpinyDogfish are the major culprits -- again
+# Step 14 - AtlHerring -----------------
+check.mort(GB.new, 'AtlHerring')
+# Top predators SilverHake, SpinyDogfish, and Pollock
 
-#Top down - 0.9
-GB.params.adj$model[Group == 'OtherDemersals', Biomass := NA]
-GB.params.adj$model[Group == 'OtherDemersals', EE := 0.9]
+# #Spinydogfish
+# lscalc(GB.params.adj$model[Group == 'SpinyDogfish', PB]) #7.8
+# GB.params.adj$model[Group == 'SpinyDogfish', PB := pbcalc(31)]
+# 
+# #New production pushes the PQ ratio very low ... need to decrease Q
+# GB.params.adj$model[Group == 'SpinyDogfish', QB := QB / 4]
+# 
+# #Check Pollock
+# lscalc(GB.params.adj$model[Group == 'Pollock', PB]) #62.5!
+# GB.params.adj$model[Group == 'Pollock', PB := pbcalc(25)]
+# #New production pushes the PQ ratio very low ... need to decrease Q
+# GB.params.adj$model[Group == 'Pollock', QB := QB / 5]
+
+# PBs and QBs now set to match GOM model values
+
+# Herring EE still at 3.37. Bumping B
+GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 4]
+
+# Step 15 - Barndoor -----------------
+check.mort(GB.new, 'Barndoor')
+# Fisheries. Reduce catch further
+for(ifleet in 1:length(fleets)){
+  setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
+  GB.params.adj$model[Group == 'Barndoor', fleet := fleet - fleet * 0.3]
+  setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
+}
+
+# Still over 1, bumping B
+GB.params.adj$model[Group == 'Barndoor', Biomass := Biomass * 2]
+
+
+# Step 16 - Illex -----------------
+check.mort(GB.new, 'Illex')
+# Spinydogfish, Loligo top preds. Bumping B
+GB.params.adj$model[Group == 'Illex', Biomass := Biomass * 2.5]
+
+# Step 17 - RedHake -----------------
+check.mort(GB.new, 'RedHake')
+# Wide variety of mortality with low values. Bumping B
+GB.params.adj$model[Group == 'RedHake', Biomass := Biomass * 2]
+
+
+# Step 18 - EE 1-2 -----------------
+# SilverHake, SmCopepods, LgCopepods, Scup, Haddock,
+# Microzooplankton, Loligo, WitchFlounder, SummerFlounder,
+# Detritus, YTFlounder, Fourspot
+
+check.mort(GB.new, 'SilverHake')
+GB.params.adj$model[Group == 'SilverHake', Biomass := Biomass * 2]
+
+#GelZooplankton major predator of Copepods and Detritus, reducing B
+GB.params.adj$model[Group == 'GelZooplankton', Biomass := Biomass * 0.5]
+
+check.mort(GB.new, 'Microzooplankton')
+# increase B
+GB.params.adj$model[Group == 'Microzooplankton', Biomass := Biomass * 2]
+# Top down for Bacteria
+GB.params.adj$model[Group == 'Bacteria', Biomass := NA]
+GB.params.adj$model[Group == 'Bacteria', EE := 0.9]
+
+check.mort(GB.new, 'Scup')
 
 #Step 17 - Dealing with WinterSkates, and Cod----
 #longevity estimates taken from FishBase
@@ -415,12 +458,7 @@ GB.params.adj$model[Group == 'SilverHake', Biomass := Biomass * 4]
 # Still just above 1. May come back later
 
 
-# Step 20 - AtlMackerel again ------------------
-check.mort(GB.new, 'AtlMackerel')
-# already adjusted diets and landings in step 6
-# Bumping B
 
-GB.params.adj$model[Group == 'AtlMackerel', Biomass := Biomass * 4.5]
 
 
 # Step 21 - WitchFlounder -----------------
@@ -548,15 +586,7 @@ for(ifleet in 1:length(fleets)){
   setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
 }
 
-check.mort(GB.new, 'Redfish') #Fisheries
-#Reduce catch by 80%
-for(ifleet in 1:length(fleets)){
-  setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
-  GB.params.adj$model[Group == 'Redfish', fleet := fleet - fleet * 0.8]
-  setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
-}
-#Still off so bumping biomass
-GB.params.adj$model[Group == 'Redfish', Biomass := Biomass * 6]
+
 
 # Step 27 - EEs > 2 ------------------------------------
 
