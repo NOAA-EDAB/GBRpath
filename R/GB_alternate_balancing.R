@@ -434,19 +434,24 @@ check.mort(GB.new, 'Microzooplankton')
 #GelZooplankton major predator of Copepods and Detritus, reducing B
 GB.params.adj$model[Group == 'GelZooplankton', Biomass := Biomass * 0.5]
 
-# Bump copepod B
-GB.params.adj$model[Group %in% c('SmCopepods', 'LgCopepods'), Biomass := Biomass * 1.5]
+# # Bump copepod B
+# GB.params.adj$model[Group == 'SmCopepods', Biomass := Biomass * 2]
+# GB.params.adj$model[Group == 'LgCopepods', Biomass := Biomass * 1.5]
 
 
 check.mort(GB.new, 'Microzooplankton')
 # increase B
-GB.params.adj$model[Group == 'Microzooplankton', Biomass := Biomass * 2.5]
+GB.params.adj$model[Group == 'Microzooplankton', Biomass := Biomass * 3]
 
 
 
-# Top down for Bacteria
+# Top down for Bacteria and Copepods
 GB.params.adj$model[Group == 'Bacteria', Biomass := NA]
 GB.params.adj$model[Group == 'Bacteria', EE := 0.95]
+GB.params.adj$model[Group == 'SmCopepods', Biomass := NA]
+GB.params.adj$model[Group == 'SmCopepods', EE := 0.95]
+GB.params.adj$model[Group == 'LgCopepods', Biomass := NA]
+GB.params.adj$model[Group == 'LgCopepods', EE := 0.95]
 
 # Detritus
 #Increase unassim to 0.4 for zooplankton
@@ -462,6 +467,10 @@ GB.params.adj$model[Group == 'Bacteria', QB := QB * 0.9]
 GB.params.adj$model[Group == 'Microzooplankton', QB := QB * 0.9]
 GB.params.adj$model[Group == 'LgCopepods', QB := QB * 0.9]
 GB.params.adj$model[Group == 'SmCopepods', QB := QB * 0.9]
+
+# Need to change some PB to stay within 0.1-0.3 P/Q range
+GB.params.adj$model[Group == 'Microzooplankton', PB := PB * 1.2]
+GB.params.adj$model[Group == 'LgCopepods', PB := PB * 1.2]
 
 check.mort(GB.new, 'Scup')
 # increase B
