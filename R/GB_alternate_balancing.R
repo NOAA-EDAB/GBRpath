@@ -531,21 +531,13 @@ GB.params.adj$diet[Group == 'Loligo', Loligo := Loligo - 0.05]
 
 # SummerFlounder
 check.mort(GB.new, 'SummerFlounder')
-# Fisheries. Decrease catch
-for(ifleet in 1:length(fleets)){
-  setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
-  GB.params.adj$model[Group == 'SummerFlounder', fleet := fleet - fleet * 0.2]
-  setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
-}
+# Bumping B
+GB.params.adj$model[Group == 'SummerFlounder', Biomass := Biomass * 1.5]
 
 # WitchFlounder
 check.mort(GB.new, 'WitchFlounder')
-# Fisheries. Decrease catch
-for(ifleet in 1:length(fleets)){
-  setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
-  GB.params.adj$model[Group == 'WitchFlounder', fleet := fleet - fleet * 0.2]
-  setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
-}
+# Bumping B
+GB.params.adj$model[Group == 'WitchFlounder', Biomass := Biomass * 1.5]
 
 # AtlMackerel
 # Bumping B
@@ -553,12 +545,8 @@ GB.params.adj$model[Group == 'AtlMackerel', Biomass := Biomass * 1.1]
 
 # YTFlounder
 check.mort(GB.new, 'YTFlounder')
-# Fisheries. Decrease catch
-for(ifleet in 1:length(fleets)){
-  setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
-  GB.params.adj$model[Group == 'YTFlounder', fleet := fleet - fleet * 0.1]
-  setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
-}
+# Bumping B
+GB.params.adj$model[Group == 'YTFlounder', Biomass := Biomass * 1.1]
 
 # Fourspot
 check.mort(GB.new, 'Fourspot')
