@@ -40,8 +40,43 @@ GB.new <- rpath(GB.params, 'Georges Bank')
 # Call in GOM params
 load(url("https://github.com/SarahJWeisberg/GOM-Rpath/blob/main/outputs/GOM_params_Rpath.RData?raw=true"))
 
+# Call in EMAX groups
+# Values come from GB specific EMAX ecopath model accessed via ecobase
+EMAX.groups <- data.table(Group = c("Bacteria", "BaleenWhales", "GelZooplankton", "HMS" ,"LgCopepods",
+                 "Micronekton", "Microzooplankton","Odontocetes", "Phytoplankton", "SeaBirds",  "SmCopepods"),
+                 PB = c(91.24998, 0.03802086, 40, 0.682623, 54.63586, 
+                        14.25, 72.00002, 0.04, 166.1342, 0.275, 41.66504),
+                 QB = c(380.2082, 4.5, 143.08, 2.053014, 109.5,
+                        36.5, 242.4243, 13.82976, NA, 4.379231, 127.75)
+)
+
+# Groups with P/Q > 0.3 are HMS, LgCopepods, Micronekton, SmCopepods
+# For HMS EMAX pedigree suggested higher confidence in PB than QB
+# For all other groups estimates are equally uncertain
+
+# Increase QB for HMS
+EMAX.groups[Group == 'HMS', QB := 2.3]
+# Decrease PB and Increase QB for LgCopepods, Micronekton, SmCopepods
+EMAX.groups[Group == 'SmCopepods', PB := PB *0.90]
+EMAX.groups[Group == 'SmCopepods', QB := QB *1.1]
+
+EMAX.groups[Group == 'Micronekton', PB := PB *0.85]
+EMAX.groups[Group == 'Micronekton', QB := QB *1.15]
+
+EMAX.groups[Group == 'LgCopepods', PB := PB *0.75]
+EMAX.groups[Group == 'LgCopepods', QB := QB *1.25]
+
+# Groups with P/Q < 0.1 are BaleenWhales, Odontocetes, and SeaBirds
+# all warm blooded so I think it is fine.
+
+# Change PB and QB for these groups in GB.params.adj to EMAX values
+for(igroup in 1:nrow(EMAX.groups)) {
+  GB.params.adj$model[Group == EMAX.groups$Group[igroup], "PB"] <- EMAX.groups$PB[igroup]
+  GB.params.adj$model[Group == EMAX.groups$Group[igroup], "QB"] <- EMAX.groups$QB[igroup]
+}
 
 # PB and QB for GB.params.adj should be set to values from GOM.params
+# Except for EMAX groups which will keep EMAX values
 # match by Group
 # pull out PB and QB from GB.params.adj
 GB.PB.QB <- GB.params.adj$model |> 
@@ -61,6 +96,8 @@ GB.GOM.PB.QB <- GB.GOM.PB.QB |>
           setnames(c('Group', 'PB', 'QB'))
 
 GB.GOM.groups <- GB.GOM.PB.QB$Group
+# Only groups not found in EMAX.groups
+GB.GOM.groups <- GB.GOM.groups[!(GB.GOM.groups %in% EMAX.groups$Group)]
 
 # Set PB in GB.params.adj to GB.GOM.PB.QB$PB
 for(igroup in GB.GOM.groups) {
@@ -109,7 +146,7 @@ GB.params.adj$diet[Group == 'Import', SpinyDogfish := 0.5]
 
 #American Plaice
 #Increase biomass - flatfish poorly sampled by gear
-GB.params.adj$model[Group == 'AmPlaice', Biomass := Biomass * 3]
+GB.params.adj$model[Group == 'AmPlaice', Biomass := Biomass * 4]
 
 #Live about 20 years
 # pbcalc(20) #0.125
@@ -199,7 +236,7 @@ GB.params.adj$diet[Group == 'OtherDemersals', OtherSkates := OtherSkates - 0.002
 check.mort(GB.new, 'BlackSeaBass')
 
 #Bump biomass
-GB.params.adj$model[Group == 'BlackSeaBass', Biomass := Biomass * 4]
+GB.params.adj$model[Group == 'BlackSeaBass', Biomass := Biomass * 4.5]
 
 #Step 05 - Atlantic Mackerel----
 check.mort(GB.new, 'AtlMackerel')
@@ -331,7 +368,7 @@ GB.params.adj$diet[Group == 'Micronekton', GelZooplankton := 0.0137]
 # GB.params.adj$model[Group == 'OtherPelagics', QB := QB / 3]
 # Now set to match GOM model values
 
-# EE still at 2.54. Bumping B
+# EE still at 2.66. Bumping B
 
 GB.params.adj$model[Group == 'Butterfish', Biomass := Biomass * 3]
 
@@ -392,7 +429,7 @@ check.mort(GB.new, 'AtlHerring')
 
 # PBs and QBs now set to match GOM model values
 
-# Herring EE still at 3.37. Bumping B
+# Herring EE still at 3.35. Bumping B
 GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 4]
 
 # Step 15 - Barndoor -----------------
@@ -411,7 +448,7 @@ GB.params.adj$model[Group == 'Barndoor', Biomass := Biomass * 2]
 # Step 16 - Illex -----------------
 check.mort(GB.new, 'Illex')
 # Spinydogfish, Loligo top preds. Bumping B
-GB.params.adj$model[Group == 'Illex', Biomass := Biomass * 2.5]
+GB.params.adj$model[Group == 'Illex', Biomass := Biomass * 2]
 
 # Step 17 - RedHake -----------------
 check.mort(GB.new, 'RedHake')
@@ -420,8 +457,8 @@ GB.params.adj$model[Group == 'RedHake', Biomass := Biomass * 2]
 
 
 # Step 18 - EE 1-2 -----------------
-# SilverHake, SmCopepods, LgCopepods, Scup, Haddock,
-# Microzooplankton, Loligo, WitchFlounder, SummerFlounder,
+# SilverHake, Scup, Microzooplankton, Haddock, AmPlaice,
+# LgCopepods, SmCopepods, Loligo, WitchFlounder, SummerFlounder,
 # Detritus, YTFlounder, Fourspot
 
 check.mort(GB.new, 'SilverHake')
@@ -438,12 +475,24 @@ GB.params.adj$model[Group == 'GelZooplankton', Biomass := Biomass * 0.5]
 # GB.params.adj$model[Group == 'SmCopepods', Biomass := Biomass * 2]
 # GB.params.adj$model[Group == 'LgCopepods', Biomass := Biomass * 1.5]
 
+check.mort(GB.new, 'Scup')
+# increase B
+GB.params.adj$model[Group == 'Scup', Biomass := Biomass * 2]
+
+# Haddock
+check.mort(GB.new, 'Haddock')
+# increase B
+GB.params.adj$model[Group == 'Haddock', Biomass := Biomass * 1.5]
+
+#AmPlaice
+check.mort(GB.new, 'AmPlaice')
+# Mostly fisheries. Don't want to change. Increase B
+GB.params.adj$model[Group == 'AmPlaice', Biomass := Biomass * 1.5]
+
 
 check.mort(GB.new, 'Microzooplankton')
-# increase B
-GB.params.adj$model[Group == 'Microzooplankton', Biomass := Biomass * 3]
-
-
+# Increasing B. Pedigree from EMAX suggests this is the parameter with least cofidence
+GB.params.adj$model[Group == 'Microzooplankton', Biomass := Biomass * 2]
 
 # Top down for Bacteria and Copepods
 GB.params.adj$model[Group == 'Bacteria', Biomass := NA]
@@ -462,24 +511,23 @@ GB.params.adj$model[Group %in% c('Microzooplankton', 'LgCopepods','SmCopepods'),
 GB.params.adj$model[Group %in% c('AmLobster', 'Macrobenthos', 'Megabenthos',
                                  'AtlScallop', 'OceanQuahog', 'OtherShrimps'),
                     Unassim := 0.3]
-#Decrease consumption
-GB.params.adj$model[Group == 'Bacteria', QB := QB * 0.9]
-GB.params.adj$model[Group == 'Microzooplankton', QB := QB * 0.9]
-GB.params.adj$model[Group == 'LgCopepods', QB := QB * 0.9]
-GB.params.adj$model[Group == 'SmCopepods', QB := QB * 0.9]
+# #Decrease consumption
+# GB.params.adj$model[Group == 'Bacteria', QB := QB * 0.9]
+# GB.params.adj$model[Group == 'Microzooplankton', QB := QB * 0.9]
+# GB.params.adj$model[Group == 'LgCopepods', QB := QB * 0.9]
+# GB.params.adj$model[Group == 'SmCopepods', QB := QB * 0.9]
+# 
+# # Need to change some PB to stay within 0.1-0.3 P/Q range
+# GB.params.adj$model[Group == 'Microzooplankton', PB := PB * 1.2]
+# GB.params.adj$model[Group == 'LgCopepods', PB := PB * 1.2]
 
-# Need to change some PB to stay within 0.1-0.3 P/Q range
-GB.params.adj$model[Group == 'Microzooplankton', PB := PB * 1.2]
-GB.params.adj$model[Group == 'LgCopepods', PB := PB * 1.2]
 
-check.mort(GB.new, 'Scup')
-# increase B
-GB.params.adj$model[Group == 'Scup', Biomass := Biomass * 1.5]
+# Loligo
+check.mort(GB.new, 'Loligo')
+# Cannibalism main issue. Moving 3% of diet from loligo to krill
+GB.params.adj$diet[Group == 'Krill', Loligo := Loligo + 0.05]
+GB.params.adj$diet[Group == 'Loligo', Loligo := Loligo - 0.05]
 
-# Haddock
-check.mort(GB.new, 'Haddock')
-# increase B
-GB.params.adj$model[Group == 'Haddock', Biomass := Biomass * 1.5]
 
 # SummerFlounder
 check.mort(GB.new, 'SummerFlounder')
@@ -499,12 +547,6 @@ for(ifleet in 1:length(fleets)){
   setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
 }
 
-# Loligo
-check.mort(GB.new, 'Loligo')
-# Cannibalism main issue. Moving 3% of diet from loligo to krill
-GB.params.adj$diet[Group == 'Krill', Loligo := Loligo + 0.03]
-GB.params.adj$diet[Group == 'Loligo', Loligo := Loligo - 0.03]
-
 # AtlMackerel
 # Bumping B
 GB.params.adj$model[Group == 'AtlMackerel', Biomass := Biomass * 1.1]
@@ -517,6 +559,17 @@ for(ifleet in 1:length(fleets)){
   GB.params.adj$model[Group == 'YTFlounder', fleet := fleet - fleet * 0.1]
   setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
 }
+
+# Fourspot
+check.mort(GB.new, 'Fourspot')
+# Bumping B
+GB.params.adj$model[Group == 'Fourspot', Biomass := Biomass * 1.1]
+
+#AtlHerring
+check.mort(GB.new, 'AtlHerring')
+# Bumping B
+GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 1.1]
+
 
 # Step 19- BA input --------------------
 #Input BA values from BA.input
