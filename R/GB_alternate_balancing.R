@@ -47,7 +47,7 @@ EMAX.groups <- data.table(Group = c("Bacteria", "BaleenWhales", "GelZooplankton"
                  PB = c(91.24998, 0.03802086, 40, 0.682623, 54.63586, 
                         14.25, 72.00002, 0.04, 166.1342, 0.275, 41.66504),
                  QB = c(380.2082, 4.5, 143.08, 2.053014, 109.5,
-                        36.5, 242.4243, 13.82976, NA, 4.379231, 127.75)
+                        36.5, 242.4243, 13.82976, NA, 76.2, 127.75)
 )
 
 # Groups with P/Q > 0.3 are HMS, LgCopepods, Micronekton, SmCopepods
