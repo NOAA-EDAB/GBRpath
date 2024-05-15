@@ -3,6 +3,14 @@
 #SML
 # Updated by MTG 03/01/2024
 
+# Folding Discards into Detritus ----
+
+# Discards were creating an additional biomass flow that complicated
+# network analysis. Trying to make the changes in a way that will
+# be easy to undo if needed in the future.
+
+
+
 #Required packages--------------------------------------------------------------
 library(data.table); library(Rpath); library(here); library(readr); library(dplyr)
 
@@ -21,11 +29,12 @@ groups <- c('SeaBirds', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 'HMS', 'Shar
             'Macrobenthos', 'Megabenthos', 'AtlScallop', 'OceanQuahog', 'SurfClam',
             'OtherShrimps', 'Krill', 'Micronekton', 'GelZooplankton', 
             'Microzooplankton', 'Bacteria', 'LgCopepods', 'SmCopepods', 'Phytoplankton',
-            'Detritus', 'Discards', 
+            'Detritus', #'Discards', 
             'ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
             'Trap', 'SmallMesh', 'LargeMesh', 'HMSFleet') #, 'OtherFisheries')
 
-types <- c(rep(0, 58), 1, 2, 2, rep(3, 9))
+types <- c(rep(0, 58), 1, 2, #2, 
+           rep(3, 9))
 
 GB.params <- create.rpath.params(groups, types)
 
@@ -38,8 +47,8 @@ GB.params$model[Type > 0 & Type < 3, Unassim := 0]
 GB.params$model[Type == 2, DetInput := 0]
 GB.params$model[Type < 2,  Detritus := 1]
 GB.params$model[Type > 1,  Detritus := 0]
-GB.params$model[Type == 3, Discards := 1]
-GB.params$model[Type < 3,  Discards := 0]
+# GB.params$model[Type == 3, Discards := 1]
+# GB.params$model[Type < 3,  Discards := 0]
 
 # Biomass and EE --------------------------------------------------------------
 #Load biomass
@@ -103,48 +112,57 @@ for(igear in 1:length(rfleets)){
 }
 
 #Load discards
-load(here('data', 'disc.input.rda'))
-
-for(igear in 1:length(rfleets)){
-  gear.disc <- disc.input[Fleet == rgear[igear], ]
-  setnames(GB.params$model, paste0(rfleets[igear], '.disc'), 'gear')
-  #Discards
-  for(igroup in 1:nrow(gear.disc)){
-    GB.params$model[Group == gear.disc[igroup, RPATH], 
-                    gear := gear.disc[igroup, Discards]][]
-  }
-  setnames(GB.params$model, 'gear', paste0(rfleets[igear], '.disc'))
-}
+# load(here('data', 'disc.input.rda'))
+# 
+# for(igear in 1:length(rfleets)){
+#   gear.disc <- disc.input[Fleet == rgear[igear], ]
+#   setnames(GB.params$model, paste0(rfleets[igear], '.disc'), 'gear')
+#   #Discards
+#   for(igroup in 1:nrow(gear.disc)){
+#     GB.params$model[Group == gear.disc[igroup, RPATH], 
+#                     gear := gear.disc[igroup, Discards]][]
+#   }
+#   setnames(GB.params$model, 'gear', paste0(rfleets[igear], '.disc'))
+# }
 
 # Diet ------------------------------------------------------------------------
 load(here('data', 'diet.input.rda'))
 
+# Change predation on discards to detritus
+diet.input[Rprey == 'Discards', Rprey := 'Detritus']
+diet.input <- diet.input  |> 
+  group_by(Rpred, Rprey) |>  # Group by predator and prey
+  summarise(preyper = sum(preyper))  |>   # Sum prey consumed per predator-prey pair
+  ungroup() |>                     # Remove grouping
+  distinct(Rpred, Rprey, .keep_all = TRUE)  # Keep all columns, remove duplicates
 
-
-preds <- unique(diet.input[, Rpred])
-#remove OffHake from preds
+preds <- (distinct(diet.input, Rpred)$Rpred)
+#remove OffHake from preds and diet.input
 preds <- preds[preds != 'OffHake']
+diet.input <- diet.input |> 
+                filter(Rpred != 'OffHake')
 
 for(ipred in 1:length(preds)){
   setnames(GB.params$diet, preds[ipred], 'Pred')
-  pred.diet <- diet.input[Rpred == preds[ipred], ]
-  prey <- pred.diet[, Rprey]
+  pred.diet <- filter(diet.input, Rpred == preds[ipred])
+  prey <- filter(pred.diet)$Rprey
   for(iprey in 1:length(prey)){
     GB.params$diet[Group == prey[iprey], 
-                   Pred := pred.diet[Rprey == prey[iprey], preyper]]
+                   Pred := filter(pred.diet, Rprey == prey[iprey])$preyper]
   }
   setnames(GB.params$diet, 'Pred', preds[ipred])
   GB.params$diet[]
 }
 
+
 check.rpath.params(GB.params)
-
-
 usethis::use_data(GB.params, overwrite = T)
 
 #Initial unbalanced model
 
 GB.init <- rpath(GB.params, 'Georges Bank', 1)
+
+
 
 usethis::use_data(GB.init, overwrite = T)
 
