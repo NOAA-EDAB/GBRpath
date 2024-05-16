@@ -113,8 +113,9 @@ for(igroup in GB.GOM.groups) {
   GB.params.adj$model[GB.params.adj$model$Group == igroup, "QB"] <- GB.GOM.PB.QB[GB.GOM.PB.QB$Group == igroup, "QB"]
 }
 
-
-
+# save new starting params for comparison after balancing
+# This will inform pedigree values
+GB.params <- copy(GB.params.adj)
 
 GB.new <- rpath(GB.params.adj, eco.name = 'Georges Bank')
 check.rpath.params(GB.params.adj)
@@ -498,7 +499,25 @@ check.mort(GB.new, 'YTFlounder')
 # Bumping B
 GB.params.adj$model[Group == 'YTFlounder', Biomass := Biomass * 1.1]
 
+#Step 19- BA input --------------------
+  #Input BA values from BA.input
+  load(here('data', 'BA.input.rda'))
 
+  BA.Group <- c('AmLobster','Cod','Goosefish','RedHake','YTFlounder')
+  #Assign values to GB.params.adj$model$BioAcc from BA.input for groups in BA.Group
+  for(igroup in 1:length(BA.Group)){
+    group.name <- BA.Group[igroup]
+    GB.params.adj$model[Group == group.name, BioAcc := BA.input[RPATH == group.name, BA]]
+  }
+  
+#Step 20 - Shark Diet -----------------
+# Shifting Shark Diet away from detritus to match GOM and MAB models
+
+  GB.params.adj$diet[Group == 'Detritus', Sharks := 0.001] #removed 0.05
+  GB.params.adj$diet[Group == 'Pinnipeds', Sharks := 0.025]
+  GB.params.adj$diet[Group == 'Odontocetes', Sharks := Sharks + 0.025]
+  
+  
 # EDITED TO HERE ------------
 GB.new <- rpath(GB.params.adj, eco.name = 'Georges Bank')
 check.rpath.params(GB.params.adj)
@@ -1061,7 +1080,7 @@ check.ee(GB.new)
 
 # Old balancing code from Max ------------
 
-# #Step 17 - Dealing with WinterSkates, and Cod----
+## #Step 17 - Dealing with WinterSkates, and Cod----
 # #longevity estimates taken from FishBase
 # #Cod - too productive
 # lscalc(GB.params.adj$model[Group == 'Cod', PB]) #2.86!
@@ -1075,7 +1094,7 @@ check.ee(GB.new)
 # GB.params.adj$model[Group == 'WinterSkate', PB := pbcalc(21)]
 # 
 # 
-# # Step 18 - AmPlaice -----------------
+## # Step 18 - AmPlaice -----------------
 # check.mort(GB.new, 'AmPlaice')
 # # LargeMesh and SmallMesh top 2
 # # Would rather bump B than decrease catch
@@ -1084,7 +1103,7 @@ check.ee(GB.new)
 # # Barely balance (EE = 0.96) may need to revisit
 # 
 # 
-# # Step 19 - SilverHake -----------------
+## # Step 19 - SilverHake -----------------
 # check.mort(GB.new, 'SilverHake')
 # 
 # GB.params.adj$model[Group == 'SilverHake', QB := QB * .75]
@@ -1105,7 +1124,7 @@ check.ee(GB.new)
 # 
 # 
 # 
-# # Step 21 - WitchFlounder -----------------
+## # Step 21 - WitchFlounder -----------------
 # 
 # # Biomass has already been x5, catch halved, PB adjusted
 # check.mort(GB.new, 'WitchFlounder')
@@ -1115,7 +1134,7 @@ check.ee(GB.new)
 # GB.params.adj$model[Group == 'WitchFlounder', Biomass := Biomass * 4]
 # 
 # 
-# # Step 22 - WhiteHake -----------------
+## # Step 22 - WhiteHake -----------------
 # 
 # # Adjusted PB in step 11
 # check.mort(GB.new, 'WhiteHake')
@@ -1137,7 +1156,7 @@ check.ee(GB.new)
 # # EE = 1.86 - Bumping B
 # GB.params.adj$model[Group == 'WhiteHake', Biomass := Biomass * 3]
 # 
-# # Step 23 - Cod -----------------
+## # Step 23 - Cod -----------------
 # 
 # # Already edited PB and QB in step 17
 # check.mort(GB.new, 'Cod')
@@ -1148,7 +1167,7 @@ check.ee(GB.new)
 # GB.params.adj$model[Group == 'Cod', Biomass := Biomass * 4]
 # 
 # 
-# # Step 24 - BlackSeaBass again -----------------
+## # Step 24 - BlackSeaBass again -----------------
 # 
 # #Step 5 adjusted PB, reduced catch by 30%, and doubled B
 # # further bumping B
@@ -1164,7 +1183,7 @@ check.ee(GB.new)
 # 
 # 
 # 
-# # Step 25 - Goosefish again -----------------
+## # Step 25 - Goosefish again -----------------
 # 
 # #Step 11 adjusted PB and QB
 # check.mort(GB.new, 'Goosefish')
@@ -1172,7 +1191,7 @@ check.ee(GB.new)
 # # Bumping B
 # GB.params.adj$model[Group == 'Goosefish', Biomass := Biomass * 4]
 # 
-# #Step 26 - Address PB issues ----
+## #Step 26 - Address PB issues ----
 # #Need to fix some other predators in the system
 # lscalc(GB.params.adj$model[Group == 'WhiteHake', PB]) #57.5
 # GB.params.adj$model[Group == 'WhiteHake', PB := pbcalc(23)]
@@ -1212,7 +1231,7 @@ check.ee(GB.new)
 # 
 # 
 # 
-# # Step 27 - EEs > 2 ------------------------------------
+## # Step 27 - EEs > 2 ------------------------------------
 # 
 # # AmLobster and Barndoor
 # # AmLobster - already adjusted PB and QB and diet in step 12
@@ -1228,7 +1247,7 @@ check.ee(GB.new)
 # GB.params.adj$model[Group == 'Barndoor', Biomass := Biomass * 2.5]
 # 
 # 
-# # Step 29 - EE  1 - 2 --------------------
+## # Step 29 - EE  1 - 2 --------------------
 # 
 # #RedHake
 # #Bump PB
@@ -1311,7 +1330,7 @@ check.ee(GB.new)
 
 # Old balancing code from Sean  -----------
 
-# #Step 10 - Under 10s - Group #1 BSB, Butter, WinterFlounder----
+## #Step 10 - Under 10s - Group #1 BSB, Butter, WinterFlounder----
 # 
 # #Butterfish/Winter Flounder
 # 
@@ -1326,7 +1345,7 @@ check.ee(GB.new)
 # 
 # 
 # 
-# #Step 13 - Revisit Mackerel, SilverHake, OtherDemersals----
+## #Step 13 - Revisit Mackerel, SilverHake, OtherDemersals----
 # #OtherDemersals
 # lscalc(GB.params.adj$model[Group == 'OtherDemersals', PB]) #4.8
 # check.mort(GB.new, 'OtherDemersals') #WinterSkate, SpinyDogs, Little skate?
@@ -1357,14 +1376,14 @@ check.ee(GB.new)
 # 
 # 
 # 
-# #Step 15 - Last above 3 - Haddock ----
+## #Step 15 - Last above 3 - Haddock ----
 # check.mort(GB.new, 'Haddock') #Macrobenthos?
 # #Moving DC
 # GB.params.adj$diet[Group == 'Haddock', Macrobenthos := NA] #removed 2e-4
 # GB.params.adj$diet[Group == 'RedHake', Macrobenthos := NA] #removed 1e-4
 # GB.params.adj$diet[Group == 'Macrobenthos', Macrobenthos := Macrobenthos + 3e-4]
 # 
-# #Step 16 - Fix Offshore Hake diet ----
+## #Step 16 - Fix Offshore Hake diet ----
 # # OffshoreHake has since been merged with SilverHake
 # 
 # #For some reason 88% of this diet is silver hake
@@ -1374,12 +1393,12 @@ check.ee(GB.new)
 # # GB.params.adj$diet[Group == 'Micronekton', OffHake := OffHake + 0.1]
 # # GB.params.adj$diet[Group == 'OffHake', OffHake := 0.01]
 # 
-# #Step 17 - Summer Flounder ----
+## #Step 17 - Summer Flounder ----
 # lscalc(GB.params.adj$model[Group == 'SummerFlounder', PB]) #2.2
 # GB.params.adj$model[Group == 'SummerFlounder', PB := pbcalc(9)]
 # GB.params.adj$model[Group == 'SummerFlounder', QB := QB / 3]
 # 
-# #Step 18 - Balance all EEs by bumping biomass ----
+## #Step 18 - Balance all EEs by bumping biomass ----
 # 
 # 
 # 
@@ -1400,7 +1419,7 @@ check.ee(GB.new)
 # 
 # 
 # 
-# #Step 19 - Detritus----
+## #Step 19 - Detritus----
 # #Increase unassim to 0.4 for zooplankton
 # GB.params.adj$model[Group %in% c('Microzooplankton', 'LgCopepods','SmCopepods'),
 #                     Unassim := 0.4]
@@ -1416,7 +1435,7 @@ check.ee(GB.new)
 # GB.params.adj$model[Group == 'LgCopepods', QB := QB * 0.75]
 # GB.params.adj$model[Group == 'SmCopepods', QB := QB * 0.75]
 # 
-# #Step 20 - Finishing touches -------
+## #Step 20 - Finishing touches -------
 # #bump up PBs
 # 
 # GB.params.adj$model[Group == 'Cod', PB := PB + 0.1 * PB]
@@ -1432,22 +1451,6 @@ check.ee(GB.new)
 #0 - perfect
 #1 - No clue
 #realistic 0.1 - 0.8
-
-#Edited 5/15/24 to match pedigree justifications for GOM model
-# Sarah Weisberg laid out the justification as:
-# 1. See Whitehouse & Aydin (2020) for pedigree assignment scheme
-# 2. Start with parameters changed in balancing - all biological parameters 
-#    changed 0.8x or more get pedigree of 0.8, otherwise change = pedigree; 
-#    if diet was changed at all, set to 0.8
-# 3. Diet parameters of single species derived from food habit database set 
-#    to 0.4 (because this was aggregated across time due to sparse sampling)
-# 4. Diets derived from EMAX use data pedigree value from EMAX - but minimum 
-#    of 0.4 due to change in time period
-# 5. Biomass estimates derived from EMAX take into account biomass changes 
-#    made during EMAX balancing (ratio of estimate reported in 
-#    documentation : estimate in final model)
-# 6. P/B or Q/B estimates from NWACS = 0.5, from Sean’s GB model = 0.6, 
-#    from multiple sources = 0.4
 
 
 
@@ -1605,6 +1608,7 @@ landings.comparison <- landings.comparison |>
                         mutate(balanced_landings_mt = balanced_landings * 57307.7) |> 
                         mutate(landings_change_mt = balanced_landings_mt - unbalanced_landings_mt)
 
+usethis::use_data(landings.comparison, overwrite = T)
 
 # Save balanced params and model
 alternate.GB.params.bal <- copy(GB.params.adj)
