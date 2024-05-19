@@ -96,6 +96,8 @@ nkept
 GB_sense_bound_bac <- parlist[KEPT]
 
 GB_sense_unbound_bac <-parlist
-
+#save
+save(GB,file = "data/GB_bac.RData")
+save(GB.params,file = "data/GB_params_bac.RData")
 save(GB_sense, file = "data/GB_sense_bound_bac.RData")
 save(GB_sense_unbound, file = "data/GB_sense_unbound_bac.RData")
