@@ -16,6 +16,12 @@ load(here("data/alternate.GB.bal.rda"))
 #Rename model/parameter files
 GB<-alternate.GB.bal
 GB.params<-alternate.GB.params.bal
+
+#adjust Bacteria diet to match MAB
+GB.params$diet[Group == 'Phytoplankton',Bacteria :=0.15]
+GB.params$diet[Group == 'Detritus',Bacteria :=0.85]
+
+GB<-rpath(GB.params,eco.name = 'Georges Bank')
 #Set up model with group names and types
 groups<-as.vector(GB$Group)
 
@@ -62,7 +68,7 @@ orig.biomass<-scene$start_state$Biomass
 
 # ----- Set up ecosense generator ----- #######################################
 scene$params$BURN_YEARS <- 50
-NUM_RUNS <- 1228
+NUM_RUNS <- 1287
 parlist <- as.list(rep(NA, NUM_RUNS))
 kept <- rep(NA, NUM_RUNS)
 
@@ -87,9 +93,9 @@ for (irun in 1:NUM_RUNS){
 KEPT <- which(kept==T)
 nkept <- length(KEPT)
 nkept
-GB_sense <- parlist[KEPT]
+GB_sense_bound_bac <- parlist[KEPT]
 
-GB_sense_unbound<-parlist
+GB_sense_unbound_bac <-parlist
 
-save(GB_sense, file = "data/GB_sense_bound.RData")
-save(GB_sense_unbound, file = "data/GB_sense_unbound.RData")
+save(GB_sense, file = "data/GB_sense_bound_bac.RData")
+save(GB_sense_unbound, file = "data/GB_sense_unbound_bac.RData")

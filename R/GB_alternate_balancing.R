@@ -154,7 +154,6 @@ GB.params.adj$model[Group == 'OceanPout', Biomass := Biomass * 3]
 check.mort(GB.new, 'OceanPout')
 #Main predator is spiny dogfish - moving 5% of spiny dogfish diet into import
 #due to the migratory nature of the species
-GB.params.adj$diet[, SpinyDogfish := SpinyDogfish - (SpinyDogfish * 0.5)]
 GB.params.adj$diet[Group == 'Import', SpinyDogfish := 0.5]
 
 #American Plaice
