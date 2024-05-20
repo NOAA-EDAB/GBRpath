@@ -19,7 +19,7 @@ load(here('data', 'BA.input.rda'))
 prebal(GB.init, spclass.GB)
 
 #Biomass Span - 6x
-#Biomass Slope -0.7110158
+#Biomass Slope -0.6911775
 # PREBAL recomends a biomass slope of -0.05 to -0.1
 
 # There is an issue with this metric - PreBal pub uses ranked order to 
@@ -154,6 +154,7 @@ GB.params.adj$model[Group == 'OceanPout', Biomass := Biomass * 3]
 check.mort(GB.new, 'OceanPout')
 #Main predator is spiny dogfish - moving 5% of spiny dogfish diet into import
 #due to the migratory nature of the species
+GB.params.adj$diet[, SpinyDogfish := SpinyDogfish - (SpinyDogfish * 0.5)]
 GB.params.adj$diet[Group == 'Import', SpinyDogfish := 0.5]
 
 #American Plaice
@@ -356,14 +357,14 @@ check.mort(GB.new, 'AtlHerring')
 
 # PBs and QBs now set to match GOM model values
 
-# Herring EE still at 3.35. Bumping B
+# Herring EE still at 3.89. Bumping B
 GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 4]
 
 
 # Step 11 - Illex -----------------
 check.mort(GB.new, 'Illex')
 # Spinydogfish, Loligo top preds. Bumping B
-GB.params.adj$model[Group == 'Illex', Biomass := Biomass * 2]
+GB.params.adj$model[Group == 'Illex', Biomass := Biomass * 2.5]
 
 
 
@@ -480,13 +481,13 @@ GB.params.adj$model[Group %in% c('AmLobster', 'Macrobenthos', 'Megabenthos',
 # Loligo
 check.mort(GB.new, 'Loligo')
 # Cannibalism main issue. Moving 3% of diet from loligo to krill
-GB.params.adj$diet[Group == 'Krill', Loligo := Loligo + 0.05]
-GB.params.adj$diet[Group == 'Loligo', Loligo := Loligo - 0.05]
+GB.params.adj$diet[Group == 'Krill', Loligo := Loligo + 0.07]
+GB.params.adj$diet[Group == 'Loligo', Loligo := Loligo - 0.07]
 
 #AtlHerring
 check.mort(GB.new, 'AtlHerring')
 # Bumping B
-GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 1.1]
+GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 1.3]
 
 #WinterFlounder
 check.mort(GB.new, 'WinterFlounder')
