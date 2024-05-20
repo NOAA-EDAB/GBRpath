@@ -859,7 +859,9 @@ GB.diet <- GB.diet |>
   bind_rows(GB.diet.plus)
 
 #Need to add Bacteria
-bact <- data.table(Rpred = 'Bacteria', Rprey = 'Detritus', preyper = 1.000)
+# values from GB EMAX model
+bact <- data.table(Rpred = c('Bacteria', 'Bacteria'), Rprey = c('Phytoplankton','Detritus'), preyper = c(0.240,0.760))
+
 
 GB.diet <- rbindlist(list(GB.diet, bact))
 
