@@ -68,7 +68,7 @@ orig.biomass<-scene$start_state$Biomass
 
 # ----- Set up ecosense generator ----- #######################################
 scene$params$BURN_YEARS <- 50
-NUM_RUNS <- 1287
+NUM_RUNS <- 50000
 parlist <- as.list(rep(NA, NUM_RUNS))
 kept <- rep(NA, NUM_RUNS)
 
@@ -81,11 +81,11 @@ for (irun in 1:NUM_RUNS){
   parlist[[irun]]$BURN_YEARS <- 50			# Set Burn Years to 50
   GBsense$params <- parlist[[irun]]
   GBtest <- rsim.run(GBsense, method = "RK4", years = all_years)
-  # failList <- which((is.na(GBtest$end_state$Biomass) | GBtest$end_state$Biomass/orig.biomass > 1000 | GBtest$end_state$Biomass/orig.biomass < 1/1000))
-  # {if (length(failList)>0)
-  # {cat(irun,": fail in year ",GBtest$crash_year,": ",failList,"\n"); kept[irun] <- F; flush.console()}
-  #   else
-  #   {cat(irun,": success!\n"); kept[irun]<-T;  flush.console()}}
+  failList <- which((is.na(GBtest$end_state$Biomass) | GBtest$end_state$Biomass/orig.biomass > 1000 | GBtest$end_state$Biomass/orig.biomass < 1/1000))
+  {if (length(failList)>0)
+  {cat(irun,": fail in year ",GBtest$crash_year,": ",failList,"\n"); kept[irun] <- F; flush.console()}
+    else
+    {cat(irun,": success!\n"); kept[irun]<-T;  flush.console()}}
   parlist[[irun]]$BURN_YEARS <- 1
 }
 
@@ -99,5 +99,5 @@ GB_sense_unbound_bac <-parlist
 #save
 save(GB,file = "data/GB_bac.RData")
 save(GB.params,file = "data/GB_params_bac.RData")
-save(GB_sense, file = "data/GB_sense_bound_bac.RData")
-save(GB_sense_unbound, file = "data/GB_sense_unbound_bac.RData")
+save(GB_sense_bound_bac, file = "data/GB_sense_bound_bac.RData")
+save(GB_sense_unbound_bac, file = "data/GB_sense_unbound_bac.RData")
