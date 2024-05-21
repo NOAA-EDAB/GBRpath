@@ -481,8 +481,8 @@ GB.params.adj$model[Group %in% c('AmLobster', 'Macrobenthos', 'Megabenthos',
 # Loligo
 check.mort(GB.new, 'Loligo')
 # Cannibalism main issue. Moving 3% of diet from loligo to krill
-GB.params.adj$diet[Group == 'Krill', Loligo := Loligo + 0.07]
-GB.params.adj$diet[Group == 'Loligo', Loligo := Loligo - 0.07]
+GB.params.adj$diet[Group == 'Krill', Loligo := Loligo + 0.06]
+GB.params.adj$diet[Group == 'Loligo', Loligo := Loligo - 0.06]
 
 #AtlHerring
 check.mort(GB.new, 'AtlHerring')
