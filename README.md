@@ -11,7 +11,30 @@ Rpath model of Georges Bank
 | ----------------------------------------------------------------------------------------------- 
 | [![](https://avatars.githubusercontent.com/u/5578254?s=100&u=cd59cd654cab73ea583c697145bfe062222355cd&v=4)](https://github.com/slucey) | 
 
+## Order in which to run scripts
 
+# To gather input data
+# 1. Go to GBRpath>data-raw>R
+# 2. Run the following scripts in order:
+#   - `GBRpath_biomass_pull.R`
+#   - `GBRpath_biomass_accumulation.R`
+#   - `GBRpath_bioparams.R`
+#   - `GBRpath_catch_pull.R`
+#   - `GBRpath_diet_pull.R`
+# All other scripts in the data-raw folder are out of date.
+# Some rely on data pulls which were replaced by hard data copies when Sean left NOAA.
+
+# To create initial model
+# 1. Go to GBRpath>R
+# 2. Run the following scripts in order:
+#   - `copepod_reorganization.R`
+#   - `GBRpath_initial_model.R`
+#   - `GBRpath_data_pedigree.R`
+
+# To recreate balancing process
+# 1. Go to GBRpath>R
+# 2. Run the following scripts in order:
+#   - `GBRpath_alternate_balance.R`
 
 #### Legal disclaimer
 
