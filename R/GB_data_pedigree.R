@@ -28,11 +28,11 @@
 
 
 # Load packages
-library(data.table); library(dplyr)
+library(data.table); library(dplyr); library(here)
 
 # Load GB.params and GB.params.adj
-load("~/GBRpath/data/GB.params.rda")
-load("~/GBRpath/data/alternate.GB.params.bal.rda")
+load(here('data', "GB.params.rda"))
+load(here('data', "alternate.GB.params.bal.rda"))
 
 # Compare biological parameters from GB.params and GB.params.adj
 pedigree.cols <- colnames(alternate.GB.params.bal$pedigree)
@@ -145,7 +145,7 @@ alternate.GB.params.bal$pedigree[, Diet := pedigree$Diet]
 # Fleets
 
 # look at landings changed in balancing
-load("~/GBRpath/data/landings.comparison.rda")
+load(here('data', "landings.comparison.rda"))
 
 landings.comparison <- landings.comparison |> 
   mutate(Change = (balanced_landings / unbalanced_landings) - 1) |> 

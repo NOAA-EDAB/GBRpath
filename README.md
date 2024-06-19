@@ -29,12 +29,15 @@ Rpath model of Georges Bank
 # 2. Run the following scripts in order:
 #   - `copepod_reorganization.R`
 #   - `GBRpath_initial_model.R`
-#   - `GBRpath_data_pedigree.R`
+
 
 # To recreate balancing process
 # 1. Go to GBRpath>R
 # 2. Run the following scripts in order:
 #   - `GBRpath_alternate_balance.R`
+#   - `GB_data_pedigree.R`
+
+
 
 #### Legal disclaimer
 
