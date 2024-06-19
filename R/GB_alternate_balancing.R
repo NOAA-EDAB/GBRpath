@@ -1069,13 +1069,6 @@ check.ee(GB.new)
 #   GB.params.adj$model[Group == group.name, BioAcc := BA.input[RPATH == group.name, BA]]
 # }
 # 
-## EDITED TO HERE ------------
-# GB.new <- rpath(GB.params.adj, eco.name = 'Georges Bank')
-# check.rpath.params(GB.params.adj)
-# check.ee(GB.new)
-# 
-## NOW BALANCED HERE -------------------------------------------
-
 
 
 # Old balancing code from Max ------------
@@ -1454,89 +1447,89 @@ check.ee(GB.new)
 
 
 
-fleets <- c('ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
-            'Trap', 'SmallMesh', 'LargeMesh', 'HMSFleet') #, 'OtherFisheries')
-
-#Biomass -
-GB.params$pedigree[, B := 0.2]
-GB.params$pedigree[Group %in% fleets, B := 0]
-GB.params$pedigree[Group %in% c('Redfish', 'AmPlaice', 'SouthernDemersals', 'Pollock',
-                                'OceanPout', 'OffHake', 'WitchFlounder', 'Mesopelagics',
-                                'Goosefish', 'BlackSeaBass', 'Sharks'), B := 0.4]
-GB.params$pedigree[Group %in% c('Seabirds', 'BalWhale', 'ToothWhale', 'HMS',
-                                'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton',
-                                'LgCopepods','SmCopepods', 'Microzooplankton', 'Phytoplankton'),
-                   B := 0.5]
-GB.params$pedigree[Group %in% c('Bacteria', 'Detritus','Discards', 'Seals'), B := 0.8]
-GB.params$pedigree[Group %in% c('SmPelagics', 'OtherCephalopods', 'OtherShrimp',
-                                'OtherPelagics', 'OtherFlatfish', 'SmFlatfishes'),
-                   B := 0.5]
-
-#PB -
-GB.params$pedigree[, PB := 0.2]
-GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), PB := 0]
-GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
-                                'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
-                                'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
-                                'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
-                                'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
-                                'ToothWhale', 'Seabirds'), PB := 0.5]
-GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
-                                'Illex', 'Loligo', 'OtherCephalopods', 'Barndoor',
-                                'Fourspot', 'OffHake',  'RedHake', 'Redfish', 'Scup',
-                                'SmoothDogfish'), PB := 0.6]
-GB.params$pedigree[Group %in% c('Goosefish',  'SilverHake',  'WhiteHake',  'Pollock',
-                                'OceanPout', 'BlackSeaBass', 'AmPlaice', 'Windowpane',
-                                'WinterFlounder', 'WitchFlounder', 'WinterSkate',
-                                'LittleSkate'), PB := 0.7]
-GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), PB := 0.8]
-
-#QB -
-GB.params$pedigree[, QB := 0.2]
-GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), QB := 0]
-GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
-                                'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
-                                'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
-                                'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
-                                'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
-                                'ToothWhale', 'Seabirds'), QB := 0.5]
-GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
-                                'Illex', 'Loligo', 'OtherCephalopods', 'Barndoor',
-                                'Fourspot', 'OffHake',  'RedHake', 'Redfish', 'Scup',
-                                'SmoothDogfish', 'Goosefish',  'OceanPout',
-                                'BlackSeaBass', 'AmPlaice', 'Windowpane',
-                                'WinterFlounder', 'WitchFlounder', 'WinterSkate',
-                                'LittleSkate'), QB := 0.6]
-GB.params$pedigree[Group %in% c('SilverHake',  'WhiteHake',  'Pollock'), QB := 0.7]
-GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), QB := 0.8]
-
-#Diet
-GB.params$pedigree[, Diet := 0.2]
-GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), Diet := 0]
-GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
-                                'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
-                                'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
-                                'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
-                                'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
-                                'ToothWhale', 'Seabirds'), Diet := 0.5]
-GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
-                                'Illex', 'Loligo', 'OtherCephalopods'), Diet := 0.6]
-GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), Diet := 0.8]
-
-#Fleets
-for(igear in 1:length(fleets)){
-  setnames(GB.params$pedigree, fleets[igear], 'gear')
-  GB.params$pedigree[, gear := 0.2]
-  GB.params$pedigree[Group %in% fleets, gear := 0]
-  GB.params$pedigree[Group %in% c('Redfish', 'AmPlaice', 'SouthernDemersals', 'Pollock',
-                                  'OceanPout', 'OffHake', 'WitchFlounder', 'Mesopelagics',
-                                  'Goosefish', 'BlackSeaBass', 'Sharks'), gear := 0.4]
-  GB.params$pedigree[Group %in% c('Seabirds', 'BalWhale', 'ToothWhale', 'HMS',
-                                  'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton',
-                                  'LgCopepods','SmCopepods', 'Microzooplankton', 'Phytoplankton'),
-                     gear := 0.5][]
-  setnames(GB.params$pedigree, 'gear', fleets[igear])
-}
+# fleets <- c('ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
+#             'Trap', 'SmallMesh', 'LargeMesh', 'HMSFleet') #, 'OtherFisheries')
+# 
+# #Biomass -
+# GB.params$pedigree[, B := 0.2]
+# GB.params$pedigree[Group %in% fleets, B := 0]
+# GB.params$pedigree[Group %in% c('Redfish', 'AmPlaice', 'SouthernDemersals', 'Pollock',
+#                                 'OceanPout', 'OffHake', 'WitchFlounder', 'Mesopelagics',
+#                                 'Goosefish', 'BlackSeaBass', 'Sharks'), B := 0.4]
+# GB.params$pedigree[Group %in% c('Seabirds', 'BalWhale', 'ToothWhale', 'HMS',
+#                                 'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton',
+#                                 'LgCopepods','SmCopepods', 'Microzooplankton', 'Phytoplankton'),
+#                    B := 0.5]
+# GB.params$pedigree[Group %in% c('Bacteria', 'Detritus','Discards', 'Seals'), B := 0.8]
+# GB.params$pedigree[Group %in% c('SmPelagics', 'OtherCephalopods', 'OtherShrimp',
+#                                 'OtherPelagics', 'OtherFlatfish', 'SmFlatfishes'),
+#                    B := 0.5]
+# 
+# #PB -
+# GB.params$pedigree[, PB := 0.2]
+# GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), PB := 0]
+# GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
+#                                 'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
+#                                 'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
+#                                 'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
+#                                 'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
+#                                 'ToothWhale', 'Seabirds'), PB := 0.5]
+# GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
+#                                 'Illex', 'Loligo', 'OtherCephalopods', 'Barndoor',
+#                                 'Fourspot', 'OffHake',  'RedHake', 'Redfish', 'Scup',
+#                                 'SmoothDogfish'), PB := 0.6]
+# GB.params$pedigree[Group %in% c('Goosefish',  'SilverHake',  'WhiteHake',  'Pollock',
+#                                 'OceanPout', 'BlackSeaBass', 'AmPlaice', 'Windowpane',
+#                                 'WinterFlounder', 'WitchFlounder', 'WinterSkate',
+#                                 'LittleSkate'), PB := 0.7]
+# GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), PB := 0.8]
+# 
+# #QB -
+# GB.params$pedigree[, QB := 0.2]
+# GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), QB := 0]
+# GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
+#                                 'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
+#                                 'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
+#                                 'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
+#                                 'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
+#                                 'ToothWhale', 'Seabirds'), QB := 0.5]
+# GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
+#                                 'Illex', 'Loligo', 'OtherCephalopods', 'Barndoor',
+#                                 'Fourspot', 'OffHake',  'RedHake', 'Redfish', 'Scup',
+#                                 'SmoothDogfish', 'Goosefish',  'OceanPout',
+#                                 'BlackSeaBass', 'AmPlaice', 'Windowpane',
+#                                 'WinterFlounder', 'WitchFlounder', 'WinterSkate',
+#                                 'LittleSkate'), QB := 0.6]
+# GB.params$pedigree[Group %in% c('SilverHake',  'WhiteHake',  'Pollock'), QB := 0.7]
+# GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), QB := 0.8]
+# 
+# #Diet
+# GB.params$pedigree[, Diet := 0.2]
+# GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), Diet := 0]
+# GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
+#                                 'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
+#                                 'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
+#                                 'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
+#                                 'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
+#                                 'ToothWhale', 'Seabirds'), Diet := 0.5]
+# GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
+#                                 'Illex', 'Loligo', 'OtherCephalopods'), Diet := 0.6]
+# GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), Diet := 0.8]
+# 
+# #Fleets
+# for(igear in 1:length(fleets)){
+#   setnames(GB.params$pedigree, fleets[igear], 'gear')
+#   GB.params$pedigree[, gear := 0.2]
+#   GB.params$pedigree[Group %in% fleets, gear := 0]
+#   GB.params$pedigree[Group %in% c('Redfish', 'AmPlaice', 'SouthernDemersals', 'Pollock',
+#                                   'OceanPout', 'OffHake', 'WitchFlounder', 'Mesopelagics',
+#                                   'Goosefish', 'BlackSeaBass', 'Sharks'), gear := 0.4]
+#   GB.params$pedigree[Group %in% c('Seabirds', 'BalWhale', 'ToothWhale', 'HMS',
+#                                   'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton',
+#                                   'LgCopepods','SmCopepods', 'Microzooplankton', 'Phytoplankton'),
+#                      gear := 0.5][]
+#   setnames(GB.params$pedigree, 'gear', fleets[igear])
+# }
 
 
 
