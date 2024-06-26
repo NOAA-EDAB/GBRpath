@@ -20,6 +20,86 @@ load(here('data/NEFSC_BTS_2021_all_seasons.RData'))
 #Use these codes to translate survey species codes ('SVSPP') to RPATH species codes ('spp')
 load(here('data-raw/Species_codes.Rdata'))
 
+#Clam index -------------------------------------------------------------------
+load(here('data', 'survdatClams.RData'))
+
+#Use GB clam region to calculate biomass
+# clam.index <- clams$data[!is.na(SVSPP) & clam.region == 'GB', 
+#                          .(B = mean(BIOMASS.MW, na.rm = T)), by = c('YEAR', 'SVSPP')]
+
+clam.index <- clams$data |> 
+      filter(!is.na(SVSPP), clam.region == 'GB') |> 
+  group_by(YEAR, SVSPP) |> 
+  summarise(Biomass = mean(BIOMASS.MW, na.rm = T), Stdev = sd(BIOMASS.MW, na.rm = T)) |> 
+  ungroup()
+
+#Need to expand from kg/tow to mt/km^2
+# Clam tows can vary greatly by I'll use an example tow as the expansion
+# 0.0039624 (dredge width in km) * 0.374(tow length in km) = 0.00148 
+#kg to mt is 0.001
+# so conversion is 0.001 / 0.00148 or 0.6757
+# clam.index[, B := B * 0.6757]
+# clam.index[, SD := SD * 0.6757]
+# clam.index[, Units := 'mt km^-2']
+# clam.index$RPATH <- ifelse(clam.index$SVSPP == 409, 'OceanQuahog','SurfClam')
+
+clam.index <- clam.index |> 
+  mutate(Biomass = Biomass*0.6757) |> 
+  mutate(Stdev = Stdev*0.6757) |>
+  mutate(RPATH = ifelse(SVSPP == 409, 'OceanQuahog', 'SurfClam')) |> 
+  select(-SVSPP)
+
+#clam.index[, RPATH := 'Clams']
+
+# create weight
+clam.index <- clam.index |> 
+                  mutate(CV = Stdev / Biomass) |> 
+                  group_by(RPATH) |>
+                  mutate(mean_CV = mean(CV, na.rm = T)) |> 
+                  mutate(weight = 1 / mean_CV) |> 
+                  dplyr::ungroup()
+
+#Scallop index ---------------------------------------------------------------
+#Scallops and clam survey not included in ms-keyrun data set as they are not 
+#used in the other models
+library(DBI); library(sf); library(survdat)
+
+#Connect to the database
+# channel <- dbutils::connect_to_database('sole', 'slucey')
+
+#scall <- survdat::get_survdat_scallop_data(channel, getWeightLength = T)
+load(here::here('data', 'survdatScallops.RData'))
+
+#Scallop survey did not record weight prior to 2001 (FSCS) so need to manually
+#calculate catch weights
+scalldat <- scallops$survdat[, BIOMASS := sum(WGTLEN), by = c('YEAR', 'STATION')]
+
+scalldat <- scallops$survdat |> 
+  group_by(YEAR, STATION) |> 
+  dplyr::mutate(Stdev = sd(WGTLEN, na.rm = T)) |>
+  dplyr::mutate(Biomass = sum(WGTLEN)) |> 
+  dplyr::ungroup()
+
+#Calculate scallop index
+#use poststrat to assign to EPU
+epu <- sf::st_read(dsn = here::here('data-raw','gis', 'EPU_extended.shp'))
+
+scall.mean <- survdat::calc_stratified_mean(scalldat, areaPolygon = epu,
+                                            areaDescription = 'EPU',
+                                            filterByArea = 'GB',
+                                            filterBySeason = 'SUMMER', tidy = T)
+
+scall.index <- scall.mean[variable == 'strat.biomass', .(Biomass = value), by = YEAR]
+#Need to expand from kg/tow to mt/km^2
+#A tow is approximately 0.0045 km^2 
+# 0.001317 (dredge width in nautical miles) * 1.852(convert naut mi to km)
+# 1.0 (tow length in nautical miles) * 1.852(convert naut mi to km)
+#kg to mt is 0.001
+# so conversion is 0.001 / 0.0045 or 0.222
+scall.index[, Biomass := Biomass * 0.222]
+# scall.index[, Biomass := NULL]
+scall.index[, Units := 'mt km^-2']
+scall.index[, RPATH := 'AtlScallop']
 
 #Calculate total GB area ------------------------------------------------------
 area<-sf::st_read(dsn=system.file("extdata","strata.shp",package="survdat"))
@@ -62,7 +142,12 @@ swept<-merge(swept,spp[,list(SVSPP,RPATH,SCINAME,Fall.q)], by = 'SVSPP')
 
 #Calcuate biomass, sd / area in mt  -------------------------------------
 swept <- swept[, biomass.area   := (tot.biomass*.001)/(Fall.q*GB.area)]
+# replace 0 variance with NA
+swept <- swept[, tot.bio.var := ifelse(tot.bio.var == 0, NA, tot.bio.var)]
 swept <- swept[, sd.area   := (sqrt(tot.bio.var)*.001)/(Fall.q*GB.area)]
+# remove NAs
+swept <- swept |> 
+  filter(!is.na(sd.area))
 
 #add biomasses (relevant for aggregate groups) -------------------------------
 setkey(swept,RPATH,YEAR)
@@ -72,21 +157,49 @@ setnames(biomass_fit, 'V1','Biomass')
 #average stderror (relevant for aggregate groups) -----------------------------
 #not correcting for area because that shouldn't matter - right??
 setkey(swept,RPATH,YEAR)
-sd_fit<-swept[,mean(sd.area), by = key(swept)]
+
+
+sd_fit<-swept[,mean(sd.area, na.rm = T), by = key(swept)]
 setnames(sd_fit,'V1','Stdev')
+
 
 #merge biomass with SD --------------------------------------------------------
 biomass_fit<-cbind(biomass_fit,sd_fit$Stdev)
 setnames(biomass_fit, 'V2','Stdev')
 
 #subset for 1985-2019 ---------------------------------------------------------
-biomass_fit<-biomass_fit[YEAR %in% 1985:2019]
+biomass_fit<-biomass_fit[YEAR %in% 1985:2022]
 
 #drop units for plotting purposes ---------------------------------------------
 biomass_fit$Biomass <- drop_units(biomass_fit$Biomass)
 biomass_fit$Stdev <- drop_units(biomass_fit$Stdev)
 
-biomass_fit<-biomass_fit[!RPATH %in% c(NA, 'Fauna','Freshwater','SouthernDemersals')]
+
+# biomass_fit<-biomass_fit[!RPATH %in% c(NA, 'Fauna','Freshwater','SouthernDemersals')]
+
+#remove groups not in the model -----------------------------------------------
+load(here('data/alternate.GB.bal.rda'))
+GBRpath_species <- alternate.GB.bal[["Group"]]
+
+biomass_fit <- biomass_fit |> 
+  filter(RPATH %in% GBRpath_species)
+
+#replace bts data with clam and scallop data ----------------------------------
+biomass_fit <- biomass_fit |> 
+                   filter(RPATH != 'SurfClam') |> 
+                   filter(RPATH != 'OceanQuahog') |>
+                   filter(RPATH != 'AtlScallop')
+
+clam.index.bind <- clam.index |> 
+  filter(YEAR %in% 1985:2022) |> 
+  select(YEAR, RPATH, Biomass, Stdev)
+
+scall.index.bind <- scall.index |>
+  filter(YEAR %in% 1985:2022) |>
+  select(YEAR, RPATH, Biomass) |> 
+  mutate(Stdev = NA)
+
+biomass_fit <- rbind(biomass_fit, clam.index.bind, scall.index.bind)
 
 #adjust biomass values for changes made during balancing -----------------------
 
@@ -115,11 +228,25 @@ biomass_adjust <- biomass_adjust  |>
                     dplyr::select(-Biomass, -ratio)
 biomass_fit <- biomass_fit  |> 
                   rename(Group = RPATH, Year = YEAR, Value = Biomass)
-#set biomass as index or absolute as appropriate
+#set biomass as index or absolute as appropriate --------------------------------
 biomass_adjust$Type <- rep("absolute",length(biomass_adjust$Group))
 biomass_adjust$Scale <- rep(1,length(biomass_adjust$Group))
 biomass_fit$Type <- rep("index",length(biomass_adjust$Group))
 biomass_fit$Scale <- rep(1,length(biomass_adjust$Group))
+
+#set weights for fitting --------------------------------------------------------
+biomass_weights <- biomass_fit |>
+                      # mutate(Stdev = replace(Stdev,
+                      #                        Stdev == 0, NA)) |> 
+                      mutate(CV = Stdev / Value) |> 
+                      group_by(Group) |>
+                      mutate(mean_CV = mean(CV, na.rm = T)) |> 
+                      mutate(weight = 1 / mean_CV) |> 
+                      dplyr::ungroup()
+
+group_B_weights <- biomass_weights |> 
+                      select(Group, weight) |> 
+                      distinct()
 
 #save file
 write.csv(biomass_adjust,"fitting/biomass_fit.csv")
@@ -135,5 +262,37 @@ ggplot(biomass_adjust[Group == "Cod",],aes(x=Year, y = Value)) +
   geom_point() +
   geom_smooth(method = "loess", se = TRUE) +
   labs(title = "Cod Biomass on Georges Bank",
+       x = "Year",
+       y = "Biomass (t/km^2)")
+
+# Just Haddock
+ggplot(biomass_adjust[Group == "Haddock",],aes(x=Year, y = Value)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = TRUE) +
+  labs(title = "Haddock Biomass on Georges Bank",
+       x = "Year",
+       y = "Biomass (t/km^2)")
+
+# AtlScallop
+ggplot(biomass_adjust[Group == "AtlScallop",],aes(x=Year, y = Value)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = TRUE) +
+  labs(title = "Scallop Biomass on Georges Bank",
+       x = "Year",
+       y = "Biomass (t/km^2)")
+
+# OceanQuahog
+ggplot(biomass_adjust[Group == "OceanQuahog",],aes(x=Year, y = Value)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = TRUE) +
+  labs(title = "Quahog Biomass on Georges Bank",
+       x = "Year",
+       y = "Biomass (t/km^2)")
+
+# SurfClam
+ggplot(biomass_adjust[Group == "SurfClam",],aes(x=Year, y = Value)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = TRUE) +
+  labs(title = "SurfClam Biomass on Georges Bank",
        x = "Year",
        y = "Biomass (t/km^2)")
