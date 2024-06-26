@@ -1,6 +1,6 @@
-#Title: GOM Rpath Time Series Fitting
+#Title: GB Rpath Time Series Fitting
 
-# Purpose: This script fits the Gulf of Maine Rpath model 
+# Purpose: This script fits the Georges Bank Rpath model 
 #           to time series data from 1985-2019
 
 # DataFiles: 'landings_fit.csv'
@@ -11,12 +11,12 @@
 # https://github.com/SarahJWeisberg/GOM-Rpath/blob/main/fitting/fitting.R
 
 #Load packages
-remotes::install_github('NOAA-EDAB/Rpath', ref='forced_catch_fix', force = T)
+remotes::install_github('NOAA-EDAB/Rpath', ref='fit_beta', force = T)
 library(Rpath); library(data.table);library(dplyr);library(here)
 
 # #Pull in code from GitHub
-library(devtools)
-source_url('https://github.com/NOAA-EDAB/Rpath/blob/fit_alpha/R/ecofitting.R')
+# library(devtools)
+# source_url('https://github.com/NOAA-EDAB/Rpath/blob/fit_alpha/R/ecofitting.R')
 
 #Create fitting functions
 source(here("fitting/ecofitting.R"))
@@ -38,7 +38,8 @@ biomass.datafile  <- paste("fitting/biomass_fit.csv",sep='')
 
 # Setup Base Ecopath and Base Rsim scenario
 basescene85 <- rsim.scenario(GB, GB.params, years = fit.years)
-basescene85$params$NoIntegrate[4:5]<-0# Manually change NoIntegrate flags so I can use AB method
+basescene85$params$NoIntegrate[57:58]<-0# Manually change NoIntegrate flags so I can use AB method
+# Done for Bacteria and LgCopepods
 scene0 <- basescene85
 
 # Read in fitting data
@@ -81,8 +82,8 @@ run0 <- rsim.run(scene0, method='AB', years=fit.years)
 rsim.fit.table(scene0,run0)
 
 # Species to test 
-test_sp <- c("Haddock", "AmLobster", "Redfish","AtlHerring", "Cusk", "Cod")
-index_sp<-c("Goosefish","AmPlaice","AtlHalibut",
+test_sp <- c("Haddock", "AmLobster", "Redfish","AtlHerring", "Cod")
+index_sp<-c("AmPlaice","AtlHalibut",
             "WitchFlounder","YTFlounder","Fourspot","WinterFlounder")
 #maybe include "SilverHake"
 data_type <- "index"  #"absolute"
@@ -98,11 +99,10 @@ scene0$fitting$Biomass$Type[!(scene0$fitting$Biomass$Group %in% index_sp)] <- "a
 # Set data weighting for species to fit
 scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Haddock","Redfish")] <- 1
 scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("AtlHerring","Cod","RedHake","Pollock","AmLobster")] <- 0.1
-scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Cusk")] <- 0.5
 
 # all combined
 fit_values   <- c(rep(0,length(test_sp)),rep(0,length(test_sp)),rep(0,length(test_sp))) 
-#fit_values   <- c(rep(0.2,length(test_sp)),rep(0.02,length(test_sp)),rep(0.02,length(test_sp))) 
+fit_values   <- c(rep(0.2,length(test_sp)),rep(0.02,length(test_sp)),rep(0.02,length(test_sp)))
 fit_species  <- c(test_sp,test_sp,test_sp)
 fit_vartype  <- c(rep("mzero",length(test_sp)),
                   rep("predvul",length(test_sp)),
