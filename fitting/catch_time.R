@@ -63,6 +63,14 @@ spp.land <- land.index |>
   summarise(Landings=sum(Landings)) |> 
   ungroup()
 
+#remove groups not in the model -----------------------------------------------
+load(here('data/alternate.GB.bal.rda'))
+GBRpath_species <- alternate.GB.bal[["Group"]]
+
+spp.land <- spp.land |> 
+  filter(RPATH %in% GBRpath_species)
+
+
 #rename columns to comply with fitting code -----------------------------------
 colnames(spp.land)<-c("Group", "Year", "Value")
 colnames(land.index)<-c("Fleet", "Group", "Year", "Value")
@@ -80,6 +88,16 @@ land.index[,Scale := rep(1,length(land.index$Value))]
 ggplot(spp.land,aes(x=Year, y = Value)) +
   geom_point() +
   facet_wrap(vars(Group),ncol = 4, scales = "free")
+
+spp.land |> 
+  filter(Group == "SurfClam") |>
+  ggplot(aes(x=Year, y = Value)) +
+  geom_point()
+
+spp.land |> 
+  filter(Group == "OceanQuahog") |>
+  ggplot(aes(x=Year, y = Value)) +
+  geom_point()
 
 #add a column called 'catch?'
 
