@@ -52,12 +52,12 @@ clam.index <- clam.index |>
 #clam.index[, RPATH := 'Clams']
 
 # create weight
-clam.index <- clam.index |> 
-                  mutate(CV = Stdev / Biomass) |> 
-                  group_by(RPATH) |>
-                  mutate(mean_CV = mean(CV, na.rm = T)) |> 
-                  mutate(weight = 1 / mean_CV) |> 
-                  dplyr::ungroup()
+# clam.index <- clam.index |> 
+#                   mutate(CV = Stdev / Biomass) |> 
+#                   group_by(RPATH) |>
+#                   mutate(mean_CV = mean(CV, na.rm = T)) |> 
+#                   mutate(weight = 1 / mean_CV) |> 
+#                   dplyr::ungroup()
 
 #Scallop index ---------------------------------------------------------------
 #Scallops and clam survey not included in ms-keyrun data set as they are not 
@@ -90,6 +90,10 @@ scall.mean <- survdat::calc_stratified_mean(scalldat, areaPolygon = epu,
                                             filterBySeason = 'SUMMER', tidy = T)
 
 scall.index <- scall.mean[variable == 'strat.biomass', .(Biomass = value), by = YEAR]
+scall.index$Stdev <- scall.mean |> 
+                      filter(variable == 'biomass.SE') |> 
+                      select(value)
+
 #Need to expand from kg/tow to mt/km^2
 #A tow is approximately 0.0045 km^2 
 # 0.001317 (dredge width in nautical miles) * 1.852(convert naut mi to km)
@@ -97,6 +101,7 @@ scall.index <- scall.mean[variable == 'strat.biomass', .(Biomass = value), by = 
 #kg to mt is 0.001
 # so conversion is 0.001 / 0.0045 or 0.222
 scall.index[, Biomass := Biomass * 0.222]
+scall.index[, Stdev := Stdev * 0.222]
 # scall.index[, Biomass := NULL]
 scall.index[, Units := 'mt km^-2']
 scall.index[, RPATH := 'AtlScallop']
@@ -143,11 +148,11 @@ swept<-merge(swept,spp[,list(SVSPP,RPATH,SCINAME,Fall.q)], by = 'SVSPP')
 #Calcuate biomass, sd / area in mt  -------------------------------------
 swept <- swept[, biomass.area   := (tot.biomass*.001)/(Fall.q*GB.area)]
 # replace 0 variance with NA
-swept <- swept[, tot.bio.var := ifelse(tot.bio.var == 0, NA, tot.bio.var)]
+# swept <- swept[, tot.bio.var := ifelse(tot.bio.var == 0, NA, tot.bio.var)]
 swept <- swept[, sd.area   := (sqrt(tot.bio.var)*.001)/(Fall.q*GB.area)]
 # remove NAs
-swept <- swept |> 
-  filter(!is.na(sd.area))
+# swept <- swept |> 
+#   filter(!is.na(sd.area))
 
 #add biomasses (relevant for aggregate groups) -------------------------------
 setkey(swept,RPATH,YEAR)
@@ -159,7 +164,7 @@ setnames(biomass_fit, 'V1','Biomass')
 setkey(swept,RPATH,YEAR)
 
 
-sd_fit<-swept[,mean(sd.area, na.rm = T), by = key(swept)]
+sd_fit<-swept[,mean(sd.area), by = key(swept)]
 setnames(sd_fit,'V1','Stdev')
 
 
@@ -173,9 +178,6 @@ biomass_fit<-biomass_fit[YEAR %in% 1985:2019]
 #drop units for plotting purposes ---------------------------------------------
 biomass_fit$Biomass <- drop_units(biomass_fit$Biomass)
 biomass_fit$Stdev <- drop_units(biomass_fit$Stdev)
-
-
-biomass_fit<-biomass_fit[!RPATH %in% c(NA, 'Fauna','Freshwater')]
 
 #remove groups not in the model -----------------------------------------------
 load(here('data/alternate.GB.bal.rda'))
@@ -191,13 +193,12 @@ biomass_fit <- biomass_fit |>
                    filter(RPATH != 'AtlScallop')
 
 clam.index.bind <- clam.index |> 
-  filter(YEAR %in% 1985:2022) |> 
+  filter(YEAR %in% 1985:2019) |> 
   select(YEAR, RPATH, Biomass, Stdev)
 
 scall.index.bind <- scall.index |>
-  filter(YEAR %in% 1985:2022) |>
-  select(YEAR, RPATH, Biomass) |> 
-  mutate(Stdev = NA)
+  filter(YEAR %in% 1985:2019) |>
+  select(YEAR, RPATH, Biomass, Stdev)
 
 biomass_fit <- rbind(biomass_fit, clam.index.bind, scall.index.bind)
 
@@ -235,18 +236,18 @@ biomass_fit$Type <- rep("index",length(biomass_adjust$Group))
 biomass_fit$Scale <- rep(1,length(biomass_adjust$Group))
 
 #set weights for fitting --------------------------------------------------------
-biomass_weights <- biomass_fit |>
-                      # mutate(Stdev = replace(Stdev,
-                      #                        Stdev == 0, NA)) |> 
-                      mutate(CV = Stdev / Value) |> 
-                      group_by(Group) |>
-                      mutate(mean_CV = mean(CV, na.rm = T)) |> 
-                      mutate(weight = 1 / mean_CV) |> 
-                      dplyr::ungroup()
-
-group_B_weights <- biomass_weights |> 
-                      select(Group, weight) |> 
-                      distinct()
+# biomass_weights <- biomass_fit |>
+#                       # mutate(Stdev = replace(Stdev,
+#                       #                        Stdev == 0, NA)) |> 
+#                       mutate(CV = Stdev / Value) |> 
+#                       group_by(Group) |>
+#                       mutate(mean_CV = mean(CV, na.rm = T)) |> 
+#                       mutate(weight = 1 / mean_CV) |> 
+#                       dplyr::ungroup()
+# 
+# group_B_weights <- biomass_weights |> 
+#                       select(Group, weight) |> 
+#                       distinct()
 
 #save file
 write.csv(biomass_adjust,"fitting/biomass_fit.csv")

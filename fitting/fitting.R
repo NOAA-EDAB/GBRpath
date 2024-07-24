@@ -100,7 +100,7 @@ scene0$fitting$Biomass$Type[!(scene0$fitting$Biomass$Group %in% index_sp)] <- "a
 # Set data weighting for species to fit
 # scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Haddock","Redfish")] <- 1
 scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
-                                                              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout', 
+                                                              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout',
                                                               'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')] <- 1
 
 # all combined
@@ -116,8 +116,8 @@ fit.initial  <- rsim.fit.run(fit_values, fit_species, fit_vartype, scene0, verbo
                              run_method='AB', years=fit.years)
 par(mfrow=c(1,1))
 for (i in 1:length(test_sp)){
-  # rsim.plot.biomass(scene0, run0, test_sp[i])
-  rsim.plot.catch(scene0, run0, test_sp[i])
+  rsim.plot.biomass(scene0, run0, test_sp[i])
+  # rsim.plot.catch(scene0, run0, test_sp[i])
 }
 
 # Run optimization
