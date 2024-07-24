@@ -168,14 +168,14 @@ biomass_fit<-cbind(biomass_fit,sd_fit$Stdev)
 setnames(biomass_fit, 'V2','Stdev')
 
 #subset for 1985-2019 ---------------------------------------------------------
-biomass_fit<-biomass_fit[YEAR %in% 1985:2022]
+biomass_fit<-biomass_fit[YEAR %in% 1985:2019]
 
 #drop units for plotting purposes ---------------------------------------------
 biomass_fit$Biomass <- drop_units(biomass_fit$Biomass)
 biomass_fit$Stdev <- drop_units(biomass_fit$Stdev)
 
 
-# biomass_fit<-biomass_fit[!RPATH %in% c(NA, 'Fauna','Freshwater','SouthernDemersals')]
+biomass_fit<-biomass_fit[!RPATH %in% c(NA, 'Fauna','Freshwater')]
 
 #remove groups not in the model -----------------------------------------------
 load(here('data/alternate.GB.bal.rda'))

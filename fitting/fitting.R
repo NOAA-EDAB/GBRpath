@@ -19,7 +19,7 @@ library(Rpath); library(data.table);library(dplyr);library(here)
 # source_url('https://github.com/NOAA-EDAB/Rpath/blob/fit_alpha/R/ecofitting.R')
 
 #Create fitting functions
-source(here("fitting/ecofitting.R"))
+# source(here("fitting/ecofitting.R"))
 
 #Load balanced model
 #Load balanced model
@@ -38,7 +38,7 @@ biomass.datafile  <- paste("fitting/biomass_fit.csv",sep='')
 
 # Setup Base Ecopath and Base Rsim scenario
 basescene85 <- rsim.scenario(GB, GB.params, years = fit.years)
-basescene85$params$NoIntegrate[57:58]<-0# Manually change NoIntegrate flags so I can use AB method
+basescene85$params$NoIntegrate[57:58] <- 0
 # Done for Bacteria and LgCopepods
 scene0 <- basescene85
 
@@ -82,9 +82,10 @@ run0 <- rsim.run(scene0, method='AB', years=fit.years)
 rsim.fit.table(scene0,run0)
 
 # Species to test 
-test_sp <- c("Haddock", "AmLobster", "Redfish","AtlHerring", "Cod")
-index_sp<-c("AmPlaice","AtlHalibut",
-            "WitchFlounder","YTFlounder","Fourspot","WinterFlounder")
+test_sp <- c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
+             'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout', 
+             'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')
+index_sp<-c("Goosefish","WitchFlounder","YTFlounder","Fourspot","WinterFlounder")
 #maybe include "SilverHake"
 data_type <- "index"  #"absolute"
 
@@ -97,12 +98,14 @@ scene0$fitting$Biomass$Type[scene0$fitting$Biomass$Group %in% index_sp] <- data_
 scene0$fitting$Biomass$Type[!(scene0$fitting$Biomass$Group %in% index_sp)] <- "absolute"
 
 # Set data weighting for species to fit
-scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Haddock","Redfish")] <- 1
-scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("AtlHerring","Cod","RedHake","Pollock","AmLobster")] <- 0.1
+# scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Haddock","Redfish")] <- 1
+scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
+                                                              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout', 
+                                                              'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')] <- 1
 
 # all combined
 fit_values   <- c(rep(0,length(test_sp)),rep(0,length(test_sp)),rep(0,length(test_sp))) 
-fit_values   <- c(rep(0.2,length(test_sp)),rep(0.02,length(test_sp)),rep(0.02,length(test_sp)))
+# fit_values   <- c(rep(0.2,length(test_sp)),rep(0.02,length(test_sp)),rep(0.02,length(test_sp)))
 fit_species  <- c(test_sp,test_sp,test_sp)
 fit_vartype  <- c(rep("mzero",length(test_sp)),
                   rep("predvul",length(test_sp)),
@@ -111,9 +114,10 @@ fit_vartype  <- c(rep("mzero",length(test_sp)),
 #Initial fit
 fit.initial  <- rsim.fit.run(fit_values, fit_species, fit_vartype, scene0, verbose=T,
                              run_method='AB', years=fit.years)
+par(mfrow=c(1,1))
 for (i in 1:length(test_sp)){
-  rsim.plot.biomass(scene0, fit.initial, test_sp[i])
-  rsim.plot.catch(scene0, fit.initial, test_sp[i])
+  # rsim.plot.biomass(scene0, run0, test_sp[i])
+  rsim.plot.catch(scene0, run0, test_sp[i])
 }
 
 # Run optimization
