@@ -81,34 +81,36 @@ run0 <- rsim.run(scene0, method='AB', years=fit.years)
 rsim.fit.table(scene0,run0)
 
 # Species to test  -----------------------------------------------------------------------
-test_sp <- c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
-             'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout', 
-             'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')
-index_sp<-c("Goosefish","WitchFlounder","YTFlounder","Fourspot","WinterFlounder")
+# test_sp <- c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
+#              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout', 
+#              'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')
+test_sp <- c("Cod",'Haddock','Pollock','WhiteHake','WinterFlounder')
+# index_sp<-c("Goosefish","WitchFlounder","YTFlounder","Fourspot","WinterFlounder")
 
 data_type <- "index"  #"absolute"
 
 # Set weights for fitting data -----------------------------------------------------------
 
-# Set data weightings for all data input low (zeros not allowed)
+## Weighting option 1 --------------------------------------------------------------------
+# # Set data weightings for all data input low (zeros not allowed)
 # scene0$fitting$Biomass$wt[] <- 1e-36
 # scene0$fitting$Catch$wt[]   <- 1e-36
+# 
+# # Set data weighting for species to fit
+# 
+# # scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
+# #                                                               'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout',
+# #                                                               'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')] <- 1
+# 
+# scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Cod",'Haddock','Pollock','WhiteHake','WinterFlounder')] <- 1
 
-# Set data type for test species
-scene0$fitting$Biomass$Type[scene0$fitting$Biomass$Group %in% index_sp] <- data_type
-scene0$fitting$Biomass$Type[!(scene0$fitting$Biomass$Group %in% index_sp)] <- "absolute"
 
-# Set data weighting for species to fit
-
-# scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
-#                                                               'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout',
-#                                                               'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')] <- 1
-
+## Weighting option 2 --------------------------------------------------------------------
 # Trying weight based on pedigree value
 # inverse so lower pedigree values are given higher weight
-group.wt <- GB.params$pedigree |> 
-              select(Group,Biomass,Trap) |> 
-              mutate(B.wt = 1/Biomass) |> 
+group.wt <- GB.params$pedigree |>
+              select(Group,Biomass,Trap) |>
+              mutate(B.wt = 1/Biomass) |>
               mutate(C.wt = 1/Trap)
 
 # set Biomass weight
@@ -117,13 +119,18 @@ scene0$fitting$Biomass$wt <- group.wt$B.wt[match(scene0$fitting$Biomass$Group,gr
 # set Catch weight
 scene0$fitting$Catch$wt <- group.wt$C.wt[match(scene0$fitting$Catch$Group,group.wt$Group)]
 
+
+# Set data type for test species ---------------------------------------------------------
+# scene0$fitting$Biomass$Type[scene0$fitting$Biomass$Group %in% index_sp] <- data_type
+# scene0$fitting$Biomass$Type[!(scene0$fitting$Biomass$Group %in% index_sp)] <- "absolute"
+
 # Set variables to allow to change --------------------------------------------------------
 # all combined
-fit_values   <- c(rep(0,length(test_sp)),rep(0,length(test_sp)),rep(0,length(test_sp))) 
+fit_values   <- c(rep(0,length(test_sp))) 
 # fit_values   <- c(rep(0.2,length(test_sp)),rep(0.02,length(test_sp)),rep(0.02,length(test_sp)))
-fit_species  <- c(test_sp,test_sp,test_sp)
-fit_vartype  <- c(rep("mzero",length(test_sp)),
-                  rep("predvul",length(test_sp)),
+fit_species  <- c(test_sp)
+fit_vartype  <- c(#rep("mzero",length(test_sp)),
+                  # rep("predvul",length(test_sp)),
                   rep("preyvul",length(test_sp)))
 
 #Initial fit -----------------------------------------------------------------------------
