@@ -10,7 +10,7 @@
 # following the example of S. Weisberg
 # https://github.com/SarahJWeisberg/GOM-Rpath/blob/main/fitting/fitting.R
 
-#Load packages
+#Load packages ----------------------------------------------------------------------------
 remotes::install_github('NOAA-EDAB/Rpath', ref='fit_beta', force = T)
 library(Rpath); library(data.table);library(dplyr);library(here)
 
@@ -21,28 +21,27 @@ library(Rpath); library(data.table);library(dplyr);library(here)
 #Create fitting functions
 # source(here("fitting/ecofitting.R"))
 
-#Load balanced model
-#Load balanced model
+#Load balanced model and params  ----------------------------------------------------------
 load(here("data/alternate.GB.bal.rda"))
 load(here("data/alternate.GB.params.bal.rda"))
 
 GB <- alternate.GB.bal 
 GB.params <- alternate.GB.params.bal
   
-#define fit years
+#define fit years and files  ---------------------------------------------------------------
 fit.years <- 1985:2019
 
 catch.datafile<- paste("fitting/landings_fit.csv",sep = "")
 #could also accomplish this by running catch_time.R script
 biomass.datafile  <- paste("fitting/biomass_fit.csv",sep='')
 
-# Setup Base Ecopath and Base Rsim scenario
+# Setup Base Ecopath and Base Rsim scenario ------------------------------------------------
 basescene85 <- rsim.scenario(GB, GB.params, years = fit.years)
 basescene85$params$NoIntegrate[57:58] <- 0
 # Done for Bacteria and LgCopepods
 scene0 <- basescene85
 
-# Read in fitting data
+# Read in fitting data --------------------------------------------------------------------
 # Biomass data (e.g. surveys)
 scene0 <- read.fitting.biomass(scene0, biomass.datafile)
 
@@ -58,9 +57,6 @@ scene0$fitting$Catch[which(scene0$fitting$Group %in% c("SmFlatfishes","OtherShri
 #scene0 <- adjust.fishing(scene0, "ForcedEffort", rpath.gears(GOM), fit.years, value=1.0)
 #scene0$forcing$ForcedBio[,"Discards"] <- GOM$Biomass["Discards"]
 
-#run active respiration forcing
-# source(here("fitting/act_resp_force.R"))
-
 # For species without catch, reapply Ecopath F (originally through gears) to ForcedFRate
 F_equil <- rowSums(GB$Landings)  /(GB$Biomass)  #+ rowSums(GOM$Discards))
 
@@ -71,38 +67,57 @@ for (sp in Equil_species){
   scene0 <- adjust.fishing(scene0, 'ForcedFRate', sp, fit.years, value=0)
 }
 
-#force phytoplankton biomass from 1998 onwards
+#run active respiration forcing -----------------------------------------------------------
+# source(here("fitting/act_resp_force.R"))
+
+#force phytoplankton biomass from 1998 onwards --------------------------------------------
 # source(here("fitting/Phyto_time.R"))
 # scene0<-adjust.forcing(scene0,"ForcedBio","Phytoplankton",sim.year = 1998:2019,bymonth = F,value=pp_force$force_b[1:23])
 
-# Run model
+# Run model with no fitting data ----------------------------------------------------------
 run0 <- rsim.run(scene0, method='AB', years=fit.years)
 
-# Some Diagnostics 
+# Some Diagnostics
 rsim.fit.table(scene0,run0)
 
-# Species to test 
+# Species to test  -----------------------------------------------------------------------
 test_sp <- c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout', 
              'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')
 index_sp<-c("Goosefish","WitchFlounder","YTFlounder","Fourspot","WinterFlounder")
-#maybe include "SilverHake"
+
 data_type <- "index"  #"absolute"
 
+# Set weights for fitting data -----------------------------------------------------------
+
 # Set data weightings for all data input low (zeros not allowed)
-scene0$fitting$Biomass$wt[] <- 1e-36
-scene0$fitting$Catch$wt[]   <- 1e-36
+# scene0$fitting$Biomass$wt[] <- 1e-36
+# scene0$fitting$Catch$wt[]   <- 1e-36
 
 # Set data type for test species
 scene0$fitting$Biomass$Type[scene0$fitting$Biomass$Group %in% index_sp] <- data_type
 scene0$fitting$Biomass$Type[!(scene0$fitting$Biomass$Group %in% index_sp)] <- "absolute"
 
 # Set data weighting for species to fit
-# scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Haddock","Redfish")] <- 1
-scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
-                                                              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout',
-                                                              'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')] <- 1
 
+# scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
+#                                                               'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout',
+#                                                               'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')] <- 1
+
+# Trying weight based on pedigree value
+# inverse so lower pedigree values are given higher weight
+group.wt <- GB.params$pedigree |> 
+              select(Group,Biomass,Trap) |> 
+              mutate(B.wt = 1/Biomass) |> 
+              mutate(C.wt = 1/Trap)
+
+# set Biomass weight
+scene0$fitting$Biomass$wt <- group.wt$B.wt[match(scene0$fitting$Biomass$Group,group.wt$Group)]
+
+# set Catch weight
+scene0$fitting$Catch$wt <- group.wt$C.wt[match(scene0$fitting$Catch$Group,group.wt$Group)]
+
+# Set variables to allow to change --------------------------------------------------------
 # all combined
 fit_values   <- c(rep(0,length(test_sp)),rep(0,length(test_sp)),rep(0,length(test_sp))) 
 # fit_values   <- c(rep(0.2,length(test_sp)),rep(0.02,length(test_sp)),rep(0.02,length(test_sp)))
@@ -111,16 +126,16 @@ fit_vartype  <- c(rep("mzero",length(test_sp)),
                   rep("predvul",length(test_sp)),
                   rep("preyvul",length(test_sp)))
 
-#Initial fit
+#Initial fit -----------------------------------------------------------------------------
 fit.initial  <- rsim.fit.run(fit_values, fit_species, fit_vartype, scene0, verbose=T,
                              run_method='AB', years=fit.years)
-par(mfrow=c(1,1))
+par(mfrow=c(2,2))
 for (i in 1:length(test_sp)){
   rsim.plot.biomass(scene0, run0, test_sp[i])
-  # rsim.plot.catch(scene0, run0, test_sp[i])
+  rsim.plot.catch(scene0, run0, test_sp[i])
 }
 
-# Run optimization
+# Run optimization ------------------------------------------------------------------------
 fit.optim    <- optim(fit_values, rsim.fit.run, #lower=0, #upper=3, 
                       species=fit_species, vartype=fit_vartype, scene=scene0,   
                       run_method='AB', years=fit.years) 
