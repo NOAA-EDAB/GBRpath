@@ -135,6 +135,24 @@ GB.params.adj$model[Group %in% aggEE, EE := 0.8]
 GB.params.adj$model[Group %in% c('AtlHerring', 'AtlMackerel'), 
                     Biomass := Biomass * 10]
 
+# Step 02 - Ocean Quahog -------------------------------------
+GB.new <- rpath(GB.params.adj, eco.name = 'Georges Bank')
+check.mort(GB.new, 'OceanQuahog')
+# Macrobenthos and Megabenthos. Some AmLobster and OtherDemersals
+# Move predation on OceanQuahog to AtlScallop and SurfClam
+GB.params.adj$diet[Group == 'OceanQuahog', Macrobenthos := 0.0002] # removed 0.005
+GB.params.adj$diet[Group == 'AtlScallop', Macrobenthos := Macrobenthos + 0.0025]
+GB.params.adj$diet[Group == 'SurfClam', Macrobenthos := Macrobenthos + 0.0025]
+
+GB.params.adj$diet[Group == 'OceanQuahog', Megabenthos := Megabenthos - 0.028]
+GB.params.adj$diet[Group == 'SurfClam', Megabenthos := Megabenthos + 0.028]
+
+GB.params.adj$diet[Group == 'OceanQuahog', AmLobster := AmLobster - 0.02]
+GB.params.adj$diet[Group == 'SurfClam', AmLobster := AmLobster + 0.01]
+GB.params.adj$diet[Group == 'Detritus', AmLobster := AmLobster + 0.01]
+
+GB.params.adj$diet[Group == 'OceanQuahog', OtherDemersals := OtherDemersals - 0.06]
+GB.params.adj$diet[Group == 'OtherDemersals', OtherDemersals := OtherDemersals + 0.06]
 
 
 #Step 02 - Deal with OceanPout, AmPlaice, and WitchFlounder----
@@ -432,8 +450,11 @@ GB.params.adj$model[Group == 'RedHake', Biomass := Biomass * 2]
 
 # Step 18 - EE < 1.5 -----------------
 
-# Haddock, Microzooplankton, LgCopepods, SmCopepods, Loligo
+# OceanQuahog, Haddock, Microzooplankton, LgCopepods, SmCopepods, Loligo
 # AmPlaice, Scup, AtlHerring, Detritus, WinterFlounder, YTFlounder
+
+# OceanQuahog
+GB.params.adj$model[Group == 'OceanQuahog', PB := 0.02]
 
 # Haddock
 check.mort(GB.new, 'Haddock')
@@ -475,7 +496,7 @@ GB.params.adj$model[Group %in% c('Microzooplankton', 'LgCopepods','SmCopepods'),
 
 #Increase unassim to 0.3 for other detritavores
 GB.params.adj$model[Group %in% c('AmLobster', 'Macrobenthos', 'Megabenthos',
-                                 'AtlScallop', 'OceanQuahog', 'OtherShrimps'),
+                                 'AtlScallop', 'OtherShrimps'),
                     Unassim := 0.3]
 
 # Loligo
@@ -518,7 +539,7 @@ GB.params.adj$model[Group == 'YTFlounder', Biomass := Biomass * 1.1]
   GB.params.adj$diet[Group == 'Odontocetes', Sharks := Sharks + 0.025]
   
   
-# EDITED TO HERE ------------
+# Check EEs and params -------------------------------------
 GB.new <- rpath(GB.params.adj, eco.name = 'Georges Bank')
 check.rpath.params(GB.params.adj)
 check.ee(GB.new)
