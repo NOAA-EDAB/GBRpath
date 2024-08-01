@@ -1,13 +1,12 @@
 #Georges Bank Rpath model
 #Expanded model of Georges Bank
 #SML
-# Updated by MTG 03/01/2024
+# Updated by MTG 03/01/2024 and SJW 8/1/24
 
 # Folding Discards into Detritus ----
 
-# Discards were creating an additional biomass flow that complicated
-# network analysis. Trying to make the changes in a way that will
-# be easy to undo if needed in the future.
+# Removing discards as a separate group so as to simplify
+# network analyses. Discard fate = detritus.
 
 
 
@@ -45,9 +44,9 @@ GB.params$model[Type < 3,  BioAcc := 0]
 GB.params$model[Type == 0, Unassim := 0.2]
 GB.params$model[Type > 0 & Type < 3, Unassim := 0]
 GB.params$model[Type == 2, DetInput := 0]
-GB.params$model[Type < 2,  Detritus := 1]
-GB.params$model[Type > 1,  Detritus := 0]
-# GB.params$model[Type == 3, Discards := 1]
+GB.params$model[Type <= 1,  Detritus := 1]
+GB.params$model[Type == 2,  Detritus := 0]
+GB.params$model[Type == 3, Detritus := 1]
 # GB.params$model[Type < 3,  Discards := 0]
 
 # Biomass and EE --------------------------------------------------------------
@@ -112,18 +111,18 @@ for(igear in 1:length(rfleets)){
 }
 
 #Load discards
-# load(here('data', 'disc.input.rda'))
-# 
-# for(igear in 1:length(rfleets)){
-#   gear.disc <- disc.input[Fleet == rgear[igear], ]
-#   setnames(GB.params$model, paste0(rfleets[igear], '.disc'), 'gear')
-#   #Discards
-#   for(igroup in 1:nrow(gear.disc)){
-#     GB.params$model[Group == gear.disc[igroup, RPATH], 
-#                     gear := gear.disc[igroup, Discards]][]
-#   }
-#   setnames(GB.params$model, 'gear', paste0(rfleets[igear], '.disc'))
-# }
+load(here('data', 'disc.input.rda'))
+
+for(igear in 1:length(rfleets)){
+  gear.disc <- disc.input[Fleet == rgear[igear], ]
+  setnames(GB.params$model, paste0(rfleets[igear], '.disc'), 'gear')
+  #Discards
+  for(igroup in 1:nrow(gear.disc)){
+    GB.params$model[Group == gear.disc[igroup, RPATH],
+                    gear := gear.disc[igroup, Discards]][]
+  }
+  setnames(GB.params$model, 'gear', paste0(rfleets[igear], '.disc'))
+}
 
 # Diet ------------------------------------------------------------------------
 load(here('data', 'diet.input.rda'))
