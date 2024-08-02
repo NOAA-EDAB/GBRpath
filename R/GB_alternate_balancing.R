@@ -138,21 +138,26 @@ GB.params.adj$model[Group %in% c('AtlHerring', 'AtlMackerel'),
 # Step 02 - Ocean Quahog -------------------------------------
 GB.new <- rpath(GB.params.adj, eco.name = 'Georges Bank')
 check.mort(GB.new, 'OceanQuahog')
+
+#Changing PB and QB to match MAB
+GB.params.adj$model[Group == 'OceanQuahog', PB := 0.05]
+GB.params.adj$model[Group == 'OceanQuahog', QB := 0.3]
+
 # Macrobenthos and Megabenthos. Some AmLobster and OtherDemersals
 # Move predation on OceanQuahog to AtlScallop and SurfClam
 GB.params.adj$diet[Group == 'OceanQuahog', Macrobenthos := 0.0002] # removed 0.005
 GB.params.adj$diet[Group == 'AtlScallop', Macrobenthos := Macrobenthos + 0.0025]
 GB.params.adj$diet[Group == 'SurfClam', Macrobenthos := Macrobenthos + 0.0025]
 
-GB.params.adj$diet[Group == 'OceanQuahog', Megabenthos := Megabenthos - 0.028]
-GB.params.adj$diet[Group == 'SurfClam', Megabenthos := Megabenthos + 0.028]
+GB.params.adj$diet[Group == 'OceanQuahog', Megabenthos := Megabenthos - 0.03]
+GB.params.adj$diet[Group == 'SurfClam', Megabenthos := Megabenthos + 0.03]
 
 GB.params.adj$diet[Group == 'OceanQuahog', AmLobster := AmLobster - 0.02]
 GB.params.adj$diet[Group == 'SurfClam', AmLobster := AmLobster + 0.01]
 GB.params.adj$diet[Group == 'Detritus', AmLobster := AmLobster + 0.01]
 
-GB.params.adj$diet[Group == 'OceanQuahog', OtherDemersals := OtherDemersals - 0.06]
-GB.params.adj$diet[Group == 'OtherDemersals', OtherDemersals := OtherDemersals + 0.06]
+# GB.params.adj$diet[Group == 'OceanQuahog', OtherDemersals := OtherDemersals - 0.06]
+# GB.params.adj$diet[Group == 'OtherDemersals', OtherDemersals := OtherDemersals + 0.06]
 
 
 #Step 03 - SouthernDemersals ----
