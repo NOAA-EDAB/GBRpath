@@ -1,7 +1,8 @@
 #Ecosense runs for GB 80s model
 #Author: Sarah J . Weisberg
 
-# Fri May 17 11:15:28 2024 ------------------------------
+# Fri Aug  2 15:07:05 2024 ------------------------------
+
 
 #Prep-------------------------------------------------------------
 library(here); library(data.table); library(Rpath)
@@ -17,11 +18,6 @@ load(here("data/alternate.GB.bal.rda"))
 GB<-alternate.GB.bal
 GB.params<-alternate.GB.params.bal
 
-#adjust Bacteria diet to match MAB
-GB.params$diet[Group == 'Phytoplankton',Bacteria :=0.15]
-GB.params$diet[Group == 'Detritus',Bacteria :=0.85]
-
-GB<-rpath(GB.params,eco.name = 'Georges Bank')
 #Set up model with group names and types
 groups<-as.vector(GB$Group)
 
@@ -68,7 +64,7 @@ orig.biomass<-scene$start_state$Biomass
 
 # ----- Set up ecosense generator ----- #######################################
 scene$params$BURN_YEARS <- 50
-NUM_RUNS <- 50000
+NUM_RUNS <- nkept
 parlist <- as.list(rep(NA, NUM_RUNS))
 kept <- rep(NA, NUM_RUNS)
 
@@ -81,11 +77,11 @@ for (irun in 1:NUM_RUNS){
   parlist[[irun]]$BURN_YEARS <- 50			# Set Burn Years to 50
   GBsense$params <- parlist[[irun]]
   GBtest <- rsim.run(GBsense, method = "RK4", years = all_years)
-  failList <- which((is.na(GBtest$end_state$Biomass) | GBtest$end_state$Biomass/orig.biomass > 1000 | GBtest$end_state$Biomass/orig.biomass < 1/1000))
-  {if (length(failList)>0)
-  {cat(irun,": fail in year ",GBtest$crash_year,": ",failList,"\n"); kept[irun] <- F; flush.console()}
-    else
-    {cat(irun,": success!\n"); kept[irun]<-T;  flush.console()}}
+  # failList <- which((is.na(GBtest$end_state$Biomass) | GBtest$end_state$Biomass/orig.biomass > 1000 | GBtest$end_state$Biomass/orig.biomass < 1/1000))
+  # {if (length(failList)>0)
+  # {cat(irun,": fail in year ",GBtest$crash_year,": ",failList,"\n"); kept[irun] <- F; flush.console()}
+  #   else
+  #   {cat(irun,": success!\n"); kept[irun]<-T;  flush.console()}}
   parlist[[irun]]$BURN_YEARS <- 1
 }
 
@@ -93,11 +89,11 @@ for (irun in 1:NUM_RUNS){
 KEPT <- which(kept==T)
 nkept <- length(KEPT)
 nkept
-GB_sense_bound_bac <- parlist[KEPT]
+GB_sense_bound <- parlist[KEPT]
 
-GB_sense_unbound_bac <-parlist
+GB_sense_unbound <-parlist
 #save
-save(GB,file = "data/GB_bac.RData")
-save(GB.params,file = "data/GB_params_bac.RData")
-save(GB_sense_bound_bac, file = "data/GB_sense_bound_bac.RData")
-save(GB_sense_unbound_bac, file = "data/GB_sense_unbound_bac.RData")
+#save(GB,file = "data/GB_bac.RData")
+#save(GB.params,file = "data/GB_params_bac.RData")
+save(GB_sense_bound, file = "data/GB_sense_bound.RData")
+save(GB_sense_unbound, file = "data/GB_sense_unbound.RData")
