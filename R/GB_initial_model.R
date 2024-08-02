@@ -111,15 +111,20 @@ for(igear in 1:length(rfleets)){
 }
 
 #Load discards
-load(here('data', 'disc.input.rda'))
+#load(here('data', 'disc.input.rda'))
+source(here("R/discards.R"))
+discards<-as.data.table(discards)
 
-for(igear in 1:length(rfleets)){
-  gear.disc <- disc.input[Fleet == rgear[igear], ]
+disc_gear<-which(rgear %in% discards$FLEET)
+
+for(i in 1:length(disc_gear)){
+  igear<-disc_gear[i]
+  gear.disc <- discards[FLEET == rgear[igear], ]
   setnames(GB.params$model, paste0(rfleets[igear], '.disc'), 'gear')
   #Discards
   for(igroup in 1:nrow(gear.disc)){
     GB.params$model[Group == gear.disc[igroup, RPATH],
-                    gear := gear.disc[igroup, Discards]][]
+                    gear := gear.disc[igroup, discards]][]
   }
   setnames(GB.params$model, 'gear', paste0(rfleets[igear], '.disc'))
 }
