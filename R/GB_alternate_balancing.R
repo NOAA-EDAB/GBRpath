@@ -155,7 +155,26 @@ GB.params.adj$diet[Group == 'OceanQuahog', OtherDemersals := OtherDemersals - 0.
 GB.params.adj$diet[Group == 'OtherDemersals', OtherDemersals := OtherDemersals + 0.06]
 
 
-#Step 02 - Deal with OceanPout, AmPlaice, and WitchFlounder----
+#Step 03 - SouthernDemersals ----
+
+fleets <- GB.params.adj$model[Type == 3, Group]
+#Southern Dems
+check.mort(GB.new, 'SouthernDemersals')
+
+#Reduce catch by an order of magnitude
+for(ifleet in 1:length(fleets)){
+  setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
+  GB.params.adj$model[Group == 'SouthernDemersals', fleet := fleet / 10]
+  setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
+}
+
+#Either have to reduce F by ~ fleet/20 or boost the biomass by order of magnitude
+# using bottom up to set biomass
+GB.params.adj$model[Group == 'SouthernDemersals', Biomass := NA]
+GB.params.adj$model[Group == 'SouthernDemersals', EE := 0.8]
+
+
+#Step 04 - Deal with OceanPout, AmPlaice, and WitchFlounder----
 #OceanPout
 #Increase Biomass - Not well sampled
 GB.params.adj$model[Group == 'OceanPout', Biomass := Biomass * 3]
@@ -210,7 +229,7 @@ for(imesh in 1:length(mesh.fleet)){
   setnames(GB.params.adj$model, 'fleet', mesh.fleet[imesh])
 }
 
-#Step 03 - Lobster----
+#Step 05 - Lobster----
 # lscalc(GB.params.adj$model[Group == 'AmLobster', PB]) #1.08
 # GB.params.adj$model[Group == 'AmLobster', PB := pbcalc(15)]
 # GB.params.adj$model[Group == 'AmLobster', QB := QB / 12]
@@ -230,7 +249,7 @@ GB.params.adj$diet[Group == 'AmLobster', OtherDemersals := 0.01] #removed 0.1218
 GB.params.adj$diet[Group == 'Megabenthos',
                    OtherDemersals := OtherDemersals + 0.122]
 
-#Step 04 - Atlantic Mackerel----
+#Step 06 - Atlantic Mackerel----
 check.mort(GB.new, 'AtlMackerel')
 
 #Biomass and production seem ok
@@ -240,7 +259,7 @@ check.mort(GB.new, 'AtlMackerel')
 DC.mack <- data.table::melt(GB.params.adj$diet[Group == 'AtlMackerel', ],
                             id.var = 'Group')
 DC.mack <- DC.mack[!is.na(value), ]
-DC.mack[, new.value := value / 10]
+DC.mack[, new.value := value / 15]
 
 mack.pred <- as.character(DC.mack[, variable])
 
@@ -248,7 +267,7 @@ for(ipred in 1:length(mack.pred)){
   new.value <- DC.mack[variable == mack.pred[ipred], new.value]
   setnames(GB.params.adj$diet, mack.pred[ipred], 'pred')
   GB.params.adj$diet[Group == 'AtlMackerel', pred := new.value]
-  GB.params.adj$diet[Group == 'Import', pred := sum(c(pred, 9 * new.value), na.rm = T)]
+  GB.params.adj$diet[Group == 'Import', pred := sum(c(pred, 14 * new.value), na.rm = T)]
   setnames(GB.params.adj$diet, 'pred', mack.pred[ipred])
 }
 
@@ -259,28 +278,16 @@ GB.params.adj$model[Group %in% c('SpinyDogfish', 'WinterSkate'),
 #Also fixed PB and QB for these predators later
 
 #Reduce catch in half
-# for(ifleet in 1:length(fleets)){
-#   setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
-#   GB.params.adj$model[Group == 'AtlMackerel', fleet := fleet / 2]
-#   setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
-# }
-
-# Trying not to change landings too much. Might revisit
-
-#Step 05 - Reduce F on Southern Dems, Redfish, and Barndoors----
-fleets <- GB.params.adj$model[Type == 3, Group]
-#Southern Dems
-check.mort(GB.new, 'SouthernDemersals')
-
-#Reduce catch by an order of magnitude
 for(ifleet in 1:length(fleets)){
   setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
-  GB.params.adj$model[Group == 'SouthernDemersals', fleet := fleet / 10]
+  GB.params.adj$model[Group == 'AtlMackerel', fleet := fleet / 2]
   setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
 }
 
-#increase biomass
-GB.params.adj$model[Group == 'SouthernDemersals', Biomass := Biomass * 2]
+# Trying not to change landings too much. Might revisit
+
+#Step 07 - Reduce F on Redfish, and Barndoors----
+
 
 #Redfish - more of a Gulf of Maine species
 check.mort(GB.new, 'Redfish')
@@ -293,15 +300,23 @@ for(ifleet in 1:length(fleets)){
 }
 
 #Barndoors
+check.mort(GB.new, 'Barndoor')
 #Reduce catch in half
-# for(ifleet in 1:length(fleets)){
-#   setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
-#   GB.params.adj$model[Group == 'Barndoor', fleet := fleet / 2]
-#   setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
-# }
+for(ifleet in 1:length(fleets)){
+  setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
+  GB.params.adj$model[Group == 'Barndoor', fleet := fleet / 2]
+  setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
+}
 
+# Increase Biomass
+GB.params.adj$model[Group == 'Barndoor', Biomass := Biomass * 4]
+# Increase PB
+# Balancing by catch and biomass alone required too large of changes
+GB.params.adj$model[Group == 'Barndoor', PB := 0.3]
+# need to change QB as well
+GB.params.adj$model[Group == 'Barndoor', QB := 1.76]
 
-# Step 06 - Butterfish -----------------
+# Step 08 - Butterfish -----------------
 check.mort(GB.new, 'Butterfish') #LowerTroph/CharsmaticMF
 
 #Look at GelZoop and OtherPel
@@ -323,7 +338,7 @@ GB.params.adj$diet[Group == 'Micronekton', GelZooplankton := 0.0137]
 
 GB.params.adj$model[Group == 'Butterfish', Biomass := Biomass * 3.5]
 
-# Step 07 - Windowpane -----------------
+# Step 09 - Windowpane -----------------
 check.mort(GB.new, 'Windowpane')
 # Low amounts of mortality from a wide variety of species and fleets
 # Bumping B
@@ -334,7 +349,7 @@ GB.params.adj$model[Group == 'Windowpane', Biomass := Biomass * 3.5]
 GB.params.adj$model[Group == 'Macrobenthos', Biomass := Biomass / 3]
 
 
-#Step 08 - OtherDemersals----
+#Step 10 - OtherDemersals----
 #DC looks too much like piscivores
 #Changed DC to look like SouthernDemersals which are more omnivorous
 check.mort(GB.new, 'OtherDemersals')
@@ -345,18 +360,19 @@ check.mort(GB.new, 'OtherDemersals')
 GB.params.adj$model[Group == 'OtherDemersals', Biomass := NA]
 GB.params.adj$model[Group == 'OtherDemersals', EE := 0.9]
 
-# Step 09 - Redfish -----------------
+# Step 11 - Redfish -----------------
 check.mort(GB.new, 'Redfish') #Fisheries
-#Reduce catch by 30%
+#Reduce catch by 50%
 for(ifleet in 1:length(fleets)){
   setnames(GB.params.adj$model, fleets[ifleet], 'fleet')
-  GB.params.adj$model[Group == 'Redfish', fleet := fleet - fleet * 0.3]
+  GB.params.adj$model[Group == 'Redfish', fleet := fleet - fleet * 0.5]
   setnames(GB.params.adj$model, 'fleet', fleets[ifleet])
 }
 #Still off so bumping biomass
-GB.params.adj$model[Group == 'Redfish', Biomass := Biomass * 3.5]
+GB.params.adj$model[Group == 'Redfish', Biomass := Biomass * 4]
 
-# Step 10 - AtlHerring -----------------
+
+# Step 12 - AtlHerring -----------------
 check.mort(GB.new, 'AtlHerring')
 # Top predators SilverHake, SpinyDogfish, and Pollock
 
@@ -379,7 +395,7 @@ check.mort(GB.new, 'AtlHerring')
 GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 4]
 
 
-# Step 11 - Illex -----------------
+# Step 13 - Illex -----------------
 check.mort(GB.new, 'Illex')
 # Spinydogfish, Loligo top preds. Bumping B
 GB.params.adj$model[Group == 'Illex', Biomass := Biomass * 2.5]
@@ -388,7 +404,7 @@ GB.params.adj$model[Group == 'Illex', Biomass := Biomass * 2.5]
 
 
 
-#Step 12 - BlackSeaBass -------------------
+#Step 14 - BlackSeaBass -------------------
 #Black Sea Bass
 # lscalc(GB.params.adj$model[Group == 'BlackSeaBass', PB]) #75
 # GB.params.adj$model[Group == 'BlackSeaBass', PB := pbcalc(20)]
@@ -411,18 +427,18 @@ for(ifleet in 1:length(fleets)){
 GB.params.adj$diet[Group == 'BlackSeaBass', Sharks := 0.002]
 GB.params.adj$diet[Group == 'BlackSeaBass', Odontocetes := 0.002]
 
-GB.params.adj$diet[Group == 'BlackSeaBass', OtherPelagics := 0.002]
+GB.params.adj$diet[Group == 'BlackSeaBass', OtherPelagics := 0.001]
 GB.params.adj$diet[Group == 'BlackSeaBass', Barndoor := 0.002]
-GB.params.adj$diet[Group == 'BlackSeaBass', OtherSkates := 0.002]
+GB.params.adj$diet[Group == 'BlackSeaBass', OtherSkates := 0.001]
 
 
 # find somewhere to take that from in each diet
 GB.params.adj$diet[Group == 'Haddock', Sharks := Sharks - 0.002]
 GB.params.adj$diet[Group == 'Pollock', Odontocetes := Odontocetes - 0.002]
 
-GB.params.adj$diet[Group == 'RedHake', OtherPelagics := OtherPelagics - 0.002]
+GB.params.adj$diet[Group == 'RedHake', OtherPelagics := OtherPelagics - 0.001]
 GB.params.adj$diet[Group == 'OtherDemersals', Barndoor := Barndoor - 0.002]
-GB.params.adj$diet[Group == 'OtherDemersals', OtherSkates := OtherSkates - 0.002]
+GB.params.adj$diet[Group == 'OtherDemersals', OtherSkates := OtherSkates - 0.001]
 
 
 check.mort(GB.new, 'BlackSeaBass')
@@ -430,17 +446,18 @@ check.mort(GB.new, 'BlackSeaBass')
 #Bump biomass
 GB.params.adj$model[Group == 'BlackSeaBass', Biomass := Biomass * 4.5]
 
-# Step 13 - SilverHake ------------------
+# Step 15 - SilverHake ------------------
 check.mort(GB.new, 'SilverHake')
 # increase B
 GB.params.adj$model[Group == 'SilverHake', Biomass := Biomass * 2]
 
 
-# Step 13 - AtlMackerel again ------------------
+# Step 16 - AtlMackerel again ------------------
 check.mort(GB.new, 'AtlMackerel')
-# already adjusted diets in step 04
+# already adjusted diets in step 06
 # Bumping B
-GB.params.adj$model[Group == 'AtlMackerel', Biomass := Biomass * 2]
+GB.params.adj$model[Group == 'AtlMackerel', Biomass := Biomass * 4]
+
 
 
 # Step 17 - RedHake -----------------
@@ -459,7 +476,7 @@ GB.params.adj$model[Group == 'OceanQuahog', PB := 0.02]
 # Haddock
 check.mort(GB.new, 'Haddock')
 # increase B
-GB.params.adj$model[Group == 'Haddock', Biomass := Biomass * 1.5]
+GB.params.adj$model[Group == 'Haddock', Biomass := Biomass * 2]
 
 check.mort(GB.new, 'Microzooplankton')
 check.mort(GB.new, 'SmCopepods')
@@ -487,7 +504,7 @@ GB.params.adj$model[Group == 'AmPlaice', Biomass := Biomass * 1.5]
 
 check.mort(GB.new, 'Scup')
 # increase B
-GB.params.adj$model[Group == 'Scup', Biomass := Biomass * 1.5]
+GB.params.adj$model[Group == 'Scup', Biomass := Biomass * 2]
 
 # Detritus
 #Increase unassim to 0.4 for zooplankton
@@ -519,6 +536,32 @@ GB.params.adj$model[Group == 'WinterFlounder', Biomass := Biomass * 1.1]
 check.mort(GB.new, 'YTFlounder')
 # Bumping B
 GB.params.adj$model[Group == 'YTFlounder', Biomass := Biomass * 1.1]
+
+#WitchFlounder
+check.mort(GB.new, 'WitchFlounder')
+# Bumping B
+GB.params.adj$model[Group == 'WitchFlounder', Biomass := Biomass * 1.3]
+
+# SummerFlounder
+check.mort(GB.new, 'SummerFlounder')
+# Bumping B
+GB.params.adj$model[Group == 'SummerFlounder', Biomass := Biomass * 1.3]
+
+#Fourspot
+check.mort(GB.new, 'Fourspot')
+# Bumping B
+GB.params.adj$model[Group == 'Fourspot', Biomass := Biomass * 1.2]
+
+#SilverHake
+check.mort(GB.new, 'SilverHake')
+# Bumping B
+GB.params.adj$model[Group == 'SilverHake', Biomass := Biomass * 1.05]
+
+#WinterSkate
+check.mort(GB.new, 'WinterSkate')
+# Bumping B
+GB.params.adj$model[Group == 'WinterSkate', Biomass := Biomass * 1.05]
+
 
 #Step 19- BA input --------------------
   #Input BA values from BA.input
