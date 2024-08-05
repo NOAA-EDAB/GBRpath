@@ -99,7 +99,7 @@ cons_groups<- GB.groups  |>
 
 
 survdat<-survey$survdat
-survdat<-left_join(survdat,spp, by = "SVSPP")
+survdat<-left_join(survdat,spp, by = "SVSPP", relationship = "many-to-many")
 
 #Load balanced model
 load(here("data/alternate.GB.bal.rda"))

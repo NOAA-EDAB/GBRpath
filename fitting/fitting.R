@@ -67,8 +67,6 @@ for (sp in Equil_species){
   scene0 <- adjust.fishing(scene0, 'ForcedFRate', sp, fit.years, value=0)
 }
 
-#run active respiration forcing -----------------------------------------------------------
-# source(here("fitting/act_resp_force.R"))
 
 #force phytoplankton biomass from 1998 onwards --------------------------------------------
 # source(here("fitting/Phyto_time.R"))
@@ -81,43 +79,60 @@ run0 <- rsim.run(scene0, method='AB', years=fit.years)
 rsim.fit.table(scene0,run0)
 
 # Species to test  -----------------------------------------------------------------------
-# test_sp <- c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
-#              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout', 
-#              'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')
-test_sp <- c("Cod",'Haddock','Pollock','WhiteHake','WinterFlounder')
-# index_sp<-c("Goosefish","WitchFlounder","YTFlounder","Fourspot","WinterFlounder")
+test_sp <- c('Cod', 'Haddock', 'YTFlounder', 'Pollock', 'AmPlaice', 'WitchFlounder',
+             'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout',
+             'WinterSkate', 'LittleSkate', 'Barndoor', 'OtherSkates', 'Goosefish',
+             'SpinyDogfish')
+
+# test_sp <- c('Cod', 'Haddock', 'YTFlounder', 
+#              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout',
+#              'Barndoor', 'OtherSkates')
+
+# index_sp<-c("YTFlounder", "Windowpane","WinterFlounder","Barndoor","OtherSkate","Goosefish")
 
 data_type <- "index"  #"absolute"
 
+#run active respiration forcing -----------------------------------------------------------
+source(here("fitting/act_resp_force.R"))
+
 # Set weights for fitting data -----------------------------------------------------------
 
+## All weights to 1 -----------------------------------------------------------------------
+# Doing this to make between scenario comparisons more straight forward
+# come back to weighting options once I have an 'optimum' scenario
+
+scene0$fitting$Biomass$wt[] <- 1
+scene0$fitting$Catch$wt[]   <- 1
+
+
 ## Weighting option 1 --------------------------------------------------------------------
-# # Set data weightings for all data input low (zeros not allowed)
+# Set data weightings for all data input low (zeros not allowed)
 # scene0$fitting$Biomass$wt[] <- 1e-36
 # scene0$fitting$Catch$wt[]   <- 1e-36
 # 
 # # Set data weighting for species to fit
 # 
-# # scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Cod",'Haddock', 'YTFlounder','Pollock', 'AmPlaice', 'WitchFlounder',
-# #                                                               'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout',
-# #                                                               'Barndoor', 'WinterSkate', 'LittleSkate', 'OtherSkates')] <- 1
+# # scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("'Cod', 'Haddock', 'YTFlounder', 'Pollock', 'AmPlaice', 'WitchFlounder', 
+# #              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout', 
+# #              'WinterSkate', 'LittleSkate', 'Barndoor', 'OtherSkates', 'Goosefish', 
+# #              'SpinyDogfish')] <- 1
 # 
-# scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("Cod",'Haddock','Pollock','WhiteHake','WinterFlounder')] <- 1
+# scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% test_sp] <- 1
 
 
 ## Weighting option 2 --------------------------------------------------------------------
-# Trying weight based on pedigree value
-# inverse so lower pedigree values are given higher weight
-group.wt <- GB.params$pedigree |>
-              select(Group,Biomass,Trap) |>
-              mutate(B.wt = 1/Biomass) |>
-              mutate(C.wt = 1/Trap)
-
-# set Biomass weight
-scene0$fitting$Biomass$wt <- group.wt$B.wt[match(scene0$fitting$Biomass$Group,group.wt$Group)]
-
-# set Catch weight
-scene0$fitting$Catch$wt <- group.wt$C.wt[match(scene0$fitting$Catch$Group,group.wt$Group)]
+# # Trying weight based on pedigree value
+# # inverse so lower pedigree values are given higher weight
+# group.wt <- GB.params$pedigree |>
+#               select(Group,Biomass,Trap) |>
+#               mutate(B.wt = 1/Biomass) |>
+#               mutate(C.wt = 1/Trap)
+# 
+# # set Biomass weight
+# scene0$fitting$Biomass$wt <- group.wt$B.wt[match(scene0$fitting$Biomass$Group,group.wt$Group)]
+# 
+# # set Catch weight
+# scene0$fitting$Catch$wt <- group.wt$C.wt[match(scene0$fitting$Catch$Group,group.wt$Group)]
 
 
 # Set data type for test species ---------------------------------------------------------
@@ -126,11 +141,11 @@ scene0$fitting$Catch$wt <- group.wt$C.wt[match(scene0$fitting$Catch$Group,group.
 
 # Set variables to allow to change --------------------------------------------------------
 # all combined
-fit_values   <- c(rep(0,length(test_sp))) 
+fit_values   <- c(rep(0,length(test_sp)),rep(0,length(test_sp)),rep(0,length(test_sp))) 
 # fit_values   <- c(rep(0.2,length(test_sp)),rep(0.02,length(test_sp)),rep(0.02,length(test_sp)))
-fit_species  <- c(test_sp)
-fit_vartype  <- c(#rep("mzero",length(test_sp)),
-                  # rep("predvul",length(test_sp)),
+fit_species  <- c(test_sp,test_sp,test_sp)
+fit_vartype  <- c(rep("mzero",length(test_sp)),
+                  rep("predvul",length(test_sp)),
                   rep("preyvul",length(test_sp)))
 
 #Initial fit -----------------------------------------------------------------------------
@@ -156,4 +171,21 @@ for (i in 1:length(test_sp)){
   rsim.plot.catch(scene0, fit.final, test_sp[i])
 }
 
+# Analysis of fit -------------------------------------------------------------------------
 
+# Plot biomass for all species, not just test species
+all_sp <- GB.params$pedigree$Group
+
+par(mfrow=c(2,2))
+for(i in 1:length(all_sp)){
+rsim.plot.biomass(scene0, fit.final, all_sp[i])
+}
+
+# Sum contribution to sum of squares
+
+final.fits <- rsim.fit.obj(scene0, fit.final)
+
+final.B.fits <- final.fits$Biomass |> 
+                  dplyr::group_by(Group) |>
+                  dplyr::summarize(SS = sum(fit))
+B.ss <- sum(final.B.fits$SS)
