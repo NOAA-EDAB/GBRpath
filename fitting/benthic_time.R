@@ -53,7 +53,9 @@ mega_gb <- mega_gb |>  mutate(anom = (Value-mean_start)/mean_start)
 
 #generate forcing time series
 macro<-alternate.GB.params.bal$model[Group == "Macrobenthos",Biomass]
-mega<-alternate.GB.params.bal$model[Group == "Megabenthos",Biomass]
+# mega biomass set by model with EE = 0.8
+# putting in manually for now
+mega<-2.393409e+00
 
 macro_time<-macro_gb |>  
   filter(Var == "biomass" & Time > 1984) |>  
@@ -63,10 +65,10 @@ macro_time<-macro_gb |>
 mega_time<-mega_gb |>  
   filter(Var == "biomass" & Time > 1984)  |>  
   select(Time,anom)  |> 
-  mutate(biomass = macro*(anom+1))
+  mutate(biomass = mega*(anom+1))
 
-#visualize
-# mega_gb |>  filter(Var == "biomass" & Time > 1984)  |> 
+# #visualize
+# mega_gb |>  filter(Var == "biomass" & Time > 1984)  |>
 #   ggplot(aes(x=Time,y=anom))+
 #   geom_line()+
 #   geom_point()+
