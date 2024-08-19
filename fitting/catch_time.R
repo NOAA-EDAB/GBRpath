@@ -14,12 +14,14 @@ library(ggplot2); library(here); library(units); library(data.table);
 library(dplyr); library(survdat)
 
 load(here('data/land.index.rda'))
+load(here('data/disc.index.rda'))
 
 #load list of groups included in model
 load(here('data-raw/Species_codes.Rdata'))
 
 #code below modified from landings_conversion.R
 land.index[Fleet =="HMS",Fleet:="HMS Fleet"]
+disc.index[Fleet =="HMS",Fleet:="HMS Fleet"]
 
 #Calculate total GB area ------------------------------------------------------
 area<-sf::st_read(dsn=system.file("extdata","strata.shp",package="survdat"))
@@ -57,10 +59,20 @@ land.index <- land.index |>
   summarise(Landings=sum(Landings)) |> 
   ungroup()
 
+disc.index <- disc.index |>  
+  group_by(Fleet,RPATH,YEAR) |>  
+  summarise(Discards=sum(Discards)) |> 
+  ungroup()
+
 #sum all landings per group ---------------------------------------------------
 spp.land <- land.index |>  
   group_by(RPATH,YEAR) |>  
   summarise(Landings=sum(Landings)) |> 
+  ungroup()
+
+spp.discard <- disc.index |>  
+  group_by(RPATH,YEAR) |>  
+  summarise(Discards=sum(Discards)) |> 
   ungroup()
 
 #remove groups not in the model -----------------------------------------------
@@ -70,37 +82,79 @@ GBRpath_species <- alternate.GB.bal[["Group"]]
 spp.land <- spp.land |> 
   filter(RPATH %in% GBRpath_species)
 
+spp.discard <- spp.discard |>
+  filter(RPATH %in% GBRpath_species)
+
+#sum catch and discards by species for total take value -----------------------
+
+spp.take <- spp.land |> 
+  left_join(spp.discard, by = c("RPATH", "YEAR"))  |> 
+  mutate(Take = coalesce(Landings, 0) + coalesce(Discards, 0))  |> 
+  select(RPATH, YEAR, Take)
+
+take.index <- disc.index |> 
+  left_join(land.index, by = c("Fleet","RPATH", "YEAR"))  |>
+  mutate(Take = coalesce(Discards, 0) + coalesce(Landings, 0))  |>
+  select(Fleet,RPATH, YEAR, Take)
 
 #rename columns to comply with fitting code -----------------------------------
-colnames(spp.land)<-c("Group", "Year", "Value")
+colnames(spp.take)<-c("Group", "Year", "Value")
+colnames(take.index)<-c("Fleet", "Group", "Year", "Value")
+
+colnames(spp.land)<-c("Group", "Year", "Landings")
 colnames(land.index)<-c("Fleet", "Group", "Year", "Value")
 
 #add sd, scale columns --------------------------------------------------------
-spp.land<-as.data.table(spp.land)
-spp.land[,Stdev := Value * 0.1]
-spp.land[,Scale := rep(1,length(spp.land$Value))]
+spp.take<-as.data.table(spp.take)
+spp.take[,Stdev := Value * 0.1]
+spp.take[,Scale := rep(1,length(spp.take$Value))]
 
-land.index<-as.data.table(land.index)
-land.index[,Stdev := Value * 0.1]
-land.index[,Scale := rep(1,length(land.index$Value))]
+take.index<-as.data.table(take.index)
+take.index[,Stdev := Value * 0.1]
+take.index[,Scale := rep(1,length(take.index$Value))]
 
 #visualize landings trends over time ------------------------------------------
-ggplot(spp.land,aes(x=Year, y = Value)) +
+ggplot(spp.take,aes(x=Year, y = Value)) +
   geom_point() +
   facet_wrap(vars(Group),ncol = 4, scales = "free")
 
-spp.land |> 
+spp.take |> 
   filter(Group == "SurfClam") |>
   ggplot(aes(x=Year, y = Value)) +
   geom_point()
 
-spp.land |> 
+spp.take |> 
   filter(Group == "OceanQuahog") |>
   ggplot(aes(x=Year, y = Value)) +
   geom_point()
+
+# Compare landings to take
+spp.compare <- spp.take |> 
+  left_join(spp.land, by = c("Group", "Year")) |> 
+  select(Group, Year, Value, Landings)
+colnames(spp.compare) <- c("Group", "Year", "Take", "Landings")
+
+# Cod
+spp.compare |> 
+  filter(Group == "Cod") |>
+  ggplot(aes(x=Year, y = Take)) +
+  geom_point() +
+  geom_point(aes(x=Year, y = Landings), color = "red")
+
+# all species, facet wrap by Group
+spp.compare |> 
+  ggplot(aes(x=Year, y = Take)) +
+  geom_point() +
+  geom_point(aes(x=Year, y = Landings), color = "red") +
+  facet_wrap(vars(Group),ncol = 4, scales = "free")
+
+#AtlScallop
 
 #add a column called 'catch?'
 
 #save file
 write.csv(spp.land,"fitting/landings_fit.csv")
 write.csv(land.index,"fitting/landings_by_gear_fit.csv")
+
+write.csv(spp.take,"fitting/take_fit.csv")
+write.csv(take.index,"fitting/take_by_gear_fit.csv")
