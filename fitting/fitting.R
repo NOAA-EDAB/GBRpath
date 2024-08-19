@@ -11,7 +11,7 @@
 # https://github.com/SarahJWeisberg/GOM-Rpath/blob/main/fitting/fitting.R
 
 #Load packages ----------------------------------------------------------------------------
-remotes::install_github('NOAA-EDAB/Rpath', ref='fit_beta', force = T)
+# remotes::install_github('NOAA-EDAB/Rpath', ref='fit_beta', force = T)
 library(Rpath); library(data.table);library(dplyr);library(here)
 
 # #Pull in code from GitHub
@@ -31,7 +31,7 @@ GB.params <- alternate.GB.params.bal
 #define fit years and files  ---------------------------------------------------------------
 fit.years <- 1985:2019
 
-catch.datafile<- paste("fitting/landings_fit.csv",sep = "")
+catch.datafile<- paste("fitting/take_fit.csv",sep = "")
 #could also accomplish this by running catch_time.R script
 biomass.datafile  <- paste("fitting/biomass_fit.csv",sep='')
 
@@ -79,24 +79,48 @@ run0 <- rsim.run(scene0, method='AB', years=fit.years)
 rsim.fit.table(scene0,run0)
 
 # Changes from base run -------------------------------------------------------------------
+
+## Add lower trophic level forcing -----------------------------------------
+### force phytoplankton biomass from 2001 onwards --------------------------------
+source(here("fitting/Phyto_time.R"))
+pp_force <- pp_force  |>  filter(Year < 2020)
+scene0<-adjust.forcing(scene0,"ForcedBio","Phytoplankton",
+                       sim.year = 2001:2019,bymonth = F,value=pp_force$force_b)
+
+### force copepod biomass --------------------------------------------
+source(here("fitting/copepods_time.R"))
+scene0<-adjust.forcing(scene0,"ForcedBio","SmCopepods",
+                       sim.year = sm$Year,bymonth = F,value=sm$force_b)
+scene0<-adjust.forcing(scene0,"ForcedBio","LgCopepods",
+                       sim.year = lg$Year,bymonth = F,value=lg$force_b)
+
 ## Species to test  -----------------------------------------------------------------------
-test_sp <- c('Cod', 'Haddock', 'Pollock', 'WhiteHake', 'Redfish', 'OceanPout', 'SpinyDogfish')
+test_sp <- c('Pollock', 'WhiteHake', 'Redfish', 'OceanPout', 'SpinyDogfish', 'YTFlounder', 
+             'AmPlaice','Windowpane', 'WinterFlounder', 
+             'LittleSkate', 'Barndoor', 'OtherSkates')
 
 # test_sp <- c('Cod', 'Haddock', 'YTFlounder', 'WhiteHake', 'Windowpane', 'WinterFlounder', 
 #              'Redfish', 'OceanPout', 'Barndoor', 'OtherSkate')
 
-index_sp<-c('YTFlounder', 'AmPlaice', 'WitchFlounder', 'Windowpane', 'WinterFlounder', 
-            'WinterSkate', 'LittleSkate', 'Barndoor', 'OtherSkates', 'Goosefish')
+index_sp<-c('Cod', 'Haddock', 'AtlScallop', 'AtlHerring', 'AtlMackerel', 'WinterSkate', 
+            'WitchFlounder', 'Goosefish', 'BlackSeaBass', 'Fourspot', 'SummerFlounder')
 
 data_type <- "index"  #"absolute"
 
 ## run active respiration forcing -----------------------------------------------------------
-# source(here("fitting/act_resp_force.R"))
+source(here("fitting/act_resp_force.R"))
+pp_force <- pp_force  |>
+              filter(Year < 2020)
+scene0<-adjust.forcing(scene0,"ForcedBio","Phytoplankton",sim.year = 2001:2019,
+                       bymonth = F,value=pp_force$force_b)
 
-## force phytoplankton biomass from 1998 onwards --------------------------------------------
-# source(here("fitting/Phyto_time.R"))
-# scene0<-adjust.forcing(scene0,"ForcedBio","Phytoplankton",sim.year = 1998:2019,bymonth = F,value=pp_force$force_b[1:23])
+## Benthic index ----------------------------------------------------------------------------
+source(here("fitting/benthic_time.R"))
 
+scene0<-adjust.forcing(scene0,"ForcedBio","Macrobenthos",
+                       sim.year = macro_time$Time,bymonth = F,value=macro_time$biomass)
+scene0<-adjust.forcing(scene0,"ForcedBio","Megabenthos",
+                       sim.year = mega_time$Time,bymonth = F,value=mega_time$biomass)
 
 ## Set weights for fitting data -----------------------------------------------------------
 
@@ -110,29 +134,29 @@ data_type <- "index"  #"absolute"
 
 ### Weighting option 1 --------------------------------------------------------------------
 # Set data weightings for all data input low (zeros not allowed)
-# scene0$fitting$Biomass$wt[] <- 1e-36
-# scene0$fitting$Catch$wt[]   <- 1e-36
-# 
-# # Set data weighting for species to fit
-# 
-# # scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("'Cod', 'Haddock', 'YTFlounder', 'Pollock', 'AmPlaice', 'WitchFlounder',
-# #              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout',
-# #              'WinterSkate', 'LittleSkate', 'Barndoor', 'OtherSkates', 'Goosefish',
-# #              'SpinyDogfish')] <- 1
-# 
-# scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% test_sp] <- 1
+scene0$fitting$Biomass$wt[] <- 1e-36
+scene0$fitting$Catch$wt[]   <- 1e-36
+
+# Set data weighting for species to fit
+
+# scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% c("'Cod', 'Haddock', 'YTFlounder', 'Pollock', 'AmPlaice', 'WitchFlounder',
+#              'WhiteHake', 'Windowpane', 'WinterFlounder', 'Redfish', 'OceanPout',
+#              'WinterSkate', 'LittleSkate', 'Barndoor', 'OtherSkates', 'Goosefish',
+#              'SpinyDogfish')] <- 1
+
+scene0$fitting$Biomass$wt[scene0$fitting$Biomass$Group %in% test_sp] <- 1
 
 
 ### Weighting option 2 --------------------------------------------------------------------
 # Trying weight based on pedigree value
 # inverse so lower pedigree values are given higher weight
-group.wt <- GB.params$pedigree |>
-              select(Group,Biomass,Trap) |>
-              mutate(B.wt = 1/Biomass) |>
-              mutate(C.wt = 1/Trap)
-
-# set Biomass weight
-scene0$fitting$Biomass$wt <- group.wt$B.wt[match(scene0$fitting$Biomass$Group,group.wt$Group)]
+# group.wt <- GB.params$pedigree |>
+#               select(Group,Biomass,Trap) |>
+#               mutate(B.wt = 1/Biomass) |>
+#               mutate(C.wt = 1/Trap)
+# 
+# # set Biomass weight
+# scene0$fitting$Biomass$wt <- group.wt$B.wt[match(scene0$fitting$Biomass$Group,group.wt$Group)]
 
 # # set Catch weight
 # scene0$fitting$Catch$wt <- group.wt$C.wt[match(scene0$fitting$Catch$Group,group.wt$Group)]
@@ -160,6 +184,15 @@ for (i in 1:length(test_sp)){
   rsim.plot.catch(scene0, run0, test_sp[i])
 }
 
+# Plot biomass for all species, not just test species
+all_sp <- GB.params$pedigree$Group
+
+par(mfrow=c(2,2))
+for (i in 1:length(all_sp)){
+  rsim.plot.biomass(scene0, run0, all_sp[i])
+  rsim.plot.catch(scene0, run0, all_sp[i])
+}
+
 # Run optimization ------------------------------------------------------------------------
 fit.optim    <- optim(fit_values, rsim.fit.run, #lower=0, #upper=3, 
                       species=fit_species, vartype=fit_vartype, scene=scene0,   
@@ -176,46 +209,52 @@ for (i in 1:length(test_sp)){
 
 # Analysis of fit -------------------------------------------------------------------------
 
-# Plot biomass for all species, not just test species
-all_sp <- GB.params$pedigree$Group
 
+
+# All species biomass
 par(mfrow=c(2,2))
 for(i in 1:length(all_sp)){
 rsim.plot.biomass(scene0, fit.final, all_sp[i])
 }
-
-## Save pdf of plots ---------------------------------------------------------------------
-# Save all plots to a single PDF file
-pdf(file = "fitting/plots/inverse_ped_weights_B.pdf")
-
-par(mfrow=c(3,3))
-# Loop through all species and create plots
-for (i in 1:length(all_sp)) {
-rsim.plot.biomass(scene0, fit.final, all_sp[i])
-}
-
-# Close the PDF file
-dev.off()
-
-# Save all plots to a single PDF file
-pdf(file = "fitting/plots/inverse_ped_weights_C.pdf")
-
-par(mfrow=c(3,3))
-# Loop through all species and create plots
+par(mfrow=c(2,2))
+# all species catch
 for (i in 1:length(all_sp)) {
   rsim.plot.catch(scene0, fit.final, all_sp[i])
 }
 
-# Close the PDF file
-dev.off()
+## Save pdf of plots ---------------------------------------------------------------------
+# # Save all plots to a single PDF file
+# pdf(file = "fitting/plots/scen11_forcePhyto_forceCopes_ActResp_forceBenthic_B.pdf")
+# 
+# par(mfrow=c(3,3))
+# # Loop through all species and create plots
+# for (i in 1:length(all_sp)) {
+# rsim.plot.biomass(scene0, fit.final, all_sp[i])
+# }
+# 
+# # Close the PDF file
+# dev.off()
+# 
+# # Save all plots to a single PDF file
+# pdf(file = "fitting/plots/scen11_forcePhyto_forceCopes_ActResp_forceBenthic_C.pdf")
+# 
+# par(mfrow=c(3,3))
+# # Loop through all species and create plots
+# for (i in 1:length(all_sp)) {
+#   rsim.plot.catch(scene0, fit.final, all_sp[i])
+# }
+# 
+# # Close the PDF file
+# dev.off()
 
 
 
 ## Sum contribution to sum of squares -----------------------------------------------------
+# Can only compare across scenarios when all weights set to 1
 
-final.fits <- rsim.fit.obj(scene0, fit.final)
-
-final.B.fits <- final.fits$Biomass |> 
-                  dplyr::group_by(Group) |>
-                  dplyr::summarize(SS = sum(fit))
-B.ss <- sum(final.B.fits$SS)
+# final.fits <- rsim.fit.obj(scene0, fit.final)
+# 
+# final.B.fits <- final.fits$Biomass |> 
+#                   dplyr::group_by(Group) |>
+#                   dplyr::summarize(SS = sum(fit))
+# B.ss <- sum(final.B.fits$SS)
