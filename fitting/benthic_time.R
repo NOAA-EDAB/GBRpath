@@ -28,11 +28,11 @@ mega <-readRDS(url("https://github.com/NOAA-EDAB/Rpathdata/blob/main/data-raw/fa
 #filter for GB only, remove unneeded column, relabel biomass, SE for simplicity
 macro_gb <- macro |>  
   filter(EPU == "GB") |> 
-  select(-Units)  |> 
+  dplyr::select(-Units)  |> 
   mutate(Var = ifelse(Var == "Fall Macrobenthos Biomass Index Estimate","biomass","SE"))
 mega_gb <- mega  |>  
   filter(EPU == "GB") |> 
-  select(-Units) |> 
+  dplyr::select(-Units) |> 
   mutate(Var = ifelse(Var == "Fall Megabenthos Biomass Index Estimate","biomass","SE"))
 
 #calculate 1980-85 mean
@@ -59,12 +59,12 @@ mega<-2.393409e+00
 
 macro_time<-macro_gb |>  
   filter(Var == "biomass" & Time > 1984) |>  
-  select(Time,anom) |> 
+  dplyr::select(Time,anom) |> 
   mutate(biomass = macro*(anom+1))
 
 mega_time<-mega_gb |>  
   filter(Var == "biomass" & Time > 1984)  |>  
-  select(Time,anom)  |> 
+  dplyr::select(Time,anom)  |> 
   mutate(biomass = mega*(anom+1))
 
 # #visualize

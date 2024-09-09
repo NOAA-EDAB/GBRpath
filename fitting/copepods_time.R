@@ -67,7 +67,7 @@ plankton$season <- ifelse(plankton$month == 1 | plankton$month == 2, "JanFeb",
 
 #filter for copepods of interest
 #tidy
-copes_y<-plankton  |>  select(ctyp_10m2,calfin_10m2,mlucens_10m2)
+copes_y<-plankton  |>  dplyr::select(ctyp_10m2,calfin_10m2,mlucens_10m2)
 copes_x<-as.data.frame(cbind(plankton$year, plankton$season))
 colnames(copes_x)<-c("Year","Season")
 copes_y[is.na(copes_y)] <- 0 #NAs should be true 0s
@@ -90,7 +90,7 @@ copes_long <- copes_long |>
                 filter(Year %in% c(1980:2019))
 
 #look at temporal coverage
-cruises<-copes_long  |>  select(Year,Season)  |>  distinct()
+cruises<-copes_long  |>  dplyr::select(Year,Season)  |>  distinct()
 
 #average abundance per cruise
 copes_cruise<-copes_long  |>  group_by(Year,Season,spp_long)  |>  dplyr::summarise(abd = mean(value))
@@ -102,7 +102,7 @@ copes_avg<-copes_annual |> group_by(spp_long)  |>  dplyr::summarise(abd=mean(abd
 #convert to biomass
 sizes<-read.csv(here("data/EcoMon_Copepod size.csv"))
 sizes<-sizes[-1,]
-sizes<-sizes  |>  select(c("X","Literature"))
+sizes<-sizes  |>  dplyr::select(c("X","Literature"))
 colnames(sizes)<-c("spp_long","length")
 sizes$length<-as.numeric(sizes$length)
 #use l-w conversion from EMAX (wet weight)
