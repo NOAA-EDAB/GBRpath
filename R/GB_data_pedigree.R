@@ -154,15 +154,15 @@ landings.comparison <- landings.comparison |>
 # set landings to 0.8 for groups in landings.comparison
 pedigree[Group %in% landings.comparison$Group, Fleets := 0.8]
 
-alternate.GB.params.bal$pedigree[, ScallopDredge := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, ClamDredge := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, OtherDredge := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, FixedGear := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, Pelagic := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, Trap := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, SmallMesh := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, LargeMesh := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, HMSFleet := pedigree$Fleets]
+alternate.GB.params.bal$pedigree[, 'Scallop Dredge' := pedigree$Fleets]
+alternate.GB.params.bal$pedigree[, 'Clam Dredge' := pedigree$Fleets]
+alternate.GB.params.bal$pedigree[, 'Other Dredge' := pedigree$Fleets]
+alternate.GB.params.bal$pedigree[, 'Fixed Gear' := pedigree$Fleets]
+alternate.GB.params.bal$pedigree[, 'Pelagic' := pedigree$Fleets]
+alternate.GB.params.bal$pedigree[, 'Trap' := pedigree$Fleets]
+alternate.GB.params.bal$pedigree[, 'SM Mesh' := pedigree$Fleets]
+alternate.GB.params.bal$pedigree[, 'LG Mesh' := pedigree$Fleets]
+alternate.GB.params.bal$pedigree[, 'HMS Fleet' := pedigree$Fleets]
 
 # Save the updated pedigree
 usethis::use_data(alternate.GB.params.bal, overwrite = T)

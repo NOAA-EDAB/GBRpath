@@ -29,8 +29,8 @@ groups <- c('SeaBirds', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 'HMS', 'Shar
             'OtherShrimps', 'Krill', 'Micronekton', 'GelZooplankton', 
             'Microzooplankton', 'Bacteria', 'LgCopepods', 'SmCopepods', 'Phytoplankton',
             'Detritus', #'Discards', 
-            'ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
-            'Trap', 'SmallMesh', 'LargeMesh', 'HMSFleet') #, 'OtherFisheries')
+            'Scallop Dredge', 'Clam Dredge', 'Other Dredge', 'Fixed Gear', 'Pelagic',
+            'Trap', 'SM Mesh', 'LG Mesh', 'HMS Fleet') #, 'OtherFisheries')
 
 types <- c(rep(0, 58), 1, 2, #2, 
            rep(3, 9))
@@ -95,8 +95,8 @@ load(here('data', 'land.input.rda'))
 #Need to account for mismatched names
 # No catch from "OtherFisheries" so not included
 # commented out rather than deleted in case it is needed later
-rfleets <- c('ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
-             'Trap', 'SmallMesh', 'LargeMesh' , 'HMSFleet') #, 'OtherFisheries') 
+rfleets <- c('Scallop Dredge', 'Clam Dredge', 'Other Dredge', 'Fixed Gear', 'Pelagic',
+             'Trap', 'SM Mesh', 'LG Mesh' , 'HMS Fleet') #, 'OtherFisheries') 
 rgear   <- c('Scallop Dredge', 'Clam Dredge', 'Other Dredge', 'Fixed Gear', 
              'Pelagic', 'Trap', 'SM Mesh','LG Mesh', 'HMS') #, 'Other') 
 
@@ -128,6 +128,7 @@ for(i in 1:length(disc_gear)){
   }
   setnames(GB.params$model, 'gear', paste0(rfleets[igear], '.disc'))
 }
+
 
 # Diet ------------------------------------------------------------------------
 load(here('data', 'diet.input.rda'))

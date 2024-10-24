@@ -208,7 +208,7 @@ check.mort(GB.new, 'WitchFlounder')
 #Main pred - OtherSkates
 #Large F from LargeMesh and SmallMesh
 #Drop 50% of large and small mesh catch - Shelf break species
-mesh.fleet <- c('SmallMesh', 'SmallMesh.disc', 'LargeMesh', 'LargeMesh.disc')
+mesh.fleet <- c('SM Mesh', 'SM Mesh.disc', 'LG Mesh', 'LG Mesh.disc')
 for(imesh in 1:length(mesh.fleet)){
   setnames(GB.params.adj$model, mesh.fleet[imesh], 'fleet')
   GB.params.adj$model[Group == 'WitchFlounder', fleet := fleet - 0.5 * fleet]
