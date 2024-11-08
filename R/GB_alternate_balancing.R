@@ -536,6 +536,13 @@ for(igroup in 1:length(BA.Group)){
   GB.params.adj$model[Group == group.name, BioAcc := BA.input[RPATH == group.name, BA]]
 }
 
+## Cod BA change -------------------------
+# Manually adjust Cod BA to help with Rsim fits
+# Original value = -0.052171320
+
+GB.params.adj$model[Group == 'Cod', BioAcc := -0.1]
+
+
 #Step 20 - Shark Diet -----------------
 # Shifting Shark Diet away from detritus to match GOM and MAB models
 
