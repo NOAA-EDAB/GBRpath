@@ -28,16 +28,6 @@ load(here("data/alternate.GB.params.bal.rda"))
 GB <- alternate.GB.bal 
 GB.params <- alternate.GB.params.bal
 
-## Adjust Cod Biomass Accummulation -------------------------------------------------------
-# Cod biomass booms in response to reduce F from ~1990 onward
-# adjusting BA to see if I can correct this
-# original value = -0.05217132
-
-# GB[['BA']][['Cod']] <- -10
-# GB.params[['model']][['BioAcc']][[14]] <- -10
-
-# Save new values so they don't get overwritten by 'source' calls later
-
 
   
 #define fit years and files  ---------------------------------------------------------------
@@ -107,12 +97,6 @@ scene0<-adjust.forcing(scene0,"ForcedBio","Phytoplankton",
 # scene0<-adjust.forcing(scene0,"ForcedBio","LgCopepods",
 #                        sim.year = lg$Year,bymonth = F,value=lg$force_b)
 
-
-### force migrate for cod ------------------------------------------------------------
-# Using BioAcc wasn't working so trying a force migrate
-
-# scene0<-adjust.forcing(scene0,"ForcedMigrate","Cod",sim.year = 1992:2000,bymonth = F,value=-0.2)
-# scene0<-adjust.forcing(scene0,"ForcedMigrate","Cod",sim.year = 2001:2019,bymonth = F,value=-0.4)
 
 
 ## Species to test  -----------------------------------------------------------------------
@@ -255,7 +239,7 @@ for (i in 1:length(all_sp)) {
 
 ## Save pdf of plots ---------------------------------------------------------------------
 # Save all plots to a single PDF file
-pdf(file = "fitting/plots/scen12_forcePhyto_ActResp_forceBenthic_CodWeighting_B.pdf")
+pdf(file = "fitting/plots/scen12_forcePhyto_ActResp_forceBenthic_CodBA_-0.34.B.pdf")
 
 par(mfrow=c(3,3))
 # Loop through all species and create plots
@@ -267,7 +251,7 @@ rsim.plot.biomass(scene0, fit.final, all_sp[i])
 dev.off()
 
 # Save all plots to a single PDF file
-pdf(file = "fitting/plots/scen12_forcePhyto_ActResp_forceBenthic_CodWeighting_C.pdf")
+pdf(file = "fitting/plots/scen12_forcePhyto_ActResp_forceBenthic_CodBA_-0.34.C.pdf")
 
 par(mfrow=c(3,3))
 # Loop through all species and create plots

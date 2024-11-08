@@ -540,7 +540,7 @@ for(igroup in 1:length(BA.Group)){
 # Manually adjust Cod BA to help with Rsim fits
 # Original value = -0.052171320
 
-GB.params.adj$model[Group == 'Cod', BioAcc := -0.1]
+GB.params.adj$model[Group == 'Cod', BioAcc := -0.34]
 
 
 #Step 20 - Shark Diet -----------------
