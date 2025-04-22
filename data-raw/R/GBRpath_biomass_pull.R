@@ -5,6 +5,11 @@ library(here); library(data.table); library(mskeyrun); library(usethis)
 #Grab species list
 load(here('data-raw', 'Species_codes.RData'))
 
+# Replace Rpath values of 'OtherFlatfish' with 'OtherDemersals'
+spp[RPATH == 'OtherFlatfish', RPATH := 'OtherDemersals']
+# Replace Rpath values of 'OffHake' with 'SilverHake'
+spp[RPATH == 'OffHake', RPATH := 'SilverHake']
+
 #Grab biomass data from ms-keyrun
 bio <- mskeyrun::surveyIndexAll
 
@@ -36,20 +41,21 @@ bio.input <- bio.index[YEAR %in% 1981:1985, .(B = mean(B, na.rm = T)), by = RPAT
 #Shellfish surveys--------------------------------------------------------------
 #Scallops and clam survey not included in ms-keyrun data set as they are not 
 #used in the other models
-library(dbutils); library(DBI); library(sf); library(survdat)
+library(DBI); library(sf); library(survdat)
 
 #Connect to the database
-channel <- dbutils::connect_to_database('sole', 'slucey')
+# channel <- dbutils::connect_to_database('sole', 'slucey')
 
-scall <- survdat::get_survdat_scallop_data(channel, getWeightLength = T)
+#scall <- survdat::get_survdat_scallop_data(channel, getWeightLength = T)
+load(here::here('data', 'survdatScallops.RData'))
 
 #Scallop survey did not record weight prior to 2001 (FSCS) so need to manually
 #calculate catch weights
-scalldat <- scall$survdat[, BIOMASS := sum(WGTLEN), by = c('YEAR', 'STATION')]
+scalldat <- scallops$survdat[, BIOMASS := sum(WGTLEN), by = c('YEAR', 'STATION')]
 
 #Calculate scallop index
 #use poststrat to assign to EPU
-epu <- sf::st_read(dsn = here::here('gis', 'EPU_extended.shp'))
+epu <- sf::st_read(dsn = here::here('data-raw','gis', 'EPU_extended.shp'))
 
 scall.mean <- survdat::calc_stratified_mean(scalldat, areaPolygon = epu,
                                             areaDescription = 'EPU',
@@ -78,12 +84,12 @@ bio.input[RPATH == 'AtlScallop', B := scall.input[, B]]
 
 
 #Clam survey--------------------------------------------------------------------
-clam <- survdat::get_survdat_clam_data(channel)
+#clam <- survdat::get_survdat_clam_data(channel)
+load(here::here('data', 'survdatClams.RData'))
 
 #Use GB clam region to calculate biomass
-clam.mean <- clam$data[!is.na(SVSPP) & clam.region == 'GB', 
+clam.index <- clams$data[!is.na(SVSPP) & clam.region == 'GB', 
                        .(B = mean(BIOMASS.MW, na.rm = T)), by = c('YEAR', 'SVSPP')]
-clam.index <- clam.mean[, .(B = sum(B)), by = YEAR]
 
 #Need to expand from kg/tow to mt/km^2
 # Clam tows can vary greatly by I'll use an example tow as the expansion
@@ -92,7 +98,8 @@ clam.index <- clam.mean[, .(B = sum(B)), by = YEAR]
 # so conversion is 0.001 / 0.00148 or 0.6757
 clam.index[, B := B * 0.6757]
 clam.index[, Units := 'mt km^-2']
-clam.index[, RPATH := 'Clams']
+clam.index$RPATH <- ifelse(clam.index$SVSPP == 409, 'OceanQuahog','SurfClam')
+#clam.index[, RPATH := 'Clams']
 
 #Input biomass
 clam.input <- clam.index[YEAR %in% 1981:1985, .(B = mean(B, na.rm = T)),
@@ -103,13 +110,16 @@ bio.input <- rbindlist(list(bio.input, clam.input))
 #Non Survey groups--------------------------------------------------------------
 #Add groups not available in database using EMAX
 #Remove macrobenthos from survey
-emax <- data.table(RPATH = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
+emax <- data.table(RPATH = c('SeaBirds', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 'HMS', 
                              'Sharks', 'Macrobenthos', 'Krill', 'Micronekton', 
-                             'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 
+                             'GelZooplankton', 'LgCopepods','SmCopepods', 'Microzooplankton', 
                              'Phytoplankton', 'Bacteria'),
-                   B = c(0.015, NA, 0.416, 0.122, 0.035, 0.024, 104, 3, 4.6, 
-                         5.24, 24.24, 3.1, 19.773, 3.456))
+                   B = c(0.015, NA, 0.416, 0.122, 0.035, 0.024, 104, 0.6457, 3.1593, 
+                         5.24, 6.981,12.99, 3.1, 19.773, 3.456))
 
+
+
+# bind to bio.input
 bio.input <- rbindlist(list(bio.input[RPATH != 'Macrobenthos'], emax))
 
 #No other cephalopods in 81 - 85

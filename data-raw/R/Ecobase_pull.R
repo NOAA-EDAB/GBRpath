@@ -1,6 +1,6 @@
 #Code from Ecobase.ecopath.org to access Ecobase
 #To get the list of available Ewe models
-library(RCurl); library(XML); library(plyr)
+library(RCurl); library(XML); library(plyr); library(tidyr); library(data.table); library(janitor)
 
 #To obtain the list of available model
 h=basicTextGatherer()
@@ -56,3 +56,32 @@ all.mod[TL > 1 & TL <=2, mean(QB)]
 all.mod[TL > 2 & TL <=3, mean(QB)]
 all.mod[TL > 3 & TL <=4, mean(QB)]
 all.mod[TL > 4, mean(QB)]
+
+
+## Grab GB EMAX values for small and large copepods to aide in splitting from mesozooplankton
+
+# pull starting values for Georges Bank EMAX model. model.model_number == 705
+
+h=basicTextGatherer()
+mymodel<-705
+curlPerform(url = paste('http://sirs.agrocampus-ouest.fr/EcoBase/php/webser/soap-client.php?no_model=',mymodel,sep=''),writefunction=h$update,verbose=TRUE)
+
+
+data<-xmlTreeParse(h$value(),useInternalNodes=TRUE)
+
+input1<-xpathSApply(data,'//group',function(x) xmlToList(x)) 
+
+# make each row of input1 its own column in a new data.table
+input1 <- as.data.table(input1, keep.rownames = T)
+input2 <- as.data.table(t(input1))
+
+# make row 1 the column names
+input2 <- row_to_names(input2, 1)
+
+# select only group_name Large Copepods and Small copepods
+EMAX_copepod_params <- input2[group_name %in% c('Large Copepods', 'Small copepods'),]
+# add column for RPATH values 'LgCopepods' and 'SmCopepods'
+EMAX_copepod_params[, RPATH := c('LgCopepods', 'SmCopepods')]
+
+# save to data folder
+usethis::use_data(EMAX_copepod_params, overwrite = T)

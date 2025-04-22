@@ -1,37 +1,37 @@
 #Generate prebal table
 groups1 <- data.table(Group = c('AtlHerring', 'AtlMackerel', 'Butterfish', 
                                 'SmPelagics', 'Mesopelagics', 'OtherPelagics', 'Cod', 
-                                'Haddock', 'Goosefish', 'OffHake', 'SilverHake', 
+                                'Haddock', 'Goosefish', 'SilverHake', 
                                 'RedHake', 'WhiteHake', 'Redfish', 'Pollock', 'OceanPout', 
                                 'BlackSeaBass', 'Bluefish', 'Scup', 'OtherDemersals', 
                                 'SouthernDemersals', 'Fourspot', 'SummerFlounder', 
                                 'AmPlaice', 'Windowpane', 'WinterFlounder', 'WitchFlounder', 
-                                'YTFlounder', 'OtherFlatfish', 'SmFlatfishes', 'SpinyDogfish', 
+                                'YTFlounder', 'SmFlatfishes', 'SpinyDogfish', 
                                 'SmoothDogfish', 'Barndoor', 'WinterSkate', 'LittleSkate', 
                                 'OtherSkates', 'Illex', 'Loligo', 'OtherCephalopods', 
                                 'AmLobster', 'AtlScallop', 
-                                'Clams'), 
-                      'Data Source' = c(rep('NEFSC BTS', 40), 'NEFSC Scallop', 
-                                        'NEFSC Clam'),
+                                'OceanQuahog', 'SurfClam'), 
+                      'Data Source' = c(rep('NEFSC BTS', 38), 'NEFSC Scallop', 
+                                        (rep('NEFSC Clam',2)) ),
                       Classification = c(rep('Pelagic (Small; Round)', 5),
                                          'Pelagic (Medium; Round)', 
-                                         rep('Demersal (Round)', 11), 
+                                         rep('Demersal (Round)', 10), 
                                          'Pelagic (Medium; Round)', 'Pelagic (Small; Round)',
                                          'Demersal (Round)', 'Demersal (Round)',
-                                         rep('Demersal (Flat)', 9), 'Demersal (Round)',
+                                         rep('Demersal (Flat)', 8), 'Demersal (Round)',
                                          'Demersal (Round)', rep('Demersal (Flat)', 4),
                                          rep('Invertebrate (Pelagic)', 3),
-                                         rep('Invertebrate (Benthic)', 3)))
+                                         rep('Invertebrate (Benthic)', 4)))
 
 groups2 <- data.table(Group = c('Seabirds', 'Seals', 'BalWhale', 'ToothWhale', 'HMS', 
                                 'Sharks', 'Macrobenthos', 'Megabenthos', 
                                 'OtherShrimps', 'Krill', 'Micronekton', 
-                                'GelZooplankton', 'Mesozooplankton', 'Microzooplankton', 
+                                'GelZooplankton', 'LgCopepods','SmCopepods', 'Microzooplankton', 
                                 'Phytoplankton'), 
                       Classification = c('Bird', 'Mammal', 'Whale', 'Whale', 'HMS', 
                                          'Shark',rep('Invertebrate (Benthic)', 2),
                                          rep('Invertebrate (Pelagic)', 4), 
-                                         rep('Zooplankton', 2), 'Primary Producer'))
+                                         rep('Zooplankton', 3), 'Primary Producer'))
 
 
 spclass.GB <- rbindlist(list(groups1[, .(Group, Classification)], groups2))
@@ -46,11 +46,11 @@ spclass.GB[Classification %in% c('Demersal (Round)', 'Demersal (Flat)', 'Demersa
                                  'HMS', 'Shark'), fish := T]
 spclass.GB[Classification %in% c('Invertebrate (Pelagic)', 'Invertebrate (Benthic)', 
                                  'Primary Producer'), invert := T]
-spclass.GB[Group %in% c('Mesozooplankton', 'Microzooplankton', 'GelZooplankton', 
+spclass.GB[Group %in% c('LgCopepods','SmCopepods', 'Microzooplankton', 'GelZooplankton', 
                         'Micronekton'), Zoop := T]
 
 plank <- c('AtlHerring', 'AtlMackerel', 'SmPelagics')
-pisc  <- c('Barndoor', 'Bluefish', 'Cod', 'Fourspot', 'Goosefish', 'HMS', 'OffHake', 
+pisc  <- c('Barndoor', 'Bluefish', 'Cod', 'Fourspot', 'Goosefish', 'HMS', 
            'SilverHake', 'Sharks', 'SpinyDogfish', 'SummerFlounder', 'OtherPelagics')
 
 spclass.GB[Group %in% plank, diet := 'Plank']
