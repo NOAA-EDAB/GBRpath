@@ -38,7 +38,7 @@ GB.new <- rpath(GB.params, 'Georges Bank')
 
 ## Bioparams for EMAX groups ---------
 # Call in GOM params
-load(url("https://github.com/SarahJWeisberg/GOM-Rpath/blob/main/outputs/GOM_params_Rpath.RData?raw=true"))
+load(here::here('data', 'GOM.params.rda'))
 
 # Call in EMAX groups
 # Values come from GB specific EMAX ecopath model accessed via ecobase
