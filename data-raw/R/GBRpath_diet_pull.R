@@ -187,7 +187,7 @@ stations <- allfh |>
 GB <- sf::read_sf(here('data-raw', 'gis'), 'GB_SOE_strata')
 
 #Post stratify
-stations <- survdat::post_strat(stations, GB, 'EPU')
+stations <- survdat:::post_strat(stations, GB, 'EPU')
 
 #Merge back
 # allfh <- merge(allfh, stations, by = c('CRUISE6', 'STRATUM', 'STATION', 'TOW'),
