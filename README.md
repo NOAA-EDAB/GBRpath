@@ -21,7 +21,8 @@ To gather input data
   - `GBRpath_catch_pull.R`
   - 'generic_scallop_clam_survey_pull.R'
   - `GBRpath_diet_pull.R`
-Note that catch data requires a login to the NOAA server. Resulting data pulls are not confidential and are found in the data folder
+
+*Note that catch data requires a login to the NOAA server. Resulting data pulls are not confidential and are found in the data folder*
 
 To create initial model
 1. Go to GBRpath>R
