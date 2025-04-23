@@ -5,12 +5,21 @@ library(comlandr)
 #Connect to database
 channel <- dbutils::connect_to_database('sole', 'slucey')
 
+## need to figure out unkVar and knStrata fields
 GB.stat.areas <- c(521, 522, 525:526, 537, 551, 552, 561, 562)
-landings <- comlandr::get_comland_data(channel, filterByArea = GB.stat.areas,
-                                       aggGear = T, aggArea = T, unkVar = 'EPU',
-                                       knStrata = c('NESPP3', 'YEAR', 'HY', 'QY',
-                                                    'MONTH', 'Fleet', 'TONCL1',
+landings <- comlandr::get_comland_data(channel, filterByYear = 1981:2022 ,filterByArea = GB.stat.areas,
+                                       aggGear = T, aggArea = T, 
+                                       unkVar = c('MONTH', 'Fleet', 'EPU'),
+                                       knStrata = c('HY', 'QY', 'MONTH', 'Fleet', 'TONCL2',
                                                     'EPU'))
+landings <- comlandr::get_comland_data(channel, filterByYear = 1981:2022 ,filterByArea = GB.stat.areas,
+                                       aggGear = F, aggArea = T, 
+                                       unkVar = c('MONTH', 'NEGEAR', 'EPU'),
+                                       knStrata = c('HY', 'QY', 'MONTH', 'NEGEAR', 'TONCL2',
+                                                    'EPU'))
+
+
+saveRDS(landings,here::here("data-raw/landingsNEGEAR.rds"))
 #Merge Rpath groups
 load(here('data-raw', 'Species_codes.RData'))
 #Fix a couple of duplicate codes
@@ -26,7 +35,7 @@ land <- merge(landings$comland[EPU == 'GB', ], unique(spp[!is.na(NESPP3),
 land.index <- land[, .(Landings = sum(SPPLIVMT)), by = c('RPATH', 'Fleet', 'YEAR')]
 
 #Divide by the area of Georges Bank
-epu <- sf::st_read(dsn = here::here('gis', 'EPU_extended.shp'))
+epu <- sf::st_read(dsn = here::here('data-raw/gis', 'EPU_extended.shp'))
 epu.area <- survdat::get_area(epu, 'EPU')
 land.index[, Landings := Landings / as.numeric(epu.area[STRATUM == 'GB', Area])]
 
@@ -41,7 +50,7 @@ land.input[, Units := 'mt km^-2']
 
 #Fix species that didn't make the cut for GB model
 land.index[RPATH == 'AtlCroaker',  RPATH := 'SouthernDemersals']
-land.index[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+land.index[RPATH == 'AtlHalibut',  RPATH := 'OtherDemersals']
 land.index[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
 land.index[RPATH == 'AmShad',      RPATH := 'RiverHerring']
 land.index[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
@@ -49,7 +58,7 @@ land.index[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
 land.index[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
 land.index[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
 land.input[RPATH == 'AtlCroaker',  RPATH := 'SouthernDemersals']
-land.input[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+land.input[RPATH == 'AtlHalibut',  RPATH := 'OtherDemersals']
 land.input[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
 land.input[RPATH == 'AmShad',      RPATH := 'RiverHerring']
 land.input[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
@@ -96,7 +105,7 @@ disc.input[, Units := 'mt km^-2']
 
 #Fix species that didn't make the cut for GB model
 disc.index[RPATH == 'AtlCroaker',  RPATH := 'SouthernDemersals']
-disc.index[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+disc.index[RPATH == 'AtlHalibut',  RPATH := 'OtherDemersals']
 disc.index[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
 disc.index[RPATH == 'AmShad',      RPATH := 'RiverHerring']
 disc.index[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
@@ -104,7 +113,7 @@ disc.index[RPATH == 'Tilefish',    RPATH := 'SouthernDemersals']
 disc.index[RPATH == 'RedCrab',     RPATH := 'Megabenthos']
 disc.index[RPATH == 'NShrimp',     RPATH := 'OtherShrimps']
 disc.input[RPATH == 'AtlCroaker',  RPATH := 'SouthernDemersals']
-disc.input[RPATH == 'AtlHalibut',  RPATH := 'OtherFlatfish']
+disc.input[RPATH == 'AtlHalibut',  RPATH := 'OtherDemersals']
 disc.input[RPATH == 'Weakfish',    RPATH := 'SouthernDemersals']
 disc.input[RPATH == 'AmShad',      RPATH := 'RiverHerring']
 disc.input[RPATH == 'StripedBass', RPATH := 'OtherDemersals']
@@ -120,9 +129,13 @@ disc.input <- disc.input[, .(Discards = sum(Discards)),
 setcolorder(disc.input, c('RPATH', 'Fleet', 'Discards', 'Units'))
 
 #Need to add a row for clam discards (set to zero)
-clam.disc <- data.table(RPATH = 'Clams', Fleet = 'Clam Dredge', Discards = 0,
+quahog.disc <- data.table(RPATH = 'OceanQuahog', Fleet = 'Clam Dredge', Discards = 0,
                         Units = 'mt km^-2')
-disc.input <- rbindlist(list(disc.input, clam.disc))
+disc.input <- rbindlist(list(disc.input, quahog.disc))
+
+surfclam.disc <- data.table(RPATH = 'SurfClam', Fleet = 'Clam Dredge', Discards = 0,
+                          Units = 'mt km^-2')
+disc.input <- rbindlist(list(disc.input, surfclam.disc))
 
 #Move to data-raw folder
 usethis::use_data(disc.input, overwrite = T)

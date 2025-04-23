@@ -49,7 +49,7 @@ NWACS <- data.table(Group = c('Phytoplankton', 'Other primary producers', 'Bacte
                               'Demersal omnivores - other', 'Medium pelagics - other',
                               'Sharks - coastal', 'Sharks - pelagic', 'Large pelagics (HMS)', 
                               'Pinnipeds', 'Baleen whales', 'Odontocetes',
-                              'Seabirds', 'Nearshore pisc birds', 'Detritus'),
+                              'SeaBirds', 'Nearshore pisc birds', 'Detritus'),
                     Biomass = c(30.000, 1.605, 7.700, 7.000, 16.000, 17.966, 6.349, 
                                 7.654, 17.452, 7.000, 8.340, 21.000, 5.500, 4.498, 
                                 0.470, 0.090, 1.650, 0.200, 0.371, 2.048, 1.200,
@@ -76,7 +76,7 @@ NWACS <- data.table(Group = c('Phytoplankton', 'Other primary producers', 'Bacte
                            10.283, 2.900, 0.900, 1.833, 1.500, 1.833, 1.838, 1.247,
                            0.690, 6.794, 5.581, 3.217, 14.301, 80.000, 80.000, NA),
                     RPATH = c('Phytoplankton', 'Phytoplankton', 'Bacteria', 
-                              'Microzooplankton', 'Mesozooplankton', 'Mesozooplankton',
+                              'Microzooplankton', 'SmCopepods', 'LgCopepods',
                               'GelZooplankton', 'Micronekton', 
                               rep('Macrobenthos', 4), 'AtlScallop', 'AmLobster',
                               'OtherShrimps', 'Mesopelagics', 'AtlHerring', 'RiverHerring',
@@ -87,8 +87,8 @@ NWACS <- data.table(Group = c('Phytoplankton', 'Other primary producers', 'Bacte
                               'RedHake', 'SouthernDemersal', rep('YTFlounder', 2),
                               rep('SummerFlounder', 2), 'WinterSkate', 
                               rep('OtherDemersals', 3), 'OtherPelagics', rep('Sharks', 2),
-                              'HMS', 'Seals', 'BalWhale', 'ToothWhale', 'Seabirds',
-                              'Seabirds', 'Detritus'))
+                              'HMS', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 'SeaBirds',
+                              'SeaBirds', 'Detritus'))
 #Calculate weighted mean
 NWACS[, Rpath.bio := sum(Biomass), by = RPATH]
 NWACS[, PB.weight := Biomass * PB]
@@ -106,18 +106,21 @@ GB.params <- GB.params[!RPATH %in% c('RedHake', 'WinterSkate'), ]
 #Several parameters need to be duplicated as their parameters will be similar to others
 GB.double <- GB.params[RPATH %in% c('AtlScallop', 'AmLobster', 'Illex', 'Micronekton'), ]
 GB.double[RPATH == 'Micronekton', RPATH := 'Krill']
-GB.double[RPATH == 'AtlScallop',  RPATH := 'Clams']
+GB.double[RPATH == 'AtlScallop',  RPATH := 'OceanQuahog']
 GB.double[RPATH == 'AmLobster',   RPATH := 'Megabenthos']
 GB.double[RPATH == 'Illex', RPATH := 'Loligo']
 ceph <- copy(GB.double[RPATH == 'Loligo', ])
 ceph[, RPATH := 'OtherCephalopods']
 GB.double <- rbindlist(list(GB.double, ceph))
+surf <- copy(GB.double[RPATH == 'OceanQuahog', ])
+surf[, RPATH := 'SurfClam']
+GB.double <- rbindlist(list(GB.double, surf))
 
 GB.params <- rbindlist(list(GB.params, GB.double))
 
 #FishBase-----------------------------------------------------------------------
 #Fill-in groups not in Buchheister
-GB.fish <- unique(spp[RPATH %in% c('Goosefish', 'OffHake', 'SilverHake', 'RedHake', 
+GB.fish <- unique(spp[RPATH %in% c('Goosefish', 'SilverHake', 'RedHake', 
                                    'WhiteHake', 'Redfish', 'Pollock', 'OceanPout', 
                                    'BlackSeaBass', 'Scup', 'Fourspot','AmPlaice', 
                                    'Windowpane', 'WinterFlounder', 'WitchFlounder', 
@@ -152,6 +155,7 @@ fish.params <- merge(fish.params, unique(spp[, list(RPATH, SCINAME)]), by = 'SCI
 #There are a couple species with extra spaces at the end...need to fix this
 fish.params[SCINAME %like% 'PSEUDOPLEURO',  RPATH := 'WinterFlounder']
 fish.params[SCINAME %like% 'HIPPOGLOSSINA', RPATH := 'Fourspot']
+fish.params[SCINAME %like% 'LEUCORAJA ERINACEUS', RPATH := 'LittleSkate']
 fish.params[, c('SCINAME', 'Species') := NULL]
 
 #Use EMAX values for aggregate group if still missing
@@ -171,8 +175,7 @@ GB.bioparams <- rbindlist(list(GB.params, fish.params), use.names = T)
 
 #Need to add OtherFlatfish and SmFlatfish
 #Use OtherDemersals for OtherFlatfish and SmPelagics for SmFlatfish
-GB.add <- copy(GB.bioparams[RPATH %in% c('OtherDemersals', 'SmPelagics'), ])
-GB.add[RPATH == 'OtherDemersals', RPATH := 'OtherFlatfish']
+GB.add <- copy(GB.bioparams[RPATH %in% ('SmPelagics'), ])
 GB.add[RPATH == 'SmPelagics', RPATH := 'SmFlatfishes']
 #Need an OtherSkates as well...going to take a mean of Winter and Little
 GB.skate <- copy(GB.bioparams[RPATH %in% c('WinterSkate', 'LittleSkate'), ])
