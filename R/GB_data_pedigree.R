@@ -32,17 +32,17 @@ library(data.table); library(dplyr)
 
 # Load GB.params and GB.params.adj
 load("~/GBRpath/data/GB.params.rda")
-load("~/GBRpath/data/alternate.GB.params.bal.rda")
+load("~/GBRpath/data/GB.params.bal.rda")
 
 # Compare biological parameters from GB.params and GB.params.adj
-pedigree.cols <- colnames(alternate.GB.params.bal$pedigree)
+pedigree.cols <- colnames(GB.params.bal$pedigree)
 
 pedigree.cols <-pedigree.cols[!pedigree.cols == "Diet"]
 
 init.params <- GB.params$model |> 
   select(all_of(pedigree.cols))
 
-balanced.params <- alternate.GB.params.bal$model |> 
+balanced.params <- GB.params.bal$model |> 
   select(all_of(pedigree.cols))
 
 # Create new table comparing relative change in values
@@ -60,7 +60,7 @@ for (param in pedigree.params) {
 
 # Compare diet from GB.params and GB.params.adj
 init.diet <- GB.params$diet 
-balanced.diet <- alternate.GB.params.bal$diet
+balanced.diet <- GB.params.bal$diet
 
 # Create new table comparing relative change in values
 # start with an empty table with columns named the values in pedigree.cols
@@ -126,21 +126,21 @@ pedigree[Group %in% long.diet.change$Group, Diet := 0.8]
 
 
  
-# Input values in pedigree of alternate.GB.params.bal --------------
+# Input values in pedigree of GB.params.bal --------------
 #Remove pedigree for fleets & discards
-alternate.GB.params.bal$pedigree<-alternate.GB.params.bal$pedigree[1:60]
+GB.params.bal$pedigree<-GB.params.bal$pedigree[1:60]
 
 # Biomass
-alternate.GB.params.bal$pedigree[, Biomass := pedigree$Biomass]
+GB.params.bal$pedigree[, Biomass := pedigree$Biomass]
 
 # PB
-alternate.GB.params.bal$pedigree[, PB := pedigree$PB]
+GB.params.bal$pedigree[, PB := pedigree$PB]
 
 # QB
-alternate.GB.params.bal$pedigree[, QB := pedigree$QB]
+GB.params.bal$pedigree[, QB := pedigree$QB]
 
 # Diet
-alternate.GB.params.bal$pedigree[, Diet := pedigree$Diet]
+GB.params.bal$pedigree[, Diet := pedigree$Diet]
 
 # Fleets
 
@@ -154,18 +154,18 @@ landings.comparison <- landings.comparison |>
 # set landings to 0.8 for groups in landings.comparison
 pedigree[Group %in% landings.comparison$Group, Fleets := 0.8]
 
-alternate.GB.params.bal$pedigree[, ScallopDredge := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, ClamDredge := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, OtherDredge := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, FixedGear := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, Pelagic := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, Trap := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, SmallMesh := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, LargeMesh := pedigree$Fleets]
-alternate.GB.params.bal$pedigree[, HMSFleet := pedigree$Fleets]
+GB.params.bal$pedigree[, ScallopDredge := pedigree$Fleets]
+GB.params.bal$pedigree[, ClamDredge := pedigree$Fleets]
+GB.params.bal$pedigree[, OtherDredge := pedigree$Fleets]
+GB.params.bal$pedigree[, FixedGear := pedigree$Fleets]
+GB.params.bal$pedigree[, Pelagic := pedigree$Fleets]
+GB.params.bal$pedigree[, Trap := pedigree$Fleets]
+GB.params.bal$pedigree[, SmallMesh := pedigree$Fleets]
+GB.params.bal$pedigree[, LargeMesh := pedigree$Fleets]
+GB.params.bal$pedigree[, HMSFleet := pedigree$Fleets]
 
 # Save the updated pedigree
-usethis::use_data(alternate.GB.params.bal, overwrite = T)
+usethis::use_data(GB.params.bal, overwrite = T)
 
-alternate.GB.bal <- rpath(alternate.GB.params.bal, eco.name = 'Georges Bank')
-usethis::use_data(alternate.GB.bal, overwrite = T)
+GB.bal <- rpath(GB.params.bal, eco.name = 'Georges Bank')
+usethis::use_data(GB.bal, overwrite = T)
