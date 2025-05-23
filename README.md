@@ -1,41 +1,38 @@
+---
+editor_options:
+  markdown:
+    wrap: 72
+---
+
 # GBRpath
 
 ![gitleaks](https://github.com/NOAA-EDAB/GBRpath/workflows/gitleaks/badge.svg)
 
-
 Rpath model of Georges Bank
 
-## Contact
+## Contacts
 
-| [MGrezlik](https://github.com/MGrezlik)        
-| ----------------------------------------------------------------------------------------------- 
+| [MGrezlik](https://github.com/MGrezlik) | [slucey](https://github.com/slucey) |
+|:--------------------------------------:|:----------------------------------:|
+| <img src="https://github.com/MGrezlik.png" width="80"> | <img src="https://github.com/slucey.png" width="80"> |
 
 ## Order in which to run scripts
 
-To gather input data
-1. Go to GBRpath>data-raw>R
-2. Run the following scripts in order:
-  - `GBRpath_biomass_pull.R`
-  - `GBRpath_biomass_accumulation.R`
-  - `GBRpath_bioparams.R`
-  - `GBRpath_catch_pull.R`
-  - 'generic_scallop_clam_survey_pull.R'
-  - `GBRpath_diet_pull.R`
+To gather input data 1. Go to GBRpath\>data-raw\>R 2. Run the following
+scripts in order: - `GBRpath_biomass_pull.R` -
+`GBRpath_biomass_accumulation.R` - `GBRpath_bioparams.R` -
+`GBRpath_catch_pull.R` - 'generic_scallop_clam_survey_pull.R' -
+`GBRpath_diet_pull.R`
 
-*Note that catch data requires a login to the NOAA server. Resulting data pulls are not confidential and are found in the data folder*
+*Note that catch data requires a login to the NOAA server. Resulting
+data pulls are not confidential and are found in the data folder*
 
-To create initial model
-1. Go to GBRpath>R
-2. Run the following scripts in order:
-  - `copepod_reorganization.R`
-  - `GB_initial_model.R`
+To create initial model 1. Go to GBRpath\>R 2. Run the following scripts
+in order: - `copepod_reorganization.R` - `GB_initial_model.R`
 
-
-To recreate balancing process and pedigree creation
-1. Go to GBRpath>R
-2. Run the following scripts in order:
-  - `GB_balancing.R`
-  - `GBRpath_data_pedigree.R`
+To recreate balancing process and pedigree creation 1. Go to GBRpath\>R
+2. Run the following scripts in order: - `GB_balancing.R` -
+`GBRpath_data_pedigree.R`
 
 #### Legal disclaimer
 
