@@ -1,13 +1,12 @@
 #Georges Bank Rpath model
 #Expanded model of Georges Bank
 #SML
-# Updated by MTG 03/01/2024
+# Updated by MTG 03/01/2024 and SJW 8/1/24
 
 # Folding Discards into Detritus ----
 
-# Discards were creating an additional biomass flow that complicated
-# network analysis. Trying to make the changes in a way that will
-# be easy to undo if needed in the future.
+# Removing discards as a separate group so as to simplify
+# network analyses. Discard fate = detritus.
 
 
 
@@ -30,8 +29,8 @@ groups <- c('SeaBirds', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 'HMS', 'Shar
             'OtherShrimps', 'Krill', 'Micronekton', 'GelZooplankton', 
             'Microzooplankton', 'Bacteria', 'LgCopepods', 'SmCopepods', 'Phytoplankton',
             'Detritus', #'Discards', 
-            'ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
-            'Trap', 'SmallMesh', 'LargeMesh', 'HMSFleet') #, 'OtherFisheries')
+            'Scallop Dredge', 'Clam Dredge', 'Other Dredge', 'Fixed Gear', 'Pelagic',
+            'Trap', 'SM Mesh', 'LG Mesh', 'HMS Fleet') #, 'OtherFisheries')
 
 types <- c(rep(0, 58), 1, 2, #2, 
            rep(3, 9))
@@ -45,9 +44,9 @@ GB.params$model[Type < 3,  BioAcc := 0]
 GB.params$model[Type == 0, Unassim := 0.2]
 GB.params$model[Type > 0 & Type < 3, Unassim := 0]
 GB.params$model[Type == 2, DetInput := 0]
-GB.params$model[Type < 2,  Detritus := 1]
-GB.params$model[Type > 1,  Detritus := 0]
-# GB.params$model[Type == 3, Discards := 1]
+GB.params$model[Type <= 1,  Detritus := 1]
+GB.params$model[Type == 2,  Detritus := 0]
+GB.params$model[Type == 3, Detritus := 1]
 # GB.params$model[Type < 3,  Discards := 0]
 
 # Biomass and EE --------------------------------------------------------------
@@ -96,8 +95,8 @@ load(here('data', 'land.input.rda'))
 #Need to account for mismatched names
 # No catch from "OtherFisheries" so not included
 # commented out rather than deleted in case it is needed later
-rfleets <- c('ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
-             'Trap', 'SmallMesh', 'LargeMesh' , 'HMSFleet') #, 'OtherFisheries') 
+rfleets <- c('Scallop Dredge', 'Clam Dredge', 'Other Dredge', 'Fixed Gear', 'Pelagic',
+             'Trap', 'SM Mesh', 'LG Mesh' , 'HMS Fleet') #, 'OtherFisheries') 
 rgear   <- c('Scallop Dredge', 'Clam Dredge', 'Other Dredge', 'Fixed Gear', 
              'Pelagic', 'Trap', 'SM Mesh','LG Mesh', 'HMS') #, 'Other') 
 
@@ -112,18 +111,24 @@ for(igear in 1:length(rfleets)){
 }
 
 #Load discards
-# load(here('data', 'disc.input.rda'))
-# 
-# for(igear in 1:length(rfleets)){
-#   gear.disc <- disc.input[Fleet == rgear[igear], ]
-#   setnames(GB.params$model, paste0(rfleets[igear], '.disc'), 'gear')
-#   #Discards
-#   for(igroup in 1:nrow(gear.disc)){
-#     GB.params$model[Group == gear.disc[igroup, RPATH], 
-#                     gear := gear.disc[igroup, Discards]][]
-#   }
-#   setnames(GB.params$model, 'gear', paste0(rfleets[igear], '.disc'))
-# }
+#load(here('data', 'disc.input.rda'))
+source(here("R/discards.R"))
+discards<-as.data.table(discards)
+
+disc_gear<-which(rgear %in% discards$FLEET)
+
+for(i in 1:length(disc_gear)){
+  igear<-disc_gear[i]
+  gear.disc <- discards[FLEET == rgear[igear], ]
+  setnames(GB.params$model, paste0(rfleets[igear], '.disc'), 'gear')
+  #Discards
+  for(igroup in 1:nrow(gear.disc)){
+    GB.params$model[Group == gear.disc[igroup, RPATH],
+                    gear := gear.disc[igroup, discards]][]
+  }
+  setnames(GB.params$model, 'gear', paste0(rfleets[igear], '.disc'))
+}
+
 
 # Diet ------------------------------------------------------------------------
 load(here('data', 'diet.input.rda'))
