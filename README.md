@@ -12,7 +12,8 @@
 |:--------------------------------------:|:----------------------------------:|
 | <img src="https://github.com/MGrezlik.png" width="80"/> | <img src="https://github.com/slucey.png" width="80"/> |
 
----
+Rpath model of Georges Bank. This model was originally developed by Sean Lucey as part of his PhD dissertation. The model has continued to be developed for additional ecosystem considerations. See version release notes for full details.
+
 
 ## Order in Which to Run Scripts
 
