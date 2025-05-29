@@ -157,7 +157,7 @@ prey[PYABBR == 'PRESER', RPATH := 'NotUsed']
 # allfh select colouns in allfh.qry
 # capitalize column names to match later code
 allfh <- allfh |> 
-          select(one_of(c('year', 'season', 'cruise6', 'station', 'stratum', 'tow', 'declat', 'declon',
+          dplyr::select(one_of(c('year', 'season', 'cruise6', 'station', 'stratum', 'tow', 'declat', 'declon',
                           'svspp', 'pdid', 'pdgutw', 'pdgutv',
                           'pynam', 'pyamtw', 'pyamtv', 'perpyw', 'perpyv'))) |> 
           rename_with(toupper)
@@ -185,6 +185,48 @@ stations <- allfh |>
 
 #Grab GB shapefile
 GB <- sf::read_sf(here('data-raw', 'gis'), 'GB_SOE_strata')
+
+#Post stratify ---------------------------------------
+# post_strat <- function (surveyData, areaPolygon, areaDescription, na.keep = F) {
+#   
+#   # transform Regional Shape file using lambert conformal conic coordinate ref system
+#   crs <- "+proj=lcc +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-72 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"
+#   
+#   areas <- areaPolygon %>%
+#     dplyr::rename(areaDescription = areaDescription) %>%
+#     sf::st_transform(., crs)
+#   
+#   # find unique stations and transform to required crs
+#   stations <- surveyData %>%
+#     dplyr::select(CRUISE6, STRATUM, STATION, LAT, LON) %>%
+#     dplyr::distinct() %>%
+#     sf::st_as_sf(., coords = c("LON","LAT"), crs=4326) %>%
+#     sf::st_transform(., crs)
+#   
+#   
+#   # Intersect the stations with the polygon
+#   # Assigns stations with polygons
+#   station_area <- sf::st_join(stations, areas, join = sf::st_intersects) %>%
+#     dplyr::select(names(stations), areaDescription) %>%
+#     sf::st_drop_geometry() %>%
+#     dplyr::arrange(CRUISE6, STRATUM, STATION)
+#   
+#   # Join survey data with stations (which now are assigned to an area based on the shape file)
+#   master <- base::merge(surveyData, station_area,
+#                         by = c("CRUISE6","STRATUM","STATION")) %>%
+#     dplyr::rename(!!areaDescription := areaDescription)
+#   
+#   # check to see if we want to keep points that fall outside of all o fthe polygons found in the shape file
+#   if (!(na.keep)) { # removes all points that fall outside of the areas defined by the polygons in stratum
+#     master <- master %>%
+#       dplyr::filter(!is.na(get(areaDescription))) %>%
+#       data.table::as.data.table()
+#   }
+#   
+#   
+#   return(master)
+#   
+# }
 
 #Post stratify
 stations <- survdat:::post_strat(stations, GB, 'EPU')
@@ -318,7 +360,7 @@ GB.cluster <- GB.fh2 |>
 
 # Remove PYAMTW and yij columns
 GB.cluster <- GB.cluster |> 
-  select(-PYAMTW, -yij)  # Select all columns except PYAMTW and yij
+  dplyr::select(-PYAMTW, -yij)  # Select all columns except PYAMTW and yij
 
 
 #Calculate weighted contribution
@@ -363,7 +405,7 @@ GB.diet <- GB.diet |>
   group_by(Rpred) |> 
   mutate(tot.preyw = sum(sum.rhat)) |> 
   mutate(preyper = sum.rhat / tot.preyw) |> 
-  select(-sum.rhat, -tot.preyw)  # Select all columns except sum.rhat and tot.preyw
+  dplyr::select(-sum.rhat, -tot.preyw)  # Select all columns except sum.rhat and tot.preyw
 
 
 # Unsurveyed Groups -----------------------------------------------------------
@@ -823,7 +865,9 @@ GB.diet <- GB.diet |>
   bind_rows(GB.diet.plus)
 
 #Need to add Bacteria
-bact <- data.table(Rpred = 'Bacteria', Rprey = 'Detritus', preyper = 1.000)
+# values from GB EMAX model
+bact <- data.table(Rpred = c('Bacteria', 'Bacteria'), Rprey = c('Phytoplankton','Detritus'), preyper = c(0.240,0.760))
+
 
 GB.diet <- rbindlist(list(GB.diet, bact))
 
