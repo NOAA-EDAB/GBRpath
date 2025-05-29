@@ -28,11 +28,11 @@
 
 
 # Load packages
-library(data.table); library(dplyr)
+library(data.table); library(dplyr); library(here)
 
 # Load GB.params and GB.params.adj
-load("~/GBRpath/data/GB.params.rda")
-load("~/GBRpath/data/GB.params.bal.rda")
+load(here('data', "GB.params.rda"))
+load(here('data', "GB.params.bal.rda"))
 
 # Compare biological parameters from GB.params and GB.params.adj
 pedigree.cols <- colnames(GB.params.bal$pedigree)
@@ -40,10 +40,10 @@ pedigree.cols <- colnames(GB.params.bal$pedigree)
 pedigree.cols <-pedigree.cols[!pedigree.cols == "Diet"]
 
 init.params <- GB.params$model |> 
-  select(all_of(pedigree.cols))
+  dplyr::select(all_of(pedigree.cols))
 
 balanced.params <- GB.params.bal$model |> 
-  select(all_of(pedigree.cols))
+  dplyr::select(all_of(pedigree.cols))
 
 # Create new table comparing relative change in values
 # start with an empty table with columns named the values in pedigree.cols
@@ -95,27 +95,27 @@ pedigree[Group %in% c('Bacteria','SmCopepods','LgCopepods','OtherDemersals'), Bi
 # start with B
 Bchange <- bio.params.change |> 
             filter(Biomass > 0.8 | Biomass < -0.8) |> 
-            select(Group)
+            dplyr::select(Group)
 
 pedigree[Group %in% Bchange$Group, Biomass := 0.8]
 
 # PB
 PBchange <- bio.params.change |> 
             filter(PB > 0.8 | PB < -0.8) |> 
-            select(Group)
+            dplyr::select(Group)
 pedigree[Group %in% PBchange$Group, PB := 0.8]
 
 # QB
 QBchange <- bio.params.change |> 
             filter(QB > 0.8 | QB < -0.8) |> 
-            select(Group)
+            dplyr::select(Group)
 pedigree[Group %in% QBchange$Group, QB := 0.8]
 
 # Diet
 # look for max and min change
 long.diet.change <- diet.change |> 
                  pivot_longer(cols = -Group, names_to = "Rpred", values_to = "Change") |> 
-                 select(Group, Change) |> 
+                 dplyr::select(Group, Change) |> 
                  na.omit() |> 
                  group_by(Group) |>
                  summarise(max = max(Change), min = min(Change)) |> 
@@ -145,7 +145,7 @@ GB.params.bal$pedigree[, Diet := pedigree$Diet]
 # Fleets
 
 # look at landings changed in balancing
-load("~/GBRpath/data/landings.comparison.rda")
+load(here('data', "landings.comparison.rda"))
 
 landings.comparison <- landings.comparison |> 
   mutate(Change = (balanced_landings / unbalanced_landings) - 1) |> 
@@ -154,15 +154,16 @@ landings.comparison <- landings.comparison |>
 # set landings to 0.8 for groups in landings.comparison
 pedigree[Group %in% landings.comparison$Group, Fleets := 0.8]
 
-GB.params.bal$pedigree[, ScallopDredge := pedigree$Fleets]
-GB.params.bal$pedigree[, ClamDredge := pedigree$Fleets]
-GB.params.bal$pedigree[, OtherDredge := pedigree$Fleets]
-GB.params.bal$pedigree[, FixedGear := pedigree$Fleets]
-GB.params.bal$pedigree[, Pelagic := pedigree$Fleets]
-GB.params.bal$pedigree[, Trap := pedigree$Fleets]
-GB.params.bal$pedigree[, SmallMesh := pedigree$Fleets]
-GB.params.bal$pedigree[, LargeMesh := pedigree$Fleets]
-GB.params.bal$pedigree[, HMSFleet := pedigree$Fleets]
+GB.params.bal$pedigree[, 'Scallop Dredge' := pedigree$Fleets]
+GB.params.bal$pedigree[, 'Clam Dredge' := pedigree$Fleets]
+GB.params.bal$pedigree[, 'Other Dredge' := pedigree$Fleets]
+GB.params.bal$pedigree[, 'Fixed Gear' := pedigree$Fleets]
+GB.params.bal$pedigree[, 'Pelagic' := pedigree$Fleets]
+GB.params.bal$pedigree[, 'Trap' := pedigree$Fleets]
+GB.params.bal$pedigree[, 'SM Mesh' := pedigree$Fleets]
+GB.params.bal$pedigree[, 'LG Mesh' := pedigree$Fleets]
+GB.params.bal$pedigree[, 'HMS Fleet' := pedigree$Fleets]
+
 
 # Save the updated pedigree
 usethis::use_data(GB.params.bal, overwrite = T)
