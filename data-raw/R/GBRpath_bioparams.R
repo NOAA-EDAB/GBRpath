@@ -3,8 +3,11 @@
 
 #Required packages--------------------------------------------------------------
 #remotes::install_github("ropensci/rfishbase")
-library(rfishbase); library(data.table)
+library(rfishbase); library(data.table); library(here)
 load(here('data-raw', 'Species_codes.RData'))
+
+#Load prebal functions
+source(here('R', 'PreBal.R'))
 
 #User functions-----------------------------------------------------------------
 rightcase <- function(x){
@@ -115,6 +118,14 @@ GB.double <- rbindlist(list(GB.double, ceph))
 surf <- copy(GB.double[RPATH == 'OceanQuahog', ])
 surf[, RPATH := 'SurfClam']
 GB.double <- rbindlist(list(GB.double, surf))
+
+# OceanQuahog PB value too high for such a long-lived species
+# Frequently reach 200 years old (Butler et al., 2013)
+pbcalc(200)
+
+GB.double[RPATH == 'OceanQuahog', PB := 0.0125]
+# Adjust QB so P/Q is 0.1
+GB.double[RPATH == 'OceanQuahog', QB := 0.125]
 
 GB.params <- rbindlist(list(GB.params, GB.double))
 
