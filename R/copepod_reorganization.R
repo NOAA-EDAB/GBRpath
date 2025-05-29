@@ -55,7 +55,7 @@ plankton_extract <- as.data.frame(plankton_extract)
 plankton <- plankton_extract
 
 #filter for GB only
-plankton_extract <- plankton_extract %>% filter(Region %in% c("GB"))
+plankton_extract <- plankton_extract  |>  filter(Region %in% c("GB"))
 plankton <- plankton_extract
 
 #create season column based on 2 month period
@@ -64,7 +64,7 @@ plankton$season <- ifelse(plankton$month == 1 | plankton$month == 2, "JanFeb", i
 
 #filter for copepods of interest
 #tidy
-copes_y<-plankton %>% select(ctyp_10m2,calfin_10m2,mlucens_10m2)
+copes_y<-plankton |>  dplyr::select(ctyp_10m2,calfin_10m2,mlucens_10m2)
 copes_x<-as.data.frame(cbind(plankton$year, plankton$season))
 colnames(copes_x)<-c("Year","Season")
 copes_y[is.na(copes_y)] <- 0 #NAs should be true 0s
@@ -74,30 +74,30 @@ copes <- cbind(copes_x, copes_y)
 copes_ynames <- colnames(copes_y)
 
 #make long dataframe
-copes_long <- copes %>% pivot_longer(all_of(copes_ynames), names_to = "spp")
+copes_long <- copes  |>  pivot_longer(all_of(copes_ynames), names_to = "spp")
 
 #rename spp
-copes_long<- copes_long %>% 
+copes_long<- copes_long |> 
   mutate(spp_long=if_else(spp=="ctyp_10m2","CENTROPAGES_TYPICUS",
                           if_else(spp=="calfin_10m2","CALANUS_FINMARCHICUS", if_else(spp=="mlucens_10m2","METRIDIA_LUCENS",NA))))
 
 #filter for 1980-85
-copes_long <- copes_long %>% filter(Year >= 1980 & Year <=1985)
+copes_long <- copes_long |> filter(Year >= 1980 & Year <=1985)
 
 #look at temporal coverage
-cruises<-copes_long %>% select(Year,Season) %>% distinct()
+cruises<-copes_long |> dplyr::select(Year,Season) |> distinct()
 
 #average abundance per cruise
-copes_cruise<-copes_long %>% group_by(Year,Season,spp_long) %>% dplyr::summarise(abd = mean(value))
+copes_cruise<-copes_long |> group_by(Year,Season,spp_long) |> dplyr::summarise(abd = mean(value))
 #annual average (across cruises)
-copes_annual<-copes_cruise %>% group_by(Year,spp_long) %>% dplyr::summarise(abd=mean(abd))
+copes_annual<-copes_cruise |> group_by(Year,spp_long) |> dplyr::summarise(abd=mean(abd))
 #average across 1980-85
-copes_avg<-copes_annual %>% group_by(spp_long) %>% dplyr::summarise(abd=mean(abd))
+copes_avg<-copes_annual |> group_by(spp_long) |> dplyr::summarise(abd=mean(abd))
 
 #convert to biomass
 sizes<-read.csv(here("data/EcoMon_Copepod size.csv"))
 sizes<-sizes[-1,]
-sizes<-sizes %>% select(c("X","Literature"))
+sizes<-sizes |> dplyr::select(c("X","Literature"))
 colnames(sizes)<-c("spp_long","length")
 sizes$length<-as.numeric(sizes$length)
 #use l-w conversion from EMAX (wet weight)
@@ -109,7 +109,7 @@ copes_avg<-left_join(copes_avg,sizes,by="spp_long")
 #multiply ind * mg/ind
 copes_avg$biomass<-copes_avg$abd*copes_avg$weight
 #pull out calanus
-calfin<-copes_avg %>% filter(spp_long=="CALANUS_FINMARCHICUS")
+calfin<-copes_avg |> filter(spp_long=="CALANUS_FINMARCHICUS")
 copes_ratio<- calfin$biomass/sum(copes_avg$biomass)
 
 
