@@ -1,4 +1,3 @@
-
 #Steps to balancing the Georges Bank model
 library(data.table); library(here); library(Rpath); library(dplyr); library(ggplot2)
 
@@ -15,7 +14,7 @@ load(here('data', 'BA.input.rda'))
 prebal(GB.init, spclass.GB)
 
 #Biomass Span - 6x
-#Biomass Slope -0.7110158
+#Biomass Slope -0.6911775
 # PREBAL recomends a biomass slope of -0.05 to -0.1
 
 # There is an issue with this metric - PreBal pub uses ranked order to 
@@ -44,11 +43,11 @@ load(here::here('data', 'GOM.params.rda'))
 # Values come from GB specific EMAX ecopath model accessed via ecobase
 # QB for SeaBirds informed by Heymans, 2001
 EMAX.groups <- data.table(Group = c("Bacteria", "BaleenWhales", "GelZooplankton", "HMS" ,"LgCopepods",
-                 "Micronekton", "Microzooplankton","Odontocetes", "Phytoplankton", "SeaBirds",  "SmCopepods"),
-                 PB = c(91.24998, 0.03802086, 40, 0.682623, 54.63586, 
-                        14.25, 72.00002, 0.04, 166.1342, 0.275, 41.66504),
-                 QB = c(380.2082, 4.5, 143.08, 2.053014, 109.5,
-                        36.5, 242.4243, 13.82976, NA, 76.2, 127.75)
+                                    "Micronekton", "Microzooplankton","Odontocetes", "Phytoplankton", "SeaBirds",  "SmCopepods"),
+                          PB = c(91.24998, 0.03802086, 40, 0.682623, 54.63586, 
+                                 14.25, 72.00002, 0.04, 166.1342, 0.275, 41.66504),
+                          QB = c(380.2082, 4.5, 143.08, 2.053014, 109.5,
+                                 36.5, 242.4243, 13.82976, NA, 76.2, 127.75)
 )
 
 # Groups with P/Q > 0.3 are HMS, LgCopepods, Micronekton, SmCopepods
@@ -81,20 +80,21 @@ for(igroup in 1:nrow(EMAX.groups)) {
 # match by Group
 # pull out PB and QB from GB.params.adj
 GB.PB.QB <- GB.params.adj$model |> 
-          select(Group, PB, QB) |> 
-          setnames(c('Group', 'PB', 'QB'), c('Group', 'GB.PB', 'GB.QB'))
+  select(Group, PB, QB) |> 
+  setnames(c('Group', 'PB', 'QB'), c('Group', 'GB.PB', 'GB.QB'))
 # same for GOM
 GOM.PB.QB <- GOM.params$model |>
-          select(Group, PB, QB) |>
-          setnames(c('Group', 'PB', 'QB'), c('Group', 'GOM.PB', 'GOM.QB'))
+  select(Group, PB, QB) |>
+  setnames(c('Group', 'PB', 'QB'), c('Group', 'GOM.PB', 'GOM.QB'))
+
 
 # merge
 GB.GOM.PB.QB <- merge(GB.PB.QB, GOM.PB.QB, by = 'Group')
 
 # remove GB values and rename to 'Group', 'PB', 'QB'
 GB.GOM.PB.QB <- GB.GOM.PB.QB |> 
-          select(Group, GOM.PB, GOM.QB) |>
-          setnames(c('Group', 'PB', 'QB'))
+  select(Group, GOM.PB, GOM.QB) |>
+  setnames(c('Group', 'PB', 'QB'))
 
 GB.GOM.groups <- GB.GOM.PB.QB$Group
 # Only groups not found in EMAX.groups
@@ -131,6 +131,29 @@ GB.params.adj$model[Group %in% aggEE, EE := 0.8]
 GB.params.adj$model[Group %in% c('AtlHerring', 'AtlMackerel'), 
                     Biomass := Biomass * 10]
 
+# Step 02 - Ocean Quahog -------------------------------------
+GB.new <- rpath(GB.params.adj, eco.name = 'Georges Bank')
+check.mort(GB.new, 'OceanQuahog')
+
+# Set PB and QB to match MAB model values
+GB.params.adj$model[Group == 'OceanQuahog', PB := 0.05]
+GB.params.adj$model[Group == 'OceanQuahog', QB := 0.3]
+
+# Macrobenthos and Megabenthos. Some AmLobster and OtherDemersals
+# Move predation on OceanQuahog to AtlScallop and SurfClam
+GB.params.adj$diet[Group == 'OceanQuahog', Macrobenthos := 0.0002] # removed 0.005
+GB.params.adj$diet[Group == 'AtlScallop', Macrobenthos := Macrobenthos + 0.0025]
+GB.params.adj$diet[Group == 'SurfClam', Macrobenthos := Macrobenthos + 0.0025]
+
+GB.params.adj$diet[Group == 'OceanQuahog', Megabenthos := Megabenthos - 0.028]
+GB.params.adj$diet[Group == 'SurfClam', Megabenthos := Megabenthos + 0.028]
+
+GB.params.adj$diet[Group == 'OceanQuahog', AmLobster := AmLobster - 0.02]
+GB.params.adj$diet[Group == 'SurfClam', AmLobster := AmLobster + 0.01]
+GB.params.adj$diet[Group == 'Detritus', AmLobster := AmLobster + 0.01]
+
+GB.params.adj$diet[Group == 'OceanQuahog', OtherDemersals := OtherDemersals - 0.06]
+GB.params.adj$diet[Group == 'OtherDemersals', OtherDemersals := OtherDemersals + 0.06]
 
 
 #Step 02 - Deal with OceanPout, AmPlaice, and WitchFlounder----
@@ -181,7 +204,9 @@ check.mort(GB.new, 'WitchFlounder')
 #Main pred - OtherSkates
 #Large F from LargeMesh and SmallMesh
 #Drop 50% of large and small mesh catch - Shelf break species
-mesh.fleet <- c('SmallMesh', 'SmallMesh.disc', 'LargeMesh', 'LargeMesh.disc')
+
+mesh.fleet <- c('SM Mesh', 'SM Mesh.disc', 'LG Mesh', 'LG Mesh.disc')
+
 for(imesh in 1:length(mesh.fleet)){
   setnames(GB.params.adj$model, mesh.fleet[imesh], 'fleet')
   GB.params.adj$model[Group == 'WitchFlounder', fleet := fleet - 0.5 * fleet]
@@ -353,18 +378,14 @@ check.mort(GB.new, 'AtlHerring')
 
 # PBs and QBs now set to match GOM model values
 
-# Herring EE still at 3.35. Bumping B
+# Herring EE still at 3.37. Bumping B
 GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 4]
 
 
 # Step 11 - Illex -----------------
 check.mort(GB.new, 'Illex')
 # Spinydogfish, Loligo top preds. Bumping B
-GB.params.adj$model[Group == 'Illex', Biomass := Biomass * 2]
-
-
-
-
+GB.params.adj$model[Group == 'Illex', Biomass := Biomass * 2.5]
 
 #Step 12 - BlackSeaBass -------------------
 #Black Sea Bass
@@ -428,8 +449,11 @@ GB.params.adj$model[Group == 'RedHake', Biomass := Biomass * 2]
 
 # Step 18 - EE < 1.5 -----------------
 
-# Haddock, Microzooplankton, LgCopepods, SmCopepods, Loligo
+# OceanQuahog, Haddock, Microzooplankton, LgCopepods, SmCopepods, Loligo
 # AmPlaice, Scup, AtlHerring, Detritus, WinterFlounder, YTFlounder
+
+# OceanQuahog
+GB.params.adj$model[Group == 'OceanQuahog', PB := 0.02]
 
 # Haddock
 check.mort(GB.new, 'Haddock')
@@ -471,19 +495,19 @@ GB.params.adj$model[Group %in% c('Microzooplankton', 'LgCopepods','SmCopepods'),
 
 #Increase unassim to 0.3 for other detritavores
 GB.params.adj$model[Group %in% c('AmLobster', 'Macrobenthos', 'Megabenthos',
-                                 'AtlScallop', 'OceanQuahog', 'OtherShrimps'),
+                                 'AtlScallop', 'OtherShrimps'),
                     Unassim := 0.3]
 
 # Loligo
 check.mort(GB.new, 'Loligo')
 # Cannibalism main issue. Moving 3% of diet from loligo to krill
-GB.params.adj$diet[Group == 'Krill', Loligo := Loligo + 0.05]
-GB.params.adj$diet[Group == 'Loligo', Loligo := Loligo - 0.05]
+GB.params.adj$diet[Group == 'Krill', Loligo := Loligo + 0.06]
+GB.params.adj$diet[Group == 'Loligo', Loligo := Loligo - 0.06]
 
 #AtlHerring
 check.mort(GB.new, 'AtlHerring')
 # Bumping B
-GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 1.1]
+GB.params.adj$model[Group == 'AtlHerring', Biomass := Biomass * 1.3]
 
 #WinterFlounder
 check.mort(GB.new, 'WinterFlounder')
@@ -496,125 +520,35 @@ check.mort(GB.new, 'YTFlounder')
 GB.params.adj$model[Group == 'YTFlounder', Biomass := Biomass * 1.1]
 
 #Step 19- BA input --------------------
-  #Input BA values from BA.input
-  load(here('data', 'BA.input.rda'))
+#Input BA values from BA.input
+load(here('data', 'BA.input.rda'))
 
-  BA.Group <- c('AmLobster','Cod','Goosefish','RedHake','YTFlounder')
-  #Assign values to GB.params.adj$model$BioAcc from BA.input for groups in BA.Group
-  for(igroup in 1:length(BA.Group)){
-    group.name <- BA.Group[igroup]
-    GB.params.adj$model[Group == group.name, BioAcc := BA.input[RPATH == group.name, BA]]
-  }
-  
+BA.Group <- c('AmLobster','Cod','Goosefish','RedHake','YTFlounder')
+#Assign values to GB.params.adj$model$BioAcc from BA.input for groups in BA.Group
+for(igroup in 1:length(BA.Group)){
+  group.name <- BA.Group[igroup]
+  GB.params.adj$model[Group == group.name, BioAcc := BA.input[RPATH == group.name, BA]]
+}
+
+## Cod BA change -------------------------
+# Manually adjust Cod BA to help with Rsim fits
+# Original value = -0.052171320
+
+GB.params.adj$model[Group == 'Cod', BioAcc := -0.34]
+
+
 #Step 20 - Shark Diet -----------------
 # Shifting Shark Diet away from detritus to match GOM and MAB models
 
-  GB.params.adj$diet[Group == 'Detritus', Sharks := 0.001] #removed 0.05
-  GB.params.adj$diet[Group == 'Pinnipeds', Sharks := 0.025]
-  GB.params.adj$diet[Group == 'Odontocetes', Sharks := Sharks + 0.025]
+GB.params.adj$diet[Group == 'Detritus', Sharks := 0.001] #removed 0.05
+GB.params.adj$diet[Group == 'Pinnipeds', Sharks := 0.025]
+GB.params.adj$diet[Group == 'Odontocetes', Sharks := Sharks + 0.025]
 
 
-#Assign Pedigrees------
-#0 - perfect
-#1 - No clue
-#realistic 0.1 - 0.8
-
-
-
-fleets <- c('ScallopDredge', 'ClamDredge', 'OtherDredge', 'FixedGear', 'Pelagic',
-            'Trap', 'SmallMesh', 'LargeMesh', 'HMSFleet') #, 'OtherFisheries')
-
-#Biomass -
-GB.params$pedigree[, B := 0.2]
-GB.params$pedigree[Group %in% fleets, B := 0]
-GB.params$pedigree[Group %in% c('Redfish', 'AmPlaice', 'SouthernDemersals', 'Pollock',
-                                'OceanPout', 'OffHake', 'WitchFlounder', 'Mesopelagics',
-                                'Goosefish', 'BlackSeaBass', 'Sharks'), B := 0.4]
-GB.params$pedigree[Group %in% c('Seabirds', 'BalWhale', 'ToothWhale', 'HMS',
-                                'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton',
-                                'LgCopepods','SmCopepods', 'Microzooplankton', 'Phytoplankton'),
-                   B := 0.5]
-GB.params$pedigree[Group %in% c('Bacteria', 'Detritus','Discards', 'Seals'), B := 0.8]
-GB.params$pedigree[Group %in% c('SmPelagics', 'OtherCephalopods', 'OtherShrimp',
-                                'OtherPelagics', 'OtherFlatfish', 'SmFlatfishes'),
-                   B := 0.5]
-
-#PB -
-GB.params$pedigree[, PB := 0.2]
-GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), PB := 0]
-GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
-                                'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
-                                'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
-                                'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
-                                'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
-                                'ToothWhale', 'Seabirds'), PB := 0.5]
-GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
-                                'Illex', 'Loligo', 'OtherCephalopods', 'Barndoor',
-                                'Fourspot', 'OffHake',  'RedHake', 'Redfish', 'Scup',
-                                'SmoothDogfish'), PB := 0.6]
-GB.params$pedigree[Group %in% c('Goosefish',  'SilverHake',  'WhiteHake',  'Pollock',
-                                'OceanPout', 'BlackSeaBass', 'AmPlaice', 'Windowpane',
-                                'WinterFlounder', 'WitchFlounder', 'WinterSkate',
-                                'LittleSkate'), PB := 0.7]
-GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), PB := 0.8]
-
-#QB -
-GB.params$pedigree[, QB := 0.2]
-GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), QB := 0]
-GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
-                                'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
-                                'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
-                                'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
-                                'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
-                                'ToothWhale', 'Seabirds'), QB := 0.5]
-GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
-                                'Illex', 'Loligo', 'OtherCephalopods', 'Barndoor',
-                                'Fourspot', 'OffHake',  'RedHake', 'Redfish', 'Scup',
-                                'SmoothDogfish', 'Goosefish',  'OceanPout',
-                                'BlackSeaBass', 'AmPlaice', 'Windowpane',
-                                'WinterFlounder', 'WitchFlounder', 'WinterSkate',
-                                'LittleSkate'), QB := 0.6]
-GB.params$pedigree[Group %in% c('SilverHake',  'WhiteHake',  'Pollock'), QB := 0.7]
-GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), QB := 0.8]
-
-#Diet
-GB.params$pedigree[, Diet := 0.2]
-GB.params$pedigree[Group %in% c(fleets, 'Discards', 'Detritus'), Diet := 0]
-GB.params$pedigree[Group %in% c('Phytoplankton', 'Bacteria', 'Microzooplankton',
-                                'LgCopepods','SmCopepods', 'GelZooplankton', 'Micronekton',
-                                'Macrobenthos', 'OtherShrimps', 'Mesopelagics',
-                                'SmPelagics', 'OtherPelagics', 'Illex', 'SouthernDemersals',
-                                'OtherDemersals', 'Sharks', 'HMS', 'Seals', 'BalWhale',
-                                'ToothWhale', 'Seabirds'), Diet := 0.5]
-GB.params$pedigree[Group %in% c('Krill', 'OceanQuahog', 'SurfClam', 'AtlScallop', 'AmLobster','Megabenthos',
-                                'Illex', 'Loligo', 'OtherCephalopods'), Diet := 0.6]
-GB.params$pedigree[Group %in% c('OtherFlatfish', 'SmFlatfishes'), Diet := 0.8]
-
-#Fleets
-for(igear in 1:length(fleets)){
-  setnames(GB.params$pedigree, fleets[igear], 'gear')
-  GB.params$pedigree[, gear := 0.2]
-  GB.params$pedigree[Group %in% fleets, gear := 0]
-  GB.params$pedigree[Group %in% c('Redfish', 'AmPlaice', 'SouthernDemersals', 'Pollock',
-                                  'OceanPout', 'OffHake', 'WitchFlounder', 'Mesopelagics',
-                                  'Goosefish', 'BlackSeaBass', 'Sharks'), gear := 0.4]
-  GB.params$pedigree[Group %in% c('Seabirds', 'BalWhale', 'ToothWhale', 'HMS',
-                                  'Macrobenthos', 'Krill', 'Micronekton', 'GelZooplankton',
-                                  'LgCopepods','SmCopepods', 'Microzooplankton', 'Phytoplankton'),
-                     gear := 0.5][]
-  setnames(GB.params$pedigree, 'gear', fleets[igear])
-}
-
-
-
-
-
-#Check results----
+# Check EEs and params -------------------------------------
 GB.new <- rpath(GB.params.adj, eco.name = 'Georges Bank')
 check.rpath.params(GB.params.adj)
 check.ee(GB.new)
-
-
 
 #save file plots
 #current <- 'Bacteria'
