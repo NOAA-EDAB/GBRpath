@@ -80,11 +80,11 @@ for(igroup in 1:nrow(EMAX.groups)) {
 # match by Group
 # pull out PB and QB from GB.params.adj
 GB.PB.QB <- GB.params.adj$model |> 
-  select(Group, PB, QB) |> 
+  dplyr::select(Group, PB, QB) |> 
   setnames(c('Group', 'PB', 'QB'), c('Group', 'GB.PB', 'GB.QB'))
 # same for GOM
 GOM.PB.QB <- GOM.params$model |>
-  select(Group, PB, QB) |>
+  dplyr::select(Group, PB, QB) |>
   setnames(c('Group', 'PB', 'QB'), c('Group', 'GOM.PB', 'GOM.QB'))
 
 
@@ -93,7 +93,7 @@ GB.GOM.PB.QB <- merge(GB.PB.QB, GOM.PB.QB, by = 'Group')
 
 # remove GB values and rename to 'Group', 'PB', 'QB'
 GB.GOM.PB.QB <- GB.GOM.PB.QB |> 
-  select(Group, GOM.PB, GOM.QB) |>
+  dplyr::select(Group, GOM.PB, GOM.QB) |>
   setnames(c('Group', 'PB', 'QB'))
 
 GB.GOM.groups <- GB.GOM.PB.QB$Group
@@ -584,19 +584,19 @@ ggplot2::ggsave(here('outputs', 'GB_prebal.png'), width = 10, height = 4)
 
 library(tidyverse)
 unbalanced.landings <- GB.params$model |> 
-                        select(Group, fleets) |>
+                        dplyr::select(Group, fleets) |>
                         pivot_longer(cols = -Group, names_to = "fleet", values_to = "landings") |>
                        group_by(Group) |>
                        mutate(unbalanced_landings = sum(landings)) |> 
-                      select(Group, unbalanced_landings) |>
+                      dplyr::select(Group, unbalanced_landings) |>
                       unique()
 
 balanced.landings <- GB.params.adj$model |> 
-                        select(Group, fleets) |>
+                        dplyr::select(Group, fleets) |>
                         pivot_longer(cols = -Group, names_to = "fleet", values_to = "landings") |>
                        group_by(Group) |>
                        mutate(balanced_landings = sum(landings)) |> 
-                      select(Group, balanced_landings) |>
+                      dplyr::select(Group, balanced_landings) |>
                       unique()
 
 landings.comparison <- merge(unbalanced.landings, balanced.landings, by = 'Group', all = T)
