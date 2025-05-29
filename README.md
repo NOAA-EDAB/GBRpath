@@ -3,13 +3,15 @@
 ![gitleaks](https://github.com/NOAA-EDAB/GBRpath/workflows/gitleaks/badge.svg)
 
 
-Rpath model of Georges Bank
+Rpath model of Georges Bank. This model was originally developed by Sean Lucey as part of his PhD dissertation. The model has continued to be developed for additional ecosystem considerations. See version release notes for full details.
 
-## Contact
 
-| [slucey](https://github.com/slucey)        
-| ----------------------------------------------------------------------------------------------- 
-| [![](https://avatars.githubusercontent.com/u/5578254?s=100&u=cd59cd654cab73ea583c697145bfe062222355cd&v=4)](https://github.com/slucey) | 
+
+## Contacts
+
+| [MGrezlik](https://github.com/MGrezlik) | [slucey](https://github.com/slucey) |
+|:--------------------------------------:|:----------------------------------:|
+| <img src="https://github.com/MGrezlik.png" width="80"/> | <img src="https://github.com/slucey.png" width="80"/> |
 
 ## Order in which to run scripts
 
