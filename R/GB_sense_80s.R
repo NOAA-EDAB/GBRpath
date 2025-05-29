@@ -1,7 +1,8 @@
 #Ecosense runs for GB 80s model
 #Author: Sarah J . Weisberg
 
-# Fri May 17 11:15:28 2024 ------------------------------
+# Fri Aug  2 15:07:05 2024 ------------------------------
+
 
 #Prep-------------------------------------------------------------
 library(here); library(data.table); library(Rpath)
@@ -16,6 +17,7 @@ load(here("data/alternate.GB.bal.rda"))
 #Rename model/parameter files
 GB<-alternate.GB.bal
 GB.params<-alternate.GB.params.bal
+
 #Set up model with group names and types
 groups<-as.vector(GB$Group)
 
@@ -62,7 +64,7 @@ orig.biomass<-scene$start_state$Biomass
 
 # ----- Set up ecosense generator ----- #######################################
 scene$params$BURN_YEARS <- 50
-NUM_RUNS <- 1228
+NUM_RUNS <- nkept
 parlist <- as.list(rep(NA, NUM_RUNS))
 kept <- rep(NA, NUM_RUNS)
 
@@ -87,9 +89,11 @@ for (irun in 1:NUM_RUNS){
 KEPT <- which(kept==T)
 nkept <- length(KEPT)
 nkept
-GB_sense <- parlist[KEPT]
+GB_sense_bound <- parlist[KEPT]
 
-GB_sense_unbound<-parlist
-
-save(GB_sense, file = "data/GB_sense_bound.RData")
+GB_sense_unbound <-parlist
+#save
+#save(GB,file = "data/GB_bac.RData")
+#save(GB.params,file = "data/GB_params_bac.RData")
+save(GB_sense_bound, file = "data/GB_sense_bound.RData")
 save(GB_sense_unbound, file = "data/GB_sense_unbound.RData")
