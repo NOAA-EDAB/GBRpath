@@ -13,8 +13,8 @@ library(here)
 library(ggplot2)
 
 #Load balanced model
-load(here("data/alternate.GB.bal.rda"))
-load(here("data/alternate.GB.params.bal.rda"))
+load(here("data/GB.bal.rda"))
+load(here("data/GB.params.bal.rda"))
 
 #macrobenthos 
 macro <- readRDS(url('https://github.com/NOAA-EDAB/Rpathdata/blob/dd034d1573f79ce011c01054bdc017e241e7857e/data-raw/fallmacrobenthosindex.rds?raw=true'))
@@ -52,7 +52,7 @@ mega_gb <- left_join(mega_gb,mega_start,by="Var")
 mega_gb <- mega_gb |>  mutate(anom = (Value-mean_start)/mean_start)
 
 #generate forcing time series
-macro<-alternate.GB.params.bal$model[Group == "Macrobenthos",Biomass]
+macro<-GB.params.bal$model[Group == "Macrobenthos",Biomass]
 # mega biomass set by model with EE = 0.8
 # putting in manually for now
 mega<-2.393409e+00

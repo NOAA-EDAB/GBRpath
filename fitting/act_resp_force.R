@@ -102,11 +102,11 @@ survdat<-survey$survdat
 survdat<-left_join(survdat,spp, by = "SVSPP", relationship = "many-to-many")
 
 #Load balanced model
-load(here("data/alternate.GB.bal.rda"))
-load(here("data/alternate.GB.params.bal.rda"))
+load(here("data/GB.bal.rda"))
+load(here("data/GB.params.bal.rda"))
 
-GB <- alternate.GB.bal 
-GB.params <- alternate.GB.params.bal
+GB <- GB.bal 
+GB.params <- GB.params.bal
 
 #Run Rsim to get initial resp_fraction
 GB.sim<- rsim.scenario(GB, GB.params, years = 1985:2019)

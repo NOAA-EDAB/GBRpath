@@ -22,11 +22,11 @@ library(Rpath); library(data.table);library(dplyr);library(here)
 # source(here("fitting/ecofitting.R"))
 
 #Load balanced model and params  ----------------------------------------------------------
-load(here("data/alternate.GB.bal.rda"))
-load(here("data/alternate.GB.params.bal.rda"))
+load(here::here("data/GB.bal.rda"))
+load(here::here("data/GB.params.bal.rda"))
 
-GB <- alternate.GB.bal 
-GB.params <- alternate.GB.params.bal
+GB <- GB.bal 
+GB.params <- GB.params.bal
 
 
   
@@ -38,23 +38,23 @@ catch.datafile<- paste("fitting/take_fit.csv",sep = "")
 biomass.datafile  <- paste("fitting/biomass_fit.csv",sep='')
 
 # Setup Base Ecopath and Base Rsim scenario ------------------------------------------------
-basescene85 <- rsim.scenario(GB, GB.params, years = fit.years)
+basescene85 <- Rpath::rsim.scenario(GB, GB.params, years = fit.years)
 basescene85$params$NoIntegrate[57:58] <- 0
 # Done for Bacteria and LgCopepods
 scene0 <- basescene85
 
 # Read in fitting data --------------------------------------------------------------------
 # Biomass data (e.g. surveys)
-scene0 <- read.fitting.biomass(scene0, biomass.datafile)
+scene0 <- Rpath::read.fitting.biomass(scene0, biomass.datafile)
 
 # Read time series of catch data and re-arrange catch forcing
-scene0 <- read.fitting.catch(scene0, catch.datafile) 
+scene0 <- Rpath::read.fitting.catch(scene0, catch.datafile) 
 # Apply the fit catch as a forcing catch
-scene0 <- fitcatch.to.forcecatch(scene0)
+scene0 <- Rpath::fitcatch.to.forcecatch(scene0)
 # Turn off fishing effort, freeze discards/offal using forced biomass
-scene0 <- adjust.fishing(scene0, "ForcedEffort", rpath.gears(GB), fit.years, value=0.0)
+scene0 <- Rpath::adjust.fishing(scene0, "ForcedEffort", rpath.gears(GB), fit.years, value=0.0)
 #Turn off catch forcing for groups with high uncertainty
-scene0 <- adjust.fishing(scene0, "ForcedCatch", c("OtherShrimps"), fit.years, value=0.0)
+scene0 <- Rpath::adjust.fishing(scene0, "ForcedCatch", c("OtherShrimps"), fit.years, value=0.0)
 scene0$fitting$Catch[which(scene0$fitting$Group %in% c("OtherShrimps"))]<-0
 #scene0 <- adjust.fishing(scene0, "ForcedEffort", rpath.gears(GOM), fit.years, value=1.0)
 #scene0$forcing$ForcedBio[,"Discards"] <- GOM$Biomass["Discards"]
@@ -69,16 +69,16 @@ Equil_species <- c('SeaBirds', 'Pinnipeds', 'BaleenWhales', 'Odontocetes', 'SmPe
                    'SmCopepods','Phytoplankton')
 
 for (sp in Equil_species){
-  scene0 <- adjust.fishing(scene0, 'ForcedFRate', sp, fit.years, value=0)
+  scene0 <- Rpath::adjust.fishing(scene0, 'ForcedFRate', sp, fit.years, value=0)
 }
 
 
 
 # Run model with no fitting data ----------------------------------------------------------
-run0 <- rsim.run(scene0, method='AB', years=fit.years)
+run0 <- Rpath::rsim.run(scene0, method='AB', years=fit.years)
 
 # Some Diagnostics
-rsim.fit.table(scene0,run0)
+Rpath::rsim.fit.table(scene0,run0)
 
 # Changes from base run -------------------------------------------------------------------
 
