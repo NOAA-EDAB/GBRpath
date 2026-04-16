@@ -134,6 +134,13 @@ spp <- read_csv(here("data-raw", "Species_codes.csv"),
 
 compare_mapped <- compare_raw |>
   inner_join(spp |> select(SVSPP, RPATH) |> distinct(), by = "SVSPP") |>
+  # ADDED: Group by the Rpath model group and sum the SVSPPs together
+  group_by(YEAR, SEASON, RPATH) |>
+  summarise(
+    Old_Total_B = sum(Old_Total_B, na.rm = TRUE),
+    New_Total_B = sum(New_Total_B, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
   # Pivot for ggplot
   pivot_longer(cols = c(Old_Total_B, New_Total_B), 
                names_to = "Source", 
